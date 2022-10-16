@@ -3,11 +3,11 @@
 [@alma]: https://github.com/Robert-Nogueira
 
 
-# Square-py
-### square-py is a wrapper of the [API] of [SquareCloud] made by [@alma]
+# squarecloud-api
+### squarecloud-api is a wrapper of the [API] of [SquareCloud] made by [@alma]
 ## Installing
 ````
-pip install square-py
+pip install squarecloud-api
 ````
 
 ## Starting
