@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='squarecloud-api',
-    version='0.0.2',
+    version='0.0.5',
     license='MIT License',
     author='Robert Nogueira',
     long_description='SquareCloud API wrapper',
