@@ -1,4 +1,6 @@
-"""This module is an unofficial wrapper for using the SquareCloud API"""
+"""This module is a wrapper for using the SquareCloud API"""
+from __future__ import annotations
+
 import logging
 # from typing import List
 from abc import ABC, abstractmethod
@@ -33,6 +35,7 @@ class AbstractClient(ABC):
 
 class Client(AbstractClient):
     """A client for interacting with the SquareCloud API."""
+
     def __init__(self, api_key: str, debug: bool = True) -> None:
         self.debug = debug
         self._api_key = api_key
@@ -155,7 +158,6 @@ class Client(AbstractClient):
 
     async def commit(self, app_id: int | str, file: File):
         await self.__http.commit(app_id, file)
-
 
     # async def fetch_apps(self):
     #     """

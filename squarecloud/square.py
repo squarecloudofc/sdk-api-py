@@ -1,8 +1,9 @@
 """module objects"""
-from typing import Literal, TYPE_CHECKING
-from abc import ABC, abstractmethod
+from __future__ import annotations
+
 import os
-import zipfile
+from abc import ABC
+from typing import Literal, TYPE_CHECKING
 
 from .data import AppData
 
@@ -18,6 +19,7 @@ class File:
         'file',
     )
     """File object"""
+
     def __init__(self, path: str):
         self.file = open(path, 'rb')
         self.path = path

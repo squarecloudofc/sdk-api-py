@@ -1,17 +1,17 @@
-"""Module"""
+"""Module to manage requests"""
 from typing import Dict, Any
 
 import aiohttp
 
 from .errors import RequestError, AuthenticationFailure, NotFoundError, BadRequestError
-
 from .logs import logger
-from .types import RawResponseData
 from .square import File
+from .types import RawResponseData
 
 
 class Response:
     """Represents a request response"""
+
     def __init__(self, data: RawResponseData) -> Dict[str, Any]:
         self.data = data
         self.status = data.get('status')
@@ -49,6 +49,7 @@ class Route:
 
 class HTTPClient:
     """A client that handles requests and responses"""
+
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
@@ -243,5 +244,3 @@ class HTTPClient:
         route: Route = Route('COMMIT', app_id=app_id)
         response: Response = await self.request(route, file=file)
         return response
-
-

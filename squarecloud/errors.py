@@ -1,4 +1,4 @@
-class SquareException(Exception):
+class SquareException(BaseException):
     """abstract class SquareException"""
 
 
@@ -12,6 +12,7 @@ class AuthenticationFailure(RequestError):
 
 class NotFoundError(RequestError):
     """raises when a request returns a 404 response"""
+
 
 class BadRequestError(RequestError):
     """raises when a request returns a 400 response"""
