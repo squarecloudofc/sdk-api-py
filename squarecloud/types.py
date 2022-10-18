@@ -8,6 +8,8 @@ class RawResponseData(TypedDict):
     status: Literal['success', 'error']
     code: Optional[int]
     message: Optional[str]
+    statusCode: Optional[str]
+    error: Optional[str]
 
 
 class UserPayload(RawResponseData):

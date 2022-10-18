@@ -1,5 +1,9 @@
 """Module to manage requests"""
+from __future__ import annotations
+
+
 from typing import Dict, Any
+
 
 import aiohttp
 
@@ -12,7 +16,7 @@ from .types import RawResponseData
 class Response:
     """Represents a request response"""
 
-    def __init__(self, data: RawResponseData) -> Dict[str, Any]:
+    def __init__(self, data: RawResponseData) -> None:
         self.data = data
         self.status = data.get('status')
         self.code = data.get('code')
@@ -54,7 +58,7 @@ class HTTPClient:
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
 
-    async def request(self, route: Route, **kwargs) -> RawResponseData:
+    async def request(self, route: Route, **kwargs) -> Response:
         """
         Sends a request to the Square API and returns the response.
 
