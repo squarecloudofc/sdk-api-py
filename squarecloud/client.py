@@ -2,19 +2,20 @@
 from __future__ import annotations
 
 import logging
-# from typing import List
+from typing import List
 from abc import ABC, abstractmethod
 
 from .data import (
+    AppData,
     StatusData,
     UserData,
     LogsData,
     BackupData,
-    CompleteLogsData
+    CompleteLogsData,
 )
 from .http import HTTPClient, Response
 from .logs import logger
-from .square import File
+from .square import File, Application
 from .types import (
     UserPayload,
     StatusPayload,
@@ -30,7 +31,7 @@ class AbstractClient(ABC):
     @property
     @abstractmethod
     def api_key(self):
-        pass
+        """get the api token"""
 
 
 class Client(AbstractClient):
@@ -154,20 +155,35 @@ class Client(AbstractClient):
         return backup
 
     async def delete_app(self, app_id: int | str):
+        """
+        D
+        Args:
+            app_id:
+
+        Returns:
+
+        """
         await self.__http.delete_application(app_id)
 
     async def commit(self, app_id: int | str, file: File):
+        """
+        Commit an application
+
+        Args:
+            app_id: the application ID
+            file: the file object to be committed
+        """
         await self.__http.commit(app_id, file)
 
-    # async def fetch_apps(self):
-    #     """
-    #     Get a list of your applications
-    #
-    #     Returns:
-    #         List[AppData]
-    #     """
-    #     result: Response = await self.__http.fetch_user_info()
-    #     payload: AppData = result.data['response']['applications']
-    #     apps_data: List[AppData] = [AppData(**app_data) for app_data in payload]
-    #     apps: List[App] = [App(client=self, data=data) for data in apps_data]
-    #     return apps
+    async def fetch_apps(self):
+        """
+        Get a list of your applications
+
+        Returns:
+            List[AppData]
+        """
+        result: Response = await self.__http.fetch_user_info()
+        payload: list = result.data['response']['applications']
+        apps_data: List[AppData] = [AppData(**app_data) for app_data in payload]
+        apps: List[Application] = [Application(client=self, data=data) for data in apps_data]
+        return apps
