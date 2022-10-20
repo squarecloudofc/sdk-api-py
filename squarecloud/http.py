@@ -68,9 +68,6 @@ class HTTPClient:
         Returns:
             RawResponseData
         """
-        method: str = route.method
-        url: str = route.url
-        endpoint: str = route.endpoint
         headers = {'Authorization': self.api_key}
 
         if route.method == 'POST':
@@ -85,7 +82,7 @@ class HTTPClient:
             kwargs['data'] = form
 
         async with self.__session(headers=headers) as session:
-            async with session.request(url=url, method=method, **kwargs) as resp:
+            async with session.request(url=route.url, method=route.method, **kwargs) as resp:
                 status_code = resp.status
                 data: RawResponseData = await resp.json()
                 extra = {
@@ -98,10 +95,9 @@ class HTTPClient:
                     extra.pop('code')
                     logger.debug(msg='request to route: ', extra=extra)
                     response: Response = Response(data=data)
-                    return response
                 elif status_code == 404:
                     logger.debug(msg='request to route: ', extra=extra)
-                    msg = f'route [{endpoint}] returned 404, [{data.get("code")}]'
+                    msg = f'route [{route.endpoint}] returned 404, [{data.get("code")}]'
                     raise NotFoundError(msg)
                 elif status_code == 401:
                     logger.error(msg='request to: ', extra=extra)
@@ -109,13 +105,14 @@ class HTTPClient:
                     raise AuthenticationFailure(msg)
                 elif status_code == 400:
                     logger.error(msg='request to: ', extra=extra)
-                    msg = f'route [{endpoint}] returned 400, [{data.get("code")}]'
+                    msg = f'route [{route.endpoint}] returned 400, [{data.get("code")}]'
                     raise BadRequestError(msg)
                 else:
-                    msg = f'An unexpected error occurred while requesting {url}, ' \
-                          f'route: [{endpoint}], status: {data.get("statusCode")}\n' \
+                    msg = f'An unexpected error occurred while requesting {route.url}, ' \
+                          f'route: [{route.endpoint}], status: {data.get("statusCode")}\n' \
                           f'Error: {data.get("error")}'
                     raise RequestError(msg)
+                return response
 
     async def fetch_user_info(self):
         """
