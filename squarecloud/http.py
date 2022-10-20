@@ -1,9 +1,7 @@
 """Module to manage requests"""
 from __future__ import annotations
 
-
 from typing import Dict, Any
-
 
 import aiohttp
 
