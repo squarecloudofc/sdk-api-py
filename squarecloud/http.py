@@ -40,6 +40,7 @@ class Route:
         'DELETE': {'METHOD': 'POST', 'PATH': '/delete/{app_id}'},
     }
 
+    # noinspection StrFormat
     def __init__(self, endpoint: str, **params) -> None:
         route: Dict[str: Dict[str, Any]] = self.ENDPOINTS[endpoint]
         self.endpoint = endpoint

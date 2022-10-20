@@ -25,6 +25,7 @@ from .types import (
 )
 
 
+# noinspection Pylint
 class AbstractClient(ABC):
     """Abstract client class"""
 
@@ -34,6 +35,7 @@ class AbstractClient(ABC):
         """get the api token"""
 
 
+# noinspection Pylint
 class Client(AbstractClient):
     """A client for interacting with the SquareCloud API."""
 
@@ -62,11 +64,9 @@ class Client(AbstractClient):
             UserData
         """
         result: Response = await self.__http.fetch_user_info()
-        if result.status == 200:
-            payload: UserPayload = result.response
-            user_data: UserData = UserData(**payload['user'])
-            return user_data
-        return
+        payload: UserPayload = result.response
+        user_data: UserData = UserData(**payload['user'])
+        return user_data
 
     async def get_logs(self, app_id: int | str):
         """
@@ -150,7 +150,7 @@ class Client(AbstractClient):
             BackupPayload
         """
         result: Response = await self.__http.backup(app_id)
-        payload: BackupPayload = result.data.get('response')
+        payload: BackupPayload = result.response
         backup: BackupData = BackupData(**payload)
         return backup
 
@@ -175,7 +175,19 @@ class Client(AbstractClient):
         """
         await self.__http.commit(app_id, file)
 
-    async def fetch_apps(self):
+    async def app(self, app_id: int | str):
+        """
+        Get an application
+        Args:
+            app_id: the application ID
+        """
+        result: Response = await self.__http.fetch_user_info()
+        payload: UserPayload = result.response
+        app_data = list(filter(lambda application: application['id'] == app_id, payload['applications']))[0]
+        app: Application = Application(client=self, data=AppData(**app_data))  # type: ignore
+        return app
+
+    async def all_apps(self):
         """
         Get a list of your applications
 
@@ -183,7 +195,8 @@ class Client(AbstractClient):
             List[AppData]
         """
         result: Response = await self.__http.fetch_user_info()
-        payload: list = result.data['response']['applications']
-        apps_data: List[AppData] = [AppData(**app_data) for app_data in payload]
+        payload: UserPayload = result.response
+        print(payload['applications'])
+        apps_data: List[AppData] = [AppData(**app_data) for app_data in payload['applications']]  # type: ignore
         apps: List[Application] = [Application(client=self, data=data) for data in apps_data]
         return apps

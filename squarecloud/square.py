@@ -105,6 +105,42 @@ class Application(AbstractApplication):
     def avatar(self):
         """application's avatar"""
         return self.__avatar
+
+    async def logs(self):
+        """get application's logs"""
+        return await self.__client.get_logs(self.id)
+
+    async def full_logs(self):
+        """get application's full logs"""
+        return await self.__client.get_logs(self.id)
+
+    async def status(self):
+        """get application's status"""
+        return await self.__client.app_status(self.id)
+
+    async def backup(self):
+        """make backup of this application"""
+        return await self.__client.backup(self.id)
+
+    async def start(self):
+        """start the application"""
+        await self.__client.start_app(self.id)
+
+    async def stop(self):
+        """stop the application"""
+        await self.__client.stop_app(self.id)
+
+    async def restart(self):
+        """restart the application"""
+        await self.__client.restart_app(self.id)
+
+    async def delete(self):
+        """delete the application"""
+        await self.__client.delete_app(self.id)
+
+    async def commit(self, file: File):
+        """commit the application"""
+        await self.__client.commit(self.id, file=file)
 #
 # class Logs:
 #     def __init__(self, Logs: Log):
