@@ -59,7 +59,7 @@ class Application(AbstractApplication):
         self.__avatar: str = data.avatar
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} id={self.id} tag={self.tag}>'
+        return f'<{self.__class__.__name__} tag={self.tag} id={self.id}>'
 
     @property
     def client(self):
