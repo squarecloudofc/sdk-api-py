@@ -196,7 +196,6 @@ class Client(AbstractClient):
         """
         result: Response = await self.__http.fetch_user_info()
         payload: UserPayload = result.response
-        print(payload['applications'])
         apps_data: List[AppData] = [AppData(**app_data) for app_data in payload['applications']]  # type: ignore
         apps: List[Application] = [Application(client=self, data=data) for data in apps_data]
         return apps
