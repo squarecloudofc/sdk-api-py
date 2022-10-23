@@ -49,7 +49,7 @@ class Client(AbstractClient):
     @property
     def api_key(self):
         """
-        The SquareCloud API key.
+        Get client api key
 
         Returns:
             self.__api_key
@@ -58,7 +58,7 @@ class Client(AbstractClient):
 
     async def user_info(self):
         """
-        Get your information
+        Get user information
 
         Returns:
             UserData
@@ -88,7 +88,7 @@ class Client(AbstractClient):
         Get logs for an application'
 
         Args:
-            app_id:
+            app_id: the application ID
 
         Returns:
             CompleteLogsData
@@ -147,7 +147,7 @@ class Client(AbstractClient):
         Args:
             app_id: the application ID
         Returns:
-            BackupPayload
+            Backup
         """
         result: Response = await self.__http.backup(app_id)
         payload: BackupPayload = result.response
@@ -156,12 +156,10 @@ class Client(AbstractClient):
 
     async def delete_app(self, app_id: int | str):
         """
-        D
+        Delete an application
+
         Args:
-            app_id:
-
-        Returns:
-
+            app_id: the application ID
         """
         await self.__http.delete_application(app_id)
 
@@ -178,6 +176,7 @@ class Client(AbstractClient):
     async def app(self, app_id: int | str):
         """
         Get an application
+
         Args:
             app_id: the application ID
         """
