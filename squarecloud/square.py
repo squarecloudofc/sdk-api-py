@@ -112,7 +112,7 @@ class Application(AbstractApplication):
 
     async def full_logs(self):
         """get application's full logs"""
-        return await self.__client.get_logs(self.id)
+        return await self.__client.logs_complete(self.id)
 
     async def status(self):
         """get application's status"""
