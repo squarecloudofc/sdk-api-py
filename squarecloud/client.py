@@ -68,7 +68,7 @@ class Client(AbstractClient):
         user_data: UserData = UserData(**payload['user'])
         return user_data
 
-    async def get_logs(self, app_id: int | str) -> LogsData:
+    async def get_logs(self, app_id: str) -> LogsData:
         """
         Get logs for an application
 
@@ -83,7 +83,7 @@ class Client(AbstractClient):
         logs_data: LogsData = LogsData(**payload)
         return logs_data
 
-    async def logs_complete(self, app_id: int | str) -> CompleteLogsData:
+    async def logs_complete(self, app_id: str) -> CompleteLogsData:
         """
         Get logs for an application'
 
@@ -98,7 +98,7 @@ class Client(AbstractClient):
         logs_data: CompleteLogsData = CompleteLogsData(**payload)
         return logs_data
 
-    async def app_status(self, app_id: int | str) -> StatusData:
+    async def app_status(self, app_id: str) -> StatusData:
         """
         Get an application status
 
@@ -113,7 +113,7 @@ class Client(AbstractClient):
         status: StatusData = StatusData(**payload)
         return status
 
-    async def start_app(self, app_id: int | str) -> None:
+    async def start_app(self, app_id: str) -> None:
         """
         Start an application
 
@@ -122,7 +122,7 @@ class Client(AbstractClient):
         """
         await self.__http.start_application(app_id)
 
-    async def stop_app(self, app_id: int | str) -> None:
+    async def stop_app(self, app_id: str) -> None:
         """
         Stop an application
 
@@ -131,7 +131,7 @@ class Client(AbstractClient):
         """
         await self.__http.stop_application(app_id)
 
-    async def restart_app(self, app_id: int | str) -> None:
+    async def restart_app(self, app_id: str) -> None:
         """
         Restart an application
 
@@ -140,7 +140,7 @@ class Client(AbstractClient):
         """
         await self.__http.restart_application(app_id)
 
-    async def backup(self, app_id: int | str) -> BackupData:
+    async def backup(self, app_id: str) -> BackupData:
         """
         Backup an application
 
@@ -154,7 +154,7 @@ class Client(AbstractClient):
         backup: BackupData = BackupData(**payload)
         return backup
 
-    async def delete_app(self, app_id: int | str) -> None:
+    async def delete_app(self, app_id: str) -> None:
         """
         Delete an application
 
@@ -163,7 +163,7 @@ class Client(AbstractClient):
         """
         await self.__http.delete_application(app_id)
 
-    async def commit(self, app_id: int | str, file: File) -> None:
+    async def commit(self, app_id: str, file: File) -> None:
         """
         Commit an application
 
@@ -173,7 +173,7 @@ class Client(AbstractClient):
         """
         await self.__http.commit(app_id, file)
 
-    async def app(self, app_id: int | str) -> Application:
+    async def app(self, app_id: str) -> Application:
         """
         Get an application
 

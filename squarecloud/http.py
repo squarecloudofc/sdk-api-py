@@ -123,7 +123,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def fetch_app_status(self, app_id: int | str) -> Response:
+    async def fetch_app_status(self, app_id: str) -> Response:
         """
         Make a request for STATUS route
 
@@ -137,7 +137,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def fetch_logs(self, app_id: int | str) -> Response:
+    async def fetch_logs(self, app_id: str) -> Response:
         """
         Make a request for LOGS route
 
@@ -151,7 +151,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def fetch_logs_complete(self, app_id: int | str) -> Response:
+    async def fetch_logs_complete(self, app_id: str) -> Response:
         """
         Make a request for LOGS_COMPLETE route
 
@@ -165,7 +165,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def start_application(self, app_id: int | str) -> Response:
+    async def start_application(self, app_id: str) -> Response:
         """
         Make a request for START route
 
@@ -179,7 +179,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def stop_application(self, app_id: int | str) -> Response:
+    async def stop_application(self, app_id: str) -> Response:
         """
         Make a request for STOP route
 
@@ -193,7 +193,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def restart_application(self, app_id: int | str) -> Response:
+    async def restart_application(self, app_id: str) -> Response:
         """
         Make a request for RESTART route
 
@@ -207,7 +207,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def backup(self, app_id: int | str) -> Response:
+    async def backup(self, app_id: str) -> Response:
         """
         Make a request for BACKUP route
         Args:
@@ -220,7 +220,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def delete_application(self, app_id: int | str) -> Response:
+    async def delete_application(self, app_id: str) -> Response:
         """
         Make a request for DELETE route
         Args:
@@ -230,7 +230,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def commit(self, app_id: int | str, file: File) -> Response:
+    async def commit(self, app_id: str, file: File) -> Response:
         """
         Make a request for COMMIT route
         Args:

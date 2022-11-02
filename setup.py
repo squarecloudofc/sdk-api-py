@@ -4,7 +4,7 @@ with open('README.md', 'r', encoding='UTF-8') as f:
     readme = f.read()
 
 setup(name=r'squarecloud-api',
-    version='0.1.0',
+    version='0.2.1',
     license='MIT License',
     author='Robert Nogueira',
     long_description=readme,

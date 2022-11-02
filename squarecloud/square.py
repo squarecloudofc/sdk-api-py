@@ -49,7 +49,7 @@ class Application(AbstractApplication):
 
     def __init__(self, client: 'Client', data: AppData):
         self.__client: 'Client' = client
-        self.__id: int | str = data.id
+        self.__id: str = data.id
         self.__tag: str = data.tag
         self.__ram: int = data.ram
         self.__lang: Literal['javascript', 'typescript', 'python'] = data.lang
