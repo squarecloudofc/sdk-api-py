@@ -53,7 +53,7 @@ class Route:
 class HTTPClient:
     """A client that handles requests and responses"""
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str) -> None:
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
 
@@ -112,7 +112,7 @@ class HTTPClient:
                     raise RequestError(msg)
                 return response
 
-    async def fetch_user_info(self):
+    async def fetch_user_info(self) -> Response:
         """
         Make a request to USER_INFO route
 
@@ -123,7 +123,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def fetch_app_status(self, app_id: int | str):
+    async def fetch_app_status(self, app_id: int | str) -> Response:
         """
         Make a request for STATUS route
 
@@ -137,7 +137,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def fetch_logs(self, app_id: int | str):
+    async def fetch_logs(self, app_id: int | str) -> Response:
         """
         Make a request for LOGS route
 
@@ -151,7 +151,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def fetch_logs_complete(self, app_id: int | str):
+    async def fetch_logs_complete(self, app_id: int | str) -> Response:
         """
         Make a request for LOGS_COMPLETE route
 
@@ -207,7 +207,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def backup(self, app_id: int | str):
+    async def backup(self, app_id: int | str) -> Response:
         """
         Make a request for BACKUP route
         Args:
@@ -220,7 +220,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def delete_application(self, app_id: int | str):
+    async def delete_application(self, app_id: int | str) -> Response:
         """
         Make a request for DELETE route
         Args:
@@ -230,7 +230,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def commit(self, app_id: int | str, file: File):
+    async def commit(self, app_id: int | str, file: File) -> Response:
         """
         Make a request for COMMIT route
         Args:
