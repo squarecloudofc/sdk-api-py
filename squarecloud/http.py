@@ -89,27 +89,28 @@ class HTTPClient:
                     'code': data.get('code'),
                     'request_message': data.get('message', '')
                 }
-                if status_code == 200:
-                    extra.pop('code')
-                    logger.debug(msg='request to route: ', extra=extra)
-                    response: Response = Response(data=data)
-                elif status_code == 404:
-                    logger.debug(msg='request to route: ', extra=extra)
-                    msg = f'route [{route.endpoint}] returned 404, [{data.get("code")}]'
-                    raise NotFoundError(msg)
-                elif status_code == 401:
-                    logger.error(msg='request to: ', extra=extra)
-                    msg = f'Invalid api token has been passed: \033[4;31m{self.api_key}\033[m'
-                    raise AuthenticationFailure(msg)
-                elif status_code == 400:
-                    logger.error(msg='request to: ', extra=extra)
-                    msg = f'route [{route.endpoint}] returned 400, [{data.get("code")}]'
-                    raise BadRequestError(msg)
-                else:
-                    msg = f'An unexpected error occurred while requesting {route.url}, ' \
-                          f'route: [{route.endpoint}], status: {data.get("statusCode")}\n' \
-                          f'Error: {data.get("error")}'
-                    raise RequestError(msg)
+                match status_code:
+                    case 200:
+                        extra.pop('code')
+                        logger.debug(msg='request to route: ', extra=extra)
+                        response: Response = Response(data=data)
+                    case 404:
+                        logger.debug(msg='request to route: ', extra=extra)
+                        msg = f'route [{route.endpoint}] returned 404, [{data.get("code")}]'
+                        raise NotFoundError(msg)
+                    case 401:
+                        logger.error(msg='request to: ', extra=extra)
+                        msg = f'Invalid api token has been passed: \033[4;31m{self.api_key}\033[m'
+                        raise AuthenticationFailure(msg)
+                    case 400:
+                        logger.error(msg='request to: ', extra=extra)
+                        msg = f'route [{route.endpoint}] returned 400, [{data.get("code")}]'
+                        raise BadRequestError(msg)
+                    case _:
+                        msg = f'An unexpected error occurred while requesting {route.url}, ' \
+                              f'route: [{route.endpoint}], status: {data.get("statusCode")}\n' \
+                              f'Error: {data.get("error")}'
+                        raise RequestError(msg)
                 return response
 
     async def fetch_user_info(self) -> Response:
