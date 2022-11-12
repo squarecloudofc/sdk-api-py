@@ -89,11 +89,9 @@ async def example():
     for app in apps_list:
         print(app)
 ````
-### Using logs listener
 
-This is a low-level decorator that allow you to receive and handle logs in your code
-
-<h1>How to use</h1>
+<h1>How to use logs listener</h1>
+<h2>This is a low-level decorator that allow you to receive and handle logs in your code</h2>
 <h3>We have two ways to use this function</h3>
 
 First - Specifying the app_ids in **client object**
