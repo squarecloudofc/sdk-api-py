@@ -107,7 +107,7 @@ async def capturar_logs(logs, app):
     #Wumpus Bot
 ````
 
-Second - Specifying the app_ids in **listener decorator**
+Second - Specifying the app_ids in the **decorator**
 ````py
 from squarecloud import square
 client = square.Client(api_key='YOUR KEY')
