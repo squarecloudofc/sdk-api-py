@@ -17,11 +17,10 @@ class CustomFormatter(logging.Formatter):
     FORMAT_ERROR = f'{red}[%(levelname)s]  %(status)s %(message)s %(route)s, error: %(code)s{end}'
 
     def format(self, record: logging.LogRecord) -> str:
-        match record.status:
-            case 'success':
-                format_body = self.FORMAT_SUCCESS
-            case _:
-                format_body = self.FORMAT_ERROR
+        if record.status == 'success':
+            format_body = self.FORMAT_SUCCESS
+        else:
+            format_body = self.FORMAT_ERROR
         # formats_level = {
         #     logging.INFO: self.purple + format_body + self.end,
         #     logging.DEBUG: self.green + format_body + self.end,

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import io
 from abc import ABC
 from typing import Literal, TYPE_CHECKING
 
@@ -21,8 +20,8 @@ class File:
     )
     """File object"""
 
-    def __init__(self, path: str | io.BufferedReader):
-        self.file = io.open(path, 'rb')
+    def __init__(self, path: str):
+        self.file = open(path, 'rb')
         self.path = path
         self.name = os.path.basename(path)
 
@@ -50,7 +49,7 @@ class Application(AbstractApplication):
 
     def __init__(self, client: 'Client', data: AppData):
         self.__client: 'Client' = client
-        self.__id: str = data.id
+        self.__id: int | str = data.id
         self.__tag: str = data.tag
         self.__ram: int = data.ram
         self.__lang: Literal['javascript', 'typescript', 'python'] = data.lang
