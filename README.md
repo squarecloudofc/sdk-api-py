@@ -91,7 +91,7 @@ async def example():
 ````
 
 <h1>How to use logs listener</h1>
-<h2>This is a low-level decorator that allow you to receive and handle logs in your code</h2>
+<h4>This is a low-level decorator that allow you to receive and handle logs in your code</h4>
 <h3>We have two ways to use this function</h3>
 
 First - Specifying the app_ids in **client object**
@@ -121,16 +121,16 @@ async def capturar_logs(logs, app):
 ````
 
 <h1>How it works?</h1>
-<h3>The terminals are updated on average every 10 seconds, please note that they will not be updated in real time due to API limitations (hence it is called a low-level function)</h3>
-<h3>Your function will receive the logs and the nametag of the application who invoked the terminal.</h3>
+<h4>The terminals are updated on average every 10 seconds, please note that they will not be updated in real time due to API limitations (hence it is called a low-level function)</h4>
+<h4>Your function will receive the logs and the nametag of the application who invoked the terminal.</h4>
 <h4>
 Also note that this may consume some number of requests depending on the number of applications you entered in the app_ids parameter.</h4>
 
 <h1>The parameters</h1>
-<h3>The two possible parameter in this listener is <b>app_ids</b> and <b>just_last</b></h3>
-<h3>If <b>just_last</b> is <b>True</b>, just last logs will be sended to your function (No repeated logs).</h3>
-<h3>Else, it will return the full terminal with repeated logs</h3>
-<h3>The <b>app_ids</b> parameter will be a list with the id(s) of the application(s) that will be pulled in the listener/event, note that it is possible to register an id in more than one listener at the same time, it will only be possible to use the id in one listener at a time. If you try to register the same id in several listeners it will return a warning</h3>
+<h4>The two possible parameter in this listener is <b>app_ids</b> and <b>just_last</b></h4>
+<h4>If <b>just_last</b> is <b>True</b>, just last logs will be sended to your function (No repeated logs).</h4>
+<h4>Else, it will return the full terminal with repeated logs</h4>
+<h4>The <b>app_ids</b> parameter will be a list with the id(s) of the application(s) that will be pulled in the listener/event, note that it is possible to register an id in more than one listener at the same time, it will only be possible to use the id in one listener at a time. If you try to register the same id in several listeners it will return a warning</h4>
 
 
 
