@@ -33,7 +33,7 @@ class StatusData:
 @dataclass
 class AppData:
     """application data class"""
-    id: int | str
+    id: str
     tag: str
     ram: int
     lang: Literal['javascript', 'typescript', 'python', 'java']
