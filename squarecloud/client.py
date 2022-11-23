@@ -1,9 +1,14 @@
 """This module is a wrapper for using the SquareCloud API"""
 from __future__ import annotations
-
+from threading import Thread
+import asyncio
+from functools import wraps
 import logging
+from datetime import datetime
 from abc import ABC, abstractmethod
-from typing import List
+from typing import *
+
+import squarecloud.errors
 
 from .data import (
     AppData,
@@ -34,12 +39,17 @@ class AbstractClient(ABC):
     def api_key(self):
         """get the api token"""
 
-
 # noinspection Pylint
 class Client(AbstractClient):
     """A client for interacting with the SquareCloud API."""
 
     def __init__(self, api_key: str, debug: bool = True) -> None:
+        """With this class you can manage/get information from your applications
+
+        Args:
+            api_key:Your API key, get in https://squarecloud.app/dashboard/me
+            debug: if True logs are generated with informations about requests
+        """
         self.debug = debug
         self._api_key = api_key
         self.__http = HTTPClient(api_key=api_key)
