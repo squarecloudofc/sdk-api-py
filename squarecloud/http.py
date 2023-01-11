@@ -5,7 +5,12 @@ from typing import Dict, Any
 
 import aiohttp
 
-from .errors import RequestError, AuthenticationFailure, NotFoundError, BadRequestError
+from .errors import (
+    RequestError,
+    AuthenticationFailure,
+    NotFoundError,
+    BadRequestError
+)
 from .logs import logger
 from .square import File
 from .types import RawResponseData
@@ -71,7 +76,7 @@ class HTTPClient:
         if route.method == 'POST':
             kwargs['skip_auto_headers'] = {'Content-Type'}
 
-        if 'file' in kwargs:
+        if route.endpoint == 'COMMIT':
             del kwargs['skip_auto_headers']
             file = kwargs['file']
             kwargs.pop('file')

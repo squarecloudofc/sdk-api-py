@@ -1,14 +1,9 @@
 """This module is a wrapper for using the SquareCloud API"""
 from __future__ import annotations
-from threading import Thread
-import asyncio
-from functools import wraps
-import logging
-from datetime import datetime
-from abc import ABC, abstractmethod
-from typing import *
 
-import squarecloud.errors
+import logging
+from abc import ABC, abstractmethod
+from typing import List
 
 from .data import (
     AppData,
@@ -21,6 +16,7 @@ from .data import (
 from .http import HTTPClient, Response
 from .logs import logger
 from .square import File, Application
+from .errors import ApplicationNotFound
 from .types import (
     UserPayload,
     StatusPayload,
@@ -30,7 +26,6 @@ from .types import (
 )
 
 
-# noinspection Pylint
 class AbstractClient(ABC):
     """Abstract client class"""
 
@@ -39,16 +34,17 @@ class AbstractClient(ABC):
     def api_key(self):
         """get the api token"""
 
-# noinspection Pylint
+
 class Client(AbstractClient):
     """A client for interacting with the SquareCloud API."""
 
     def __init__(self, api_key: str, debug: bool = True) -> None:
-        """With this class you can manage/get information from your applications
+        """With this class you can manage/get information from
+        your applications
 
         Args:
             api_key:Your API key, get in https://squarecloud.app/dashboard/me
-            debug: if True logs are generated with informations about requests
+            debug: if True logs are generated with information about requests
         """
         self.debug = debug
         self._api_key = api_key
@@ -192,8 +188,13 @@ class Client(AbstractClient):
         """
         result: Response = await self.__http.fetch_user_info()
         payload: UserPayload = result.response
-        app_data = list(filter(lambda application: application['id'] == app_id, payload['applications']))[0]
-        app: Application = Application(client=self, data=AppData(**app_data))  # type: ignore
+        app_data = list(filter(lambda application: application['id'] == app_id,
+                               payload['applications']))
+        if not app_data:
+            raise ApplicationNotFound
+        app_data = app_data.pop()
+        app: Application = Application(
+            client=self, data=AppData(**app_data))  # type: ignore
         return app
 
     async def all_apps(self) -> List[Application]:
@@ -205,6 +206,9 @@ class Client(AbstractClient):
         """
         result: Response = await self.__http.fetch_user_info()
         payload: UserPayload = result.response
-        apps_data: List[AppData] = [AppData(**app_data) for app_data in payload['applications']]  # type: ignore
-        apps: List[Application] = [Application(client=self, data=data) for data in apps_data]
+        apps_data: List[AppData] = [
+            AppData(**app_data) for app_data in  # type: ignore
+            payload['applications']]
+        apps: List[Application] = [Application(client=self, data=data) for data
+                                   in apps_data]
         return apps

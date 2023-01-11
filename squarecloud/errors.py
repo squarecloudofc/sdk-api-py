@@ -16,3 +16,7 @@ class NotFoundError(RequestError):
 
 class BadRequestError(RequestError):
     """raises when a request returns a 400 response"""
+
+
+class ApplicationNotFound(SquareException):
+    """raises when an application is not found"""

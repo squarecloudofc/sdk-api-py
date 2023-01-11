@@ -139,10 +139,6 @@ class Application(AbstractApplication):
         """delete the application"""
         await self.__client.delete_app(self.id)
 
-    async def commit(self, file: File):
+    async def commit(self, file: File, restart: bool = True):
         """commit the application"""
         await self.__client.commit(self.id, file=file)
-#
-# class Logs:
-#     def __init__(self, Logs: Log):
-#         self._logs:
