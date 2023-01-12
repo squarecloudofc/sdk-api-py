@@ -1,8 +1,8 @@
 """module objects"""
 from __future__ import annotations
 
-import os
 import io
+import os
 from abc import ABC
 from typing import Literal, TYPE_CHECKING
 
@@ -17,14 +17,17 @@ class File:
     __slots__ = (
         'path',
         'name',
-        'file',
+        'bytes',
     )
     """File object"""
 
     def __init__(self, path: str | io.BufferedReader):
-        self.file = io.open(path, 'rb')
+        self.bytes = io.open(path, 'rb')
         self.path = path
         self.name = os.path.basename(path)
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__}(name={self.name}, path={self.path})'
 
 
 class AbstractApplication(ABC):

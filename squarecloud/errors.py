@@ -20,3 +20,15 @@ class BadRequestError(RequestError):
 
 class ApplicationNotFound(SquareException):
     """raises when an application is not found"""
+
+
+class InvalidFile(SquareException):
+    """raised when a file is invalid"""
+
+
+class MissingConfigFile(RequestError):
+    """raised when the configuration file is missing"""
+
+
+class MissingDependenciesFile(RequestError):
+    """raised when the configuration file is missing"""

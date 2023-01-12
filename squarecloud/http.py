@@ -14,7 +14,7 @@ from .errors import (
 from .logs import logger
 from .square import File
 from .types import RawResponseData
-
+from enum import Enum
 
 class Response:
     """Represents a request response"""
@@ -27,20 +27,35 @@ class Response:
         self.response = data.get('response')
 
 
+class Routes(Enum):
+    user_info: str = 'USER_INFO'
+    app_status: str = 'APP_STATUS'
+    logs: str = 'LOGS'
+    logs_complete: str = 'LOGS_COMPLETE'
+    start: str = 'START'
+    stop: str = 'STOP'
+    restart: str = 'RESTART'
+    backup: str = 'BACKUP'
+    commit: str = 'COMMIT'
+    delete: str = 'DELETE'
+    upload: str = 'UPLOAD'
+
+
 class Route:
     """Represents a route"""
     BASE: str = 'https://api.squarecloud.app/v1/public'
     ENDPOINTS = {
-        'USER_INFO': {'METHOD': 'GET', 'PATH': '/user'},
-        'APP_STATUS': {'METHOD': 'GET', 'PATH': '/status/{app_id}'},
-        'LOGS': {'METHOD': 'GET', 'PATH': '/logs/{app_id}'},
-        'LOGS_COMPLETE': {'METHOD': 'GET', 'PATH': '/full-logs/{app_id}'},
-        'START': {'METHOD': 'POST', 'PATH': '/start/{app_id}'},
-        'STOP': {'METHOD': 'POST', 'PATH': '/stop/{app_id}'},
-        'RESTART': {'METHOD': 'POST', 'PATH': '/restart/{app_id}'},
-        'BACKUP': {'METHOD': 'GET', 'PATH': '/backup/{app_id}'},
-        'COMMIT': {'METHOD': 'POST', 'PATH': '/commit/{app_id}'},
-        'DELETE': {'METHOD': 'POST', 'PATH': '/delete/{app_id}'},
+        Routes.user_info: {'METHOD': 'GET', 'PATH': '/user'},
+        Routes.app_status: {'METHOD': 'GET', 'PATH': '/status/{app_id}'},
+        Routes.logs: {'METHOD': 'GET', 'PATH': '/logs/{app_id}'},
+        Routes.logs_complete: {'METHOD': 'GET', 'PATH': '/full-logs/{app_id}'},
+        Routes.start: {'METHOD': 'POST', 'PATH': '/start/{app_id}'},
+        Routes.stop: {'METHOD': 'POST', 'PATH': '/stop/{app_id}'},
+        Routes.restart: {'METHOD': 'POST', 'PATH': '/restart/{app_id}'},
+        Routes.backup: {'METHOD': 'GET', 'PATH': '/backup/{app_id}'},
+        Routes.commit: {'METHOD': 'POST', 'PATH': '/commit/{app_id}'},
+        Routes.delete: {'METHOD': 'POST', 'PATH': '/delete/{app_id}'},
+        Routes.upload: {'METHOD': 'POST', 'PATH': '/upload'},
     }
 
     # noinspection StrFormat
@@ -76,16 +91,17 @@ class HTTPClient:
         if route.method == 'POST':
             kwargs['skip_auto_headers'] = {'Content-Type'}
 
-        if route.endpoint == 'COMMIT':
+        if route.endpoint == 'COMMIT' or route.endpoint == 'UPLOAD':
             del kwargs['skip_auto_headers']
             file = kwargs['file']
             kwargs.pop('file')
             form = aiohttp.FormData()
-            form.add_field('file', file.file, filename=file.name)
+            form.add_field('file', file.bytes, filename=file.name)
             kwargs['data'] = form
 
         async with self.__session(headers=headers) as session:
-            async with session.request(url=route.url, method=route.method, **kwargs) as resp:
+            async with session.request(url=route.url, method=route.method,
+                                       **kwargs) as resp:
                 status_code = resp.status
                 data: RawResponseData = await resp.json()
                 extra = {
@@ -125,7 +141,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route = Route('USER_INFO')
+        route = Route(Routes.user_info)
         response: Response = await self.request(route)
         return response
 
@@ -139,7 +155,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route('APP_STATUS', app_id=app_id)
+        route: Route = Route(Routes.app_status, app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -153,7 +169,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route('LOGS', app_id=app_id)
+        route: Route = Route(Routes.logs, app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -167,7 +183,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route('LOGS_COMPLETE', app_id=app_id)
+        route: Route = Route(Routes.logs_complete, app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -181,7 +197,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route('START', app_id=app_id)
+        route: Route = Route(Routes.start, app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -209,7 +225,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route('RESTART', app_id=app_id)
+        route: Route = Route(Routes.restart, app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -222,7 +238,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route('BACKUP', app_id=app_id)
+        route: Route = Route(Routes.backup, app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -232,7 +248,7 @@ class HTTPClient:
         Args:
             app_id: the application ID
         """
-        route: Route = Route('DELETE', app_id=app_id)
+        route: Route = Route(Routes.delete, app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -246,6 +262,19 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route('COMMIT', app_id=app_id)
+        route: Route = Route(Routes.commit, app_id=app_id)
+        response: Response = await self.request(route, file=file)
+        return response
+
+    async def upload(self, file: File):
+        """
+        Make a request to UPLOAD route
+        Args:
+            file: file to be uploaded
+
+        Returns:
+            Response
+        """
+        route: Route = Route(Routes.upload)
         response: Response = await self.request(route, file=file)
         return response

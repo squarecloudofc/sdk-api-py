@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Literal, Any, Callable
 
 from .data import (
     AppData,
@@ -13,10 +13,10 @@ from .data import (
     BackupData,
     CompleteLogsData,
 )
-from .http import HTTPClient, Response
+from .http import HTTPClient, Response, Routes
 from .logs import logger
 from .square import File, Application
-from .errors import ApplicationNotFound
+from .errors import ApplicationNotFound, InvalidFile
 from .types import (
     UserPayload,
     StatusPayload,
@@ -35,6 +35,55 @@ class AbstractClient(ABC):
         """get the api token"""
 
 
+def create_config_file(
+        display_name: str,
+        main: str,
+        memory: int,
+        version: Literal['recommended', 'latest'],
+        path: str,
+        avatar: str | None = None,
+        description: str | None = None,
+        subdomain: str | None = None,
+        start: str | None = None
+):
+    """
+    Creates a config file (squarecloud.app)
+    Args:
+
+        display_name: name of your application
+        main: name of your main file
+        memory: amount of memory to be allocated
+        version: version of python and node.js, you can choose between
+        'recommended' and 'latest'
+        avatar: your application avatar url
+        description: your application description
+        subdomain: subdomain of your application
+        start: the command to start your application
+        path: the path where the file should be saved
+
+    Returns:
+        TextIOWrapper
+    """
+    content: str = ''
+    optionals: dict[str, Any] = {
+        'DISPLAY_NAME': display_name,
+        'MAIN': main,
+        'MEMORY': memory,
+        'VERSION': version,
+        'AVATAR': avatar,
+        'DESCRIPTION': description,
+        'SUBDOMAIN': subdomain,
+        'START': start,
+    }
+    for key, value in optionals.items():
+        if value is not None:
+            string: str = f'{key}={value}\n'
+            content += string
+    with open(f'./{path}/squarecloud.app', 'w') as f:
+        f.write(content)
+        return f
+
+
 class Client(AbstractClient):
     """A client for interacting with the SquareCloud API."""
 
@@ -49,6 +98,7 @@ class Client(AbstractClient):
         self.debug = debug
         self._api_key = api_key
         self.__http = HTTPClient(api_key=api_key)
+        self._listeners: dict[Routes, Callable]
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
@@ -212,3 +262,13 @@ class Client(AbstractClient):
         apps: List[Application] = [Application(client=self, data=data) for data
                                    in apps_data]
         return apps
+
+    async def upload_app(self, zip: File, check_zip: bool = True):
+        if not isinstance(zip, File):
+            raise InvalidFile(
+                f'you need provide an {File.__name__} object')
+        elif zip.name.split('.')[-1] != 'zip':
+            raise InvalidFile('the file must be a .zip file')
+        await self.__http.upload(zip)
+
+    # async def on_request(self):
