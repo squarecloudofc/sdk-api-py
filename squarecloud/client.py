@@ -1,6 +1,7 @@
 """This module is a wrapper for using the SquareCloud API"""
 from __future__ import annotations
 
+import asyncio
 import logging
 from abc import ABC, abstractmethod
 from typing import List, Literal, Any, Callable
@@ -12,8 +13,10 @@ from .data import (
     LogsData,
     BackupData,
     FullLogsData,
+    UploadData
 )
-from .http import HTTPClient, Response, Endpoint
+from .http import HTTPClient, Response
+from .http.router import Endpoint
 from .logs import logger
 from .square import File
 from .app import Application
@@ -24,6 +27,7 @@ from .types import (
     LogsPayload,
     BackupPayload,
     FullLogsPayload,
+    UploadPayload,
 )
 
 
@@ -98,8 +102,8 @@ class Client(AbstractClient):
         """
         self.debug = debug
         self._api_key = api_key
-        self.__http = HTTPClient(api_key=api_key)
-        self._listeners: dict[Endpoint, Callable]
+        self._http = HTTPClient(api_key=api_key)
+        self._listeners: dict[list[Endpoint], Callable]
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
@@ -120,7 +124,7 @@ class Client(AbstractClient):
         Returns:
             UserData
         """
-        result: Response = await self.__http.fetch_user_info()
+        result: Response = await self._http.fetch_user_info()
         payload: UserPayload = result.response
         user_data: UserData = UserData(**payload['user'])
         return user_data
@@ -135,7 +139,7 @@ class Client(AbstractClient):
         Returns:
             LogData
         """
-        result: Response = await self.__http.fetch_logs(app_id)
+        result: Response = await self._http.fetch_logs(app_id)
         payload: LogsPayload = result.response
         logs_data: LogsData = LogsData(**payload)
         return logs_data
@@ -150,7 +154,7 @@ class Client(AbstractClient):
         Returns:
             FullLogsData
         """
-        result: Response = await self.__http.fetch_logs_complete(app_id)
+        result: Response = await self._http.fetch_logs_complete(app_id)
         payload: FullLogsPayload = result.response
         logs_data: FullLogsData = FullLogsData(**payload)
         return logs_data
@@ -165,7 +169,7 @@ class Client(AbstractClient):
         Returns:
             StatusData
         """
-        result: Response = await self.__http.fetch_app_status(app_id)
+        result: Response = await self._http.fetch_app_status(app_id)
         payload: StatusPayload = result.response
         status: StatusData = StatusData(**payload)
         return status
@@ -177,7 +181,7 @@ class Client(AbstractClient):
         Args:
             app_id: the application ID
         """
-        return await self.__http.start_application(app_id)
+        return await self._http.start_application(app_id)
 
     async def stop_app(self, app_id: str) -> Response:
         """
@@ -186,7 +190,7 @@ class Client(AbstractClient):
         Args:
             app_id: the application ID
         """
-        return await self.__http.stop_application(app_id)
+        return await self._http.stop_application(app_id)
 
     async def restart_app(self, app_id: str) -> Response:
         """
@@ -195,7 +199,7 @@ class Client(AbstractClient):
         Args:
             app_id: the application ID
         """
-        return await self.__http.restart_application(app_id)
+        return await self._http.restart_application(app_id)
 
     async def backup(self, app_id: str) -> BackupData:
         """
@@ -206,7 +210,7 @@ class Client(AbstractClient):
         Returns:
             Backup
         """
-        result: Response = await self.__http.backup(app_id)
+        result: Response = await self._http.backup(app_id)
         payload: BackupPayload = result.response
         backup: BackupData = BackupData(**payload)
         return backup
@@ -218,7 +222,7 @@ class Client(AbstractClient):
         Args:
             app_id: the application ID
         """
-        return await self.__http.delete_application(app_id)
+        return await self._http.delete_application(app_id)
 
     async def commit(self, app_id: str, file: File) -> Response:
         """
@@ -228,7 +232,7 @@ class Client(AbstractClient):
             app_id: the application ID
             file: the file object to be committed
         """
-        return await self.__http.commit(app_id, file)
+        return await self._http.commit(app_id, file)
 
     async def app(self, app_id: str) -> Application:
         """
@@ -237,7 +241,7 @@ class Client(AbstractClient):
         Args:
             app_id: the application ID
         """
-        result: Response = await self.__http.fetch_user_info()
+        result: Response = await self._http.fetch_user_info()
         payload: UserPayload = result.response
         app_data = list(filter(lambda application: application['id'] == app_id,
                                payload['applications']))
@@ -255,7 +259,7 @@ class Client(AbstractClient):
         Returns:
             List[AppData]
         """
-        result: Response = await self.__http.fetch_user_info()
+        result: Response = await self._http.fetch_user_info()
         payload: UserPayload = result.response
         apps_data: List[AppData] = [
             AppData(**app_data) for app_data in  # type: ignore
@@ -264,12 +268,13 @@ class Client(AbstractClient):
                                    in apps_data]
         return apps
 
-    async def upload_app(self, file: File) -> Response:
+    async def upload_app(self, file: File) -> UploadData:
         if not isinstance(file, File):
             raise InvalidFile(
                 f'you need provide an {File.__name__} object')
         if file.name.split('.')[-1] != 'zip':
             raise InvalidFile('the file must be a .zip file')
-        return await self.__http.upload(file)
-
-    # async def on_request(self):
+        result: Response = await self._http.upload(file)
+        payload: UploadPayload = result.app
+        app: UploadData = UploadData(**payload)
+        return app

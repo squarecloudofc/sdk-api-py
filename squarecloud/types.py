@@ -11,6 +11,7 @@ class RawResponseData(TypedDict):
     message: Optional[str]
     statusCode: Optional[str]
     error: Optional[str]
+    app: Optional[Dict[str, Any]]
 
 
 class UserPayload(RawResponseData):
@@ -43,3 +44,7 @@ class StatusPayload(RawResponseData):
 class StopPayload(RawResponseData):
     """stop payload"""
     stop: Dict[str, Any]
+
+
+class UploadPayload(RawResponseData):
+    app: Dict[str, Any]

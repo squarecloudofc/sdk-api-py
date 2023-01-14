@@ -69,3 +69,15 @@ class FullLogsData:
 class BackupData:
     """backup data class"""
     downloadURL: str
+
+
+@dataclass
+class UploadData:
+    id: str
+    tag: str
+    description: str
+    language: str
+    avatar: str
+    subdomain: str | None
+    ram: int
+    cpu: int

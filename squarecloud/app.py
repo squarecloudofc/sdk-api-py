@@ -18,10 +18,11 @@ class AppCache:
         self.full_logs: FullLogsData | None = None
         self.backup: BackupData | None = None
 
-    def clear_cache(self):
+    def clear(self):
         self.status = None
         self.logs = None
         self.full_logs = None
+        self.backup = None
 
     def update(self, *args):
         for arg in args:
@@ -32,7 +33,7 @@ class AppCache:
             elif isinstance(arg, FullLogsData):
                 self.full_logs = arg
             elif isinstance(arg, BackupData):
-                self.status = arg
+                self.backup = arg
             else:
                 types: list = [
                     i.__name__ for i in [
@@ -57,6 +58,7 @@ class Application(AbstractApplication):
     # pylint: disable=invalid-name
     __slots__ = [
         '__client',
+        '__http',
         '__id',
         '__tag',
         '__ram',
