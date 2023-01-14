@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Literal, Any, Optional
+from typing import Dict, Literal, Any
 
 
 # pylint: disable=too-many-instance-attributes
@@ -27,7 +27,7 @@ class StatusData:
     network: Dict[str, Any]
     requests: int
     uptime: int
-    time: Optional[int] = None
+    time: int | None = None
 
 
 @dataclass
@@ -60,7 +60,7 @@ class LogsData:
 
 
 @dataclass
-class CompleteLogsData:
+class FullLogsData:
     """complete logs data class"""
     logs: str
 

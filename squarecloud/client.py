@@ -11,18 +11,19 @@ from .data import (
     UserData,
     LogsData,
     BackupData,
-    CompleteLogsData,
+    FullLogsData,
 )
-from .http import HTTPClient, Response, Routes
+from .http import HTTPClient, Response, Endpoint
 from .logs import logger
-from .square import File, Application
+from .square import File
+from .app import Application
 from .errors import ApplicationNotFound, InvalidFile
 from .types import (
     UserPayload,
     StatusPayload,
     LogsPayload,
     BackupPayload,
-    CompleteLogsPayload,
+    FullLogsPayload,
 )
 
 
@@ -36,11 +37,11 @@ class AbstractClient(ABC):
 
 
 def create_config_file(
+        path: str,
         display_name: str,
         main: str,
         memory: int,
         version: Literal['recommended', 'latest'],
-        path: str,
         avatar: str | None = None,
         description: str | None = None,
         subdomain: str | None = None,
@@ -79,9 +80,9 @@ def create_config_file(
         if value is not None:
             string: str = f'{key}={value}\n'
             content += string
-    with open(f'./{path}/squarecloud.app', 'w') as f:
-        f.write(content)
-        return f
+    with open(f'./{path}/squarecloud.app', 'w', encoding='utf-8') as file:
+        file.write(content)
+        return file
 
 
 class Client(AbstractClient):
@@ -98,7 +99,7 @@ class Client(AbstractClient):
         self.debug = debug
         self._api_key = api_key
         self.__http = HTTPClient(api_key=api_key)
-        self._listeners: dict[Routes, Callable]
+        self._listeners: dict[Endpoint, Callable]
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
@@ -139,7 +140,7 @@ class Client(AbstractClient):
         logs_data: LogsData = LogsData(**payload)
         return logs_data
 
-    async def logs_complete(self, app_id: str) -> CompleteLogsData:
+    async def logs_complete(self, app_id: str) -> FullLogsData:
         """
         Get logs for an application'
 
@@ -147,11 +148,11 @@ class Client(AbstractClient):
             app_id: the application ID
 
         Returns:
-            CompleteLogsData
+            FullLogsData
         """
         result: Response = await self.__http.fetch_logs_complete(app_id)
-        payload: CompleteLogsPayload = result.response
-        logs_data: CompleteLogsData = CompleteLogsData(**payload)
+        payload: FullLogsPayload = result.response
+        logs_data: FullLogsData = FullLogsData(**payload)
         return logs_data
 
     async def app_status(self, app_id: str) -> StatusData:
@@ -169,32 +170,32 @@ class Client(AbstractClient):
         status: StatusData = StatusData(**payload)
         return status
 
-    async def start_app(self, app_id: str) -> None:
+    async def start_app(self, app_id: str) -> Response:
         """
         Start an application
 
         Args:
             app_id: the application ID
         """
-        await self.__http.start_application(app_id)
+        return await self.__http.start_application(app_id)
 
-    async def stop_app(self, app_id: str) -> None:
+    async def stop_app(self, app_id: str) -> Response:
         """
         Stop an application
 
         Args:
             app_id: the application ID
         """
-        await self.__http.stop_application(app_id)
+        return await self.__http.stop_application(app_id)
 
-    async def restart_app(self, app_id: str) -> None:
+    async def restart_app(self, app_id: str) -> Response:
         """
         Restart an application
 
         Args:
             app_id: the application ID
         """
-        await self.__http.restart_application(app_id)
+        return await self.__http.restart_application(app_id)
 
     async def backup(self, app_id: str) -> BackupData:
         """
@@ -210,16 +211,16 @@ class Client(AbstractClient):
         backup: BackupData = BackupData(**payload)
         return backup
 
-    async def delete_app(self, app_id: str) -> None:
+    async def delete_app(self, app_id: str) -> Response:
         """
         Delete an application
 
         Args:
             app_id: the application ID
         """
-        await self.__http.delete_application(app_id)
+        return await self.__http.delete_application(app_id)
 
-    async def commit(self, app_id: str, file: File) -> None:
+    async def commit(self, app_id: str, file: File) -> Response:
         """
         Commit an application
 
@@ -227,7 +228,7 @@ class Client(AbstractClient):
             app_id: the application ID
             file: the file object to be committed
         """
-        await self.__http.commit(app_id, file)
+        return await self.__http.commit(app_id, file)
 
     async def app(self, app_id: str) -> Application:
         """
@@ -263,12 +264,12 @@ class Client(AbstractClient):
                                    in apps_data]
         return apps
 
-    async def upload_app(self, zip: File, check_zip: bool = True):
-        if not isinstance(zip, File):
+    async def upload_app(self, file: File) -> Response:
+        if not isinstance(file, File):
             raise InvalidFile(
                 f'you need provide an {File.__name__} object')
-        elif zip.name.split('.')[-1] != 'zip':
+        if file.name.split('.')[-1] != 'zip':
             raise InvalidFile('the file must be a .zip file')
-        await self.__http.upload(zip)
+        return await self.__http.upload(file)
 
     # async def on_request(self):

@@ -5,6 +5,7 @@ class RawResponseData(TypedDict):
     """raw response data"""
     data: Dict[str, Any]
     response: Dict[str, Any]
+    headers: Dict[str, Any]
     status: Literal['success', 'error']
     code: Optional[int]
     message: Optional[str]
@@ -28,7 +29,7 @@ class BackupPayload(RawResponseData):
     backup: Dict[str, Any]
 
 
-class CompleteLogsPayload(RawResponseData):
+class FullLogsPayload(RawResponseData):
     """complete logs payload"""
     url: Dict[str, Any]
 

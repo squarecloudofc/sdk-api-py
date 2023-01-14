@@ -13,7 +13,7 @@ class CustomFormatter(logging.Formatter):
     red = '\033[0;31m'
     end = '\033[m'
 
-    FORMAT_SUCCESS = f'{green}[%(levelname)s] %(status)s %(message)s [%(route)s] %(request_message)s {end}'
+    FORMAT_SUCCESS = f'{green}[%(levelname)s] %(status)s %(message)s %(route)s %(request_message)s {end}'
     FORMAT_ERROR = f'{red}[%(levelname)s]  %(status)s %(message)s %(route)s, error: %(code)s{end}'
 
     def format(self, record: logging.LogRecord) -> str:

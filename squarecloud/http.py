@@ -14,56 +14,100 @@ from .errors import (
 from .logs import logger
 from .square import File
 from .types import RawResponseData
-from enum import Enum
+
 
 class Response:
     """Represents a request response"""
 
-    def __init__(self, data: RawResponseData) -> None:
+    def __init__(self, data: RawResponseData, route) -> None:
         self.data = data
+        self.route = route
+        self.headers = data.get('headers')
         self.status = data.get('status')
         self.code = data.get('code')
         self.message = data.get('message')
         self.response = data.get('response')
 
 
-class Routes(Enum):
-    user_info: str = 'USER_INFO'
-    app_status: str = 'APP_STATUS'
-    logs: str = 'LOGS'
-    logs_complete: str = 'LOGS_COMPLETE'
-    start: str = 'START'
-    stop: str = 'STOP'
-    restart: str = 'RESTART'
-    backup: str = 'BACKUP'
-    commit: str = 'COMMIT'
-    delete: str = 'DELETE'
-    upload: str = 'UPLOAD'
-
-
-class Route:
-    """Represents a route"""
+class Endpoint:
     BASE: str = 'https://api.squarecloud.app/v1/public'
     ENDPOINTS = {
-        Routes.user_info: {'METHOD': 'GET', 'PATH': '/user'},
-        Routes.app_status: {'METHOD': 'GET', 'PATH': '/status/{app_id}'},
-        Routes.logs: {'METHOD': 'GET', 'PATH': '/logs/{app_id}'},
-        Routes.logs_complete: {'METHOD': 'GET', 'PATH': '/full-logs/{app_id}'},
-        Routes.start: {'METHOD': 'POST', 'PATH': '/start/{app_id}'},
-        Routes.stop: {'METHOD': 'POST', 'PATH': '/stop/{app_id}'},
-        Routes.restart: {'METHOD': 'POST', 'PATH': '/restart/{app_id}'},
-        Routes.backup: {'METHOD': 'GET', 'PATH': '/backup/{app_id}'},
-        Routes.commit: {'METHOD': 'POST', 'PATH': '/commit/{app_id}'},
-        Routes.delete: {'METHOD': 'POST', 'PATH': '/delete/{app_id}'},
-        Routes.upload: {'METHOD': 'POST', 'PATH': '/upload'},
+        'USER_INFO': {'METHOD': 'GET', 'PATH': '/user'},
+        'APP_STATUS': {'METHOD': 'GET', 'PATH': '/status/{app_id}'},
+        'LOGS': {'METHOD': 'GET', 'PATH': '/logs/{app_id}'},
+        'FULL_LOGS': {'METHOD': 'GET', 'PATH': '/full-logs/{app_id}'},
+        'START': {'METHOD': 'POST', 'PATH': '/start/{app_id}'},
+        'STOP': {'METHOD': 'POST', 'PATH': '/stop/{app_id}'},
+        'RESTART': {'METHOD': 'POST', 'PATH': '/restart/{app_id}'},
+        'BACKUP': {'METHOD': 'GET', 'PATH': '/backup/{app_id}'},
+        'COMMIT': {'METHOD': 'POST', 'PATH': '/commit/{app_id}'},
+        'DELETE': {'METHOD': 'POST', 'PATH': '/delete/{app_id}'},
+        'UPLOAD': {'METHOD': 'POST', 'PATH': '/upload'},
     }
 
+    def __init__(self, name: str):
+        endpoint: Dict[str: Dict[str, Any]] = self.ENDPOINTS[name]
+        self.name: str = name
+        self.method: str = endpoint['METHOD']
+        self.path: str = endpoint['PATH']
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}('{self.name}')>"
+
+    @classmethod
+    def user_info(cls):
+        return cls('USER_INFO')
+
+    @classmethod
+    def app_status(cls):
+        return cls('APP_STATUS')
+
+    @classmethod
+    def logs(cls):
+        return cls('LOGS')
+
+    @classmethod
+    def full_logs(cls):
+        return cls('FULL_LOGS')
+
+    @classmethod
+    def start(cls):
+        return cls('START')
+
+    @classmethod
+    def stop(cls):
+        return cls('STOP')
+
+    @classmethod
+    def restart(cls):
+        return cls('RESTART')
+
+    @classmethod
+    def backup(cls):
+        return cls('RESTART')
+
+    @classmethod
+    def commit(cls):
+        return cls('COMMIT')
+
+    @classmethod
+    def delete(cls):
+        return cls('DELETE')
+
+    @classmethod
+    def upload(cls):
+        return cls('UPLOAD')
+
+
+class Router:
+    """Represents a route"""
+    BASE: str = 'https://api.squarecloud.app/v1/public'
+
     # noinspection StrFormat
-    def __init__(self, endpoint: str, **params) -> None:
-        route: Dict[str: Dict[str, Any]] = self.ENDPOINTS[endpoint]
-        self.endpoint = endpoint
-        self.method: str = route['METHOD']
-        self.path: str = route['PATH']
+    def __init__(self, endpoint: Endpoint, **params) -> None:
+        self.endpoint: Endpoint = endpoint
+        self.method: str = endpoint.method
+        self.path: str = endpoint.path
         url: str = self.BASE + self.path.format(**params)
         if params:
             url.format(params)
@@ -76,8 +120,9 @@ class HTTPClient:
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
+        self._trace_configs: list[aiohttp.TraceConfig] = []
 
-    async def request(self, route: Route, **kwargs) -> Response:
+    async def request(self, route: Router, **kwargs) -> Response:
         """
         Sends a request to the Square API and returns the response.
 
@@ -91,7 +136,7 @@ class HTTPClient:
         if route.method == 'POST':
             kwargs['skip_auto_headers'] = {'Content-Type'}
 
-        if route.endpoint == 'COMMIT' or route.endpoint == 'UPLOAD':
+        if route.endpoint in (Endpoint.commit(), Endpoint.upload()):
             del kwargs['skip_auto_headers']
             file = kwargs['file']
             kwargs.pop('file')
@@ -99,14 +144,15 @@ class HTTPClient:
             form.add_field('file', file.bytes, filename=file.name)
             kwargs['data'] = form
 
-        async with self.__session(headers=headers) as session:
+        async with self.__session(
+                headers=headers, trace_configs=self._trace_configs) as session:
             async with session.request(url=route.url, method=route.method,
                                        **kwargs) as resp:
                 status_code = resp.status
                 data: RawResponseData = await resp.json()
                 extra = {
                     'status': data.get('status'),
-                    'route': route.endpoint,
+                    'route': route.url,
                     'code': data.get('code'),
                     'request_message': data.get('message', '')
                 }
@@ -114,22 +160,22 @@ class HTTPClient:
                     case 200:
                         extra.pop('code')
                         logger.debug(msg='request to route: ', extra=extra)
-                        response: Response = Response(data=data)
+                        response: Response = Response(data=data, route=route)
                     case 404:
                         logger.debug(msg='request to route: ', extra=extra)
-                        msg = f'route [{route.endpoint}] returned 404, [{data.get("code")}]'
+                        msg = f'route [{route.endpoint.name}] returned 404, [{data.get("code")}]'
                         raise NotFoundError(msg)
                     case 401:
                         logger.error(msg='request to: ', extra=extra)
-                        msg = f'Invalid api token has been passed: \033[4;31m{self.api_key}\033[m'
+                        msg = 'Invalid api token has been passed'
                         raise AuthenticationFailure(msg)
                     case 400:
                         logger.error(msg='request to: ', extra=extra)
-                        msg = f'route [{route.endpoint}] returned 400, [{data.get("code")}]'
+                        msg = f'route [{route.endpoint.name}] returned 400, [{data.get("code")}]'
                         raise BadRequestError(msg)
                     case _:
                         msg = f'An unexpected error occurred while requesting {route.url}, ' \
-                              f'route: [{route.endpoint}], status: {data.get("statusCode")}\n' \
+                              f'route: [{route.endpoint.name}], status: {data.get("statusCode")}\n' \
                               f'Error: {data.get("error")}'
                         raise RequestError(msg)
                 return response
@@ -141,7 +187,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route = Route(Routes.user_info)
+        route = Router(Endpoint.user_info())
         response: Response = await self.request(route)
         return response
 
@@ -155,7 +201,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route(Routes.app_status, app_id=app_id)
+        route: Router = Router(Endpoint.app_status(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -169,7 +215,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route(Routes.logs, app_id=app_id)
+        route: Router = Router(Endpoint.logs(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -183,7 +229,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route(Routes.logs_complete, app_id=app_id)
+        route: Router = Router(Endpoint.full_logs(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -197,7 +243,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route(Routes.start, app_id=app_id)
+        route: Router = Router(Endpoint.start(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -211,7 +257,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route('STOP', app_id=app_id)
+        route: Router = Router(Endpoint.stop(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -225,7 +271,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route(Routes.restart, app_id=app_id)
+        route: Router = Router(Endpoint.restart(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -238,7 +284,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route(Routes.backup, app_id=app_id)
+        route: Router = Router(Endpoint.backup(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -248,7 +294,7 @@ class HTTPClient:
         Args:
             app_id: the application ID
         """
-        route: Route = Route(Routes.delete, app_id=app_id)
+        route: Router = Router(Endpoint.delete(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -262,7 +308,7 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route(Routes.commit, app_id=app_id)
+        route: Router = Router(Endpoint.commit(), app_id=app_id)
         response: Response = await self.request(route, file=file)
         return response
 
@@ -275,6 +321,6 @@ class HTTPClient:
         Returns:
             Response
         """
-        route: Route = Route(Routes.upload)
+        route: Router = Router(Endpoint.upload())
         response: Response = await self.request(route, file=file)
         return response
