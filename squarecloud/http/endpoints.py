@@ -6,7 +6,8 @@ from typing import Dict, Any
 class Endpoint:
     BASE: str = 'https://api.squarecloud.app/v1/public'
     ENDPOINTS = {
-        'USER_INFO': {'METHOD': 'GET', 'PATH': '/user'},
+        'USER_ME': {'METHOD': 'GET', 'PATH': '/user'},
+        'USER_INFO': {'METHOD': 'GET', 'PATH': '/user/{user_id}'},
         'APP_STATUS': {'METHOD': 'GET', 'PATH': '/status/{app_id}'},
         'LOGS': {'METHOD': 'GET', 'PATH': '/logs/{app_id}'},
         'FULL_LOGS': {'METHOD': 'GET', 'PATH': '/full-logs/{app_id}'},
@@ -29,7 +30,11 @@ class Endpoint:
         return isinstance(other, Endpoint) and self.name == other.name
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}('{self.name}')>"
+        return f"{Endpoint.__name__}('{self.name}')"
+
+    @classmethod
+    def user_me(cls):
+        return cls('USER_ME')
 
     @classmethod
     def user_info(cls):
@@ -89,3 +94,6 @@ class Router:
         if params:
             url.format(params)
         self.url = url
+
+    def __repr__(self):
+        return f"{Router.__name__}(path='{self.path}', method='{self.method}')"

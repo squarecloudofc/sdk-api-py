@@ -1,11 +1,12 @@
-from .data import AppData
 from abc import ABC
-from typing import Literal, TYPE_CHECKING, Callable
-from .square import File
+from typing import TYPE_CHECKING, Callable
+
+from .data import AppData
 from .data import StatusData, LogsData, FullLogsData, BackupData
-from .http import Response, HTTPClient, Endpoint
 from .errors import SquareException
-from .listener import ListenerManager
+from .http import Response, HTTPClient, Endpoint
+from .listener import ListenerManager, Listener
+from .square import File
 
 # avoid circular imports
 if TYPE_CHECKING:
@@ -68,7 +69,7 @@ class Application(AbstractApplication):
     def __init__(self, client: 'Client', http: HTTPClient, data: AppData):
         self._client: 'Client' = client
         self._http = http
-        self._listener: ListenerManager = ListenerManager(self)
+        self._listener: ListenerManager = Listener
         self._data = data
         self.cache: AppCache = AppCache()
 
@@ -124,9 +125,12 @@ class Application(AbstractApplication):
         """application's avatar"""
         return self.data.avatar
 
-    def on_request(self, endpoint: Endpoint) -> Callable:
+    def capture(self, endpoint: Endpoint) -> Callable:
         def wrapper(func):
-            self._listener.add_listener(endpoint, func)
+            if not self._listener.get_capture_listener(endpoint):
+                return self._listener.add_capture_listener(endpoint, func)
+            raise SquareException(
+                f'Already exists an capture_listener for {endpoint}')
 
         return wrapper
 
@@ -134,7 +138,7 @@ class Application(AbstractApplication):
         """get application's logs"""
         logs: LogsData = await self.client.get_logs(self.id)
         endpoint: Endpoint = Endpoint.logs()
-        await self._listener.on_request_end(endpoint=endpoint, logs=logs)
+        await self._listener.on_capture(endpoint=endpoint, logs=logs)
         if update_cache:
             self.cache.logs = logs
         return logs
@@ -143,7 +147,7 @@ class Application(AbstractApplication):
         """get application's full logs"""
         full_logs: FullLogsData = await self.client.full_logs(self.id)
         endpoint: Endpoint = Endpoint.full_logs()
-        await self._listener.on_request_end(
+        await self._listener.on_capture(
             endpoint=endpoint, full_logs=full_logs)
         if update_cache:
             self.cache.full_logs = full_logs
@@ -153,7 +157,7 @@ class Application(AbstractApplication):
         """get application's status"""
         status: StatusData = await self.client.app_status(self.id)
         endpoint: Endpoint = Endpoint.app_status()
-        await self._listener.on_request_end(endpoint=endpoint, status=status)
+        await self._listener.on_capture(endpoint=endpoint, status=status)
         if update_cache:
             self.cache.status = status
         return status
@@ -162,35 +166,53 @@ class Application(AbstractApplication):
         """make backup of this application"""
         backup: BackupData = await self.client.backup(self.id)
         endpoint: Endpoint = Endpoint.backup()
-        await self._listener.on_request_end(endpoint=endpoint, backup=backup)
+        await self._listener.on_capture(endpoint=endpoint, backup=backup)
         if update_cache:
             self.cache.backup = backup
         return backup
 
     async def start(self, update_cache: bool = True) -> Response:
         """start the application"""
+        response: Response = await self.client.start_app(self.id)
+        endpoint: Endpoint = Endpoint.start()
         if update_cache:
             self.cache.status.running = True
-        return await self.client.start_app(self.id)
+        await self._listener.on_capture(endpoint=endpoint,
+                                        response=response)
+        return response
 
     async def stop(self, update_cache: bool = True) -> Response:
         """stop the application"""
-        result = await self.client.stop_app(self.id)
+        response: Response = await self.client.stop_app(self.id)
+        endpoint: Endpoint = Endpoint.stop()
         if update_cache:
             self.cache.status.running = False
-        return result
+        await self._listener.on_capture(endpoint=endpoint,
+                                        response=response)
+        return response
 
     async def restart(self, update_cache: bool = True) -> Response:
         """restart the application"""
-        result = await self.client.restart_app(self.id)
+        response: Response = await self.client.restart_app(self.id)
+        endpoint: Endpoint = Endpoint.restart()
+        await self._listener.on_capture(endpoint=endpoint,
+                                        response=response)
         if update_cache:
             self.cache.status.status = 'restarting'
-        return result
+        return response
 
     async def delete(self) -> Response:
         """delete the application"""
-        return await self.client.delete_app(self.id)
+        response: Response = await self.client.delete_app(self.id)
+        endpoint: Endpoint = Endpoint.delete()
+        await self._listener.on_capture(endpoint=endpoint,
+                                        response=response)
+        return response
 
     async def commit(self, file: File) -> Response:
         """commit the application"""
-        return await self.client.commit(self.id, file=file)
+        response: Response = await self.client.commit(self.id, file=file)
+        endpoint: Endpoint = Endpoint.commit()
+        await self._listener.on_capture(endpoint=endpoint,
+                                        response=response)
+        return response

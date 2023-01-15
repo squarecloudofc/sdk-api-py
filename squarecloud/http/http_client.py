@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any, Literal
 
 import aiohttp
 
@@ -10,19 +11,19 @@ from ..errors import (
     BadRequestError,
     AuthenticationFailure
 )
-from typing import Any, Literal
 from ..logs import logger
+from ..payloads import RawResponseData
 from ..square import File
-from ..types import RawResponseData
 
 
-class Response:
+class Response(aiohttp.ClientResponse):
     """Represents a request response"""
 
-    def __init__(self, data: RawResponseData, route) -> None:
+    def __init__(self, data: RawResponseData, route: Router, *args,
+                 **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.data = data
         self.route: Router = route
-        self.headers: dict[str, Any] = data.get('headers')
         self.status: Literal['success', 'error'] = data.get('status')
         self.code: int = data.get('code')
         self.message: str = data.get('message')
@@ -91,14 +92,18 @@ class HTTPClient:
                         raise RequestError(msg)
                 return response
 
-    async def fetch_user_info(self) -> Response:
+    async def fetch_user_info(self, user_id: int | None = None) -> Response:
         """
         Make a request to USER_INFO route
 
         Returns:
             Response
         """
-        route = Router(Endpoint.user_info())
+        if user_id:
+            route: Router = Router(Endpoint.user_info(), user_id=user_id)
+            response: Response = await self.request(route)
+            return response
+        route = Router(Endpoint.user_me())
         response: Response = await self.request(route)
         return response
 

@@ -48,7 +48,8 @@ class UserData:
     """user data class"""
     id: int
     tag: str
-    email: str | Literal['Access denied']
+    locale: str
+    email: str | None
     plan: PlanData
     blocklist: bool
 
