@@ -1,11 +1,11 @@
 """This module is a wrapper for using the SquareCloud API"""
 from __future__ import annotations
 
-import asyncio
 import logging
 from abc import ABC, abstractmethod
 from typing import List, Literal, Any, Callable
 
+from .app import Application
 from .data import (
     AppData,
     StatusData,
@@ -15,12 +15,11 @@ from .data import (
     FullLogsData,
     UploadData
 )
+from .errors import ApplicationNotFound, InvalidFile
 from .http import HTTPClient, Response
-from .http.router import Endpoint
+from .http.endpoints import Endpoint
 from .logs import logger
 from .square import File
-from .app import Application
-from .errors import ApplicationNotFound, InvalidFile
 from .types import (
     UserPayload,
     StatusPayload,
@@ -144,7 +143,7 @@ class Client(AbstractClient):
         logs_data: LogsData = LogsData(**payload)
         return logs_data
 
-    async def logs_complete(self, app_id: str) -> FullLogsData:
+    async def full_logs(self, app_id: str) -> FullLogsData:
         """
         Get logs for an application'
 
@@ -249,7 +248,8 @@ class Client(AbstractClient):
             raise ApplicationNotFound
         app_data = app_data.pop()
         app: Application = Application(
-            client=self, data=AppData(**app_data))  # type: ignore
+            client=self, http=self._http,
+            data=AppData(**app_data))  # type: ignore
         return app
 
     async def all_apps(self) -> List[Application]:
@@ -264,8 +264,9 @@ class Client(AbstractClient):
         apps_data: List[AppData] = [
             AppData(**app_data) for app_data in  # type: ignore
             payload['applications']]
-        apps: List[Application] = [Application(client=self, data=data) for data
-                                   in apps_data]
+        apps: List[Application] = [
+            Application(client=self, http=self._http, data=data) for data
+            in apps_data]
         return apps
 
     async def upload_app(self, file: File) -> UploadData:

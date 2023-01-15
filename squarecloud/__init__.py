@@ -1,4 +1,4 @@
 from .client import Client, create_config_file
 from .square import File
 from .errors import *
-from .http.router import Endpoint
+from .http.endpoints import Endpoint

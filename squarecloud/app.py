@@ -1,10 +1,11 @@
 from .data import AppData
 from abc import ABC
-from typing import Literal, TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING, Callable
 from .square import File
 from .data import StatusData, LogsData, FullLogsData, BackupData
-from .http import Response
+from .http import Response, HTTPClient, Endpoint
 from .errors import SquareException
+from .listener import ListenerManager
 
 # avoid circular imports
 if TYPE_CHECKING:
@@ -57,103 +58,111 @@ class Application(AbstractApplication):
     # nine arguments is available in this case
     # pylint: disable=invalid-name
     __slots__ = [
-        '__client',
-        '__http',
-        '__id',
-        '__tag',
-        '__ram',
-        '__lang',
-        '__type',
-        '__cluster',
-        '__is_website',
-        '__avatar',
+        '_client',
+        '_http',
+        '_listener',
+        '_data',
         'cache'
     ]
 
-    def __init__(self, client: 'Client', data: AppData):
-        self.__client: Client = client
-        self.__id: str = data.id
-        self.__tag: str = data.tag
-        self.__ram: int = data.ram
-        self.__lang: Literal['javascript', 'typescript', 'python'] = data.lang
-        self.__type: Literal['free', 'paid'] = data.type
-        self.__cluster: str = data.cluster
-        self.__is_website: bool = data.isWebsite
-        self.__avatar: str = data.avatar
+    def __init__(self, client: 'Client', http: HTTPClient, data: AppData):
+        self._client: 'Client' = client
+        self._http = http
+        self._listener: ListenerManager = ListenerManager(self)
+        self._data = data
         self.cache: AppCache = AppCache()
 
     def __repr__(self):
         return f'<{self.__class__.__name__} tag={self.tag} id={self.id}>'
 
     @property
+    def data(self):
+        return self._data
+
+    @property
     def client(self):
         """client instance"""
-        return self.__client
+        return self._client
 
     @property
     def id(self):
         """application's id"""
-        return self.__id
+        return self.data.id
 
     @property
     def tag(self):
         """application's tag"""
-        return self.__tag
+        return self.data.tag
 
     @property
     def ram(self):
         """application's allocated ram"""
-        return self.__ram
+        return self.data.ram
 
     @property
     def lang(self):
         """application's programing language"""
-        return self.__lang
+        return self.data.lang
 
     @property
     def type(self):
         """application's type"""
-        return self.__type
+        return self.data.type
 
     @property
     def cluster(self):
         """application's cluster"""
-        return self.__cluster
+        return self.data.cluster
 
     @property
     def is_website(self):
         """whether the application is a website"""
-        return self.__is_website
+        return self.data.isWebsite
 
     @property
     def avatar(self):
         """application's avatar"""
-        return self.__avatar
+        return self.data.avatar
+
+    def on_request(self, endpoint: Endpoint) -> Callable:
+        def wrapper(func):
+            self._listener.add_listener(endpoint, func)
+
+        return wrapper
 
     async def logs(self, update_cache: bool = True) -> LogsData:
         """get application's logs"""
-        logs: LogsData = await self.__client.get_logs(self.id)
+        logs: LogsData = await self.client.get_logs(self.id)
+        endpoint: Endpoint = Endpoint.logs()
+        await self._listener.on_request_end(endpoint=endpoint, logs=logs)
         if update_cache:
             self.cache.logs = logs
         return logs
 
     async def full_logs(self, update_cache: bool = True) -> FullLogsData:
         """get application's full logs"""
-        full_logs: FullLogsData = await self.__client.logs_complete(self.id)
+        full_logs: FullLogsData = await self.client.full_logs(self.id)
+        endpoint: Endpoint = Endpoint.full_logs()
+        await self._listener.on_request_end(
+            endpoint=endpoint, full_logs=full_logs)
         if update_cache:
             self.cache.full_logs = full_logs
         return full_logs
 
     async def status(self, update_cache: bool = True) -> StatusData:
         """get application's status"""
-        status: StatusData = await self.__client.app_status(self.id)
+        status: StatusData = await self.client.app_status(self.id)
+        endpoint: Endpoint = Endpoint.app_status()
+        await self._listener.on_request_end(endpoint=endpoint, status=status)
         if update_cache:
             self.cache.status = status
         return status
 
     async def backup(self, update_cache: bool = True) -> BackupData:
         """make backup of this application"""
-        backup: BackupData = await self.__client.backup(self.id)
+        backup: BackupData = await self.client.backup(self.id)
+        endpoint: Endpoint = Endpoint.backup()
+        await self._listener.on_request_end(endpoint=endpoint, backup=backup)
         if update_cache:
             self.cache.backup = backup
         return backup
@@ -162,26 +171,26 @@ class Application(AbstractApplication):
         """start the application"""
         if update_cache:
             self.cache.status.running = True
-        return await self.__client.start_app(self.id)
+        return await self.client.start_app(self.id)
 
     async def stop(self, update_cache: bool = True) -> Response:
         """stop the application"""
-        result = await self.__client.stop_app(self.id)
+        result = await self.client.stop_app(self.id)
         if update_cache:
             self.cache.status.running = False
         return result
 
     async def restart(self, update_cache: bool = True) -> Response:
         """restart the application"""
-        result = await self.__client.restart_app(self.id)
+        result = await self.client.restart_app(self.id)
         if update_cache:
             self.cache.status.status = 'restarting'
         return result
 
     async def delete(self) -> Response:
         """delete the application"""
-        return await self.__client.delete_app(self.id)
+        return await self.client.delete_app(self.id)
 
     async def commit(self, file: File) -> Response:
         """commit the application"""
-        return await self.__client.commit(self.id, file=file)
+        return await self.client.commit(self.id, file=file)

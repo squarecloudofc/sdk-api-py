@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+
 import aiohttp
 
-from .router import Endpoint, Router
+from .endpoints import Endpoint, Router
 from ..errors import (
     NotFoundError,
     RequestError,
     BadRequestError,
     AuthenticationFailure
 )
+from typing import Any, Literal
 from ..logs import logger
 from ..square import File
-
 from ..types import RawResponseData
 
 
@@ -20,13 +21,13 @@ class Response:
 
     def __init__(self, data: RawResponseData, route) -> None:
         self.data = data
-        self.route = route
-        self.headers = data.get('headers')
-        self.status = data.get('status')
-        self.code = data.get('code')
-        self.message = data.get('message')
-        self.response = data.get('response')
-        self.app = data.get('app')
+        self.route: Router = route
+        self.headers: dict[str, Any] = data.get('headers')
+        self.status: Literal['success', 'error'] = data.get('status')
+        self.code: int = data.get('code')
+        self.message: str = data.get('message')
+        self.response: dict[str, Any] = data.get('response')
+        self.app: dict[str, Any] = data.get('app')
 
 
 class HTTPClient:
@@ -35,7 +36,6 @@ class HTTPClient:
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
-        self.trace_config: aiohttp.TraceConfig = aiohttp.TraceConfig()
 
     async def request(self, route: Router, **kwargs) -> Response:
         """
@@ -50,15 +50,13 @@ class HTTPClient:
 
         if route.method == 'POST':
             kwargs['skip_auto_headers'] = {'Content-Type'}
-        if route.endpoint.name in ('COMMIT', 'UPLOAD'):
+        if route.endpoint in (Endpoint.commit(), Endpoint.upload()):
             del kwargs['skip_auto_headers']
             file = kwargs.pop('file')
             form = aiohttp.FormData()
             form.add_field('file', file.bytes, filename=file.name)
             kwargs['data'] = form
-
-        async with self.__session(
-                headers=headers, trace_configs=[self.trace_config]) as session:
+        async with self.__session(headers=headers) as session:
             async with session.request(url=route.url, method=route.method,
                                        **kwargs) as resp:
                 status_code = resp.status

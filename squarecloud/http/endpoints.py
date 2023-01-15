@@ -25,6 +25,9 @@ class Endpoint:
         self.method: str = endpoint['METHOD']
         self.path: str = endpoint['PATH']
 
+    def __eq__(self, other: Endpoint):
+        return isinstance(other, Endpoint) and self.name == other.name
+
     def __repr__(self):
         return f"<{self.__class__.__name__}('{self.name}')>"
 
