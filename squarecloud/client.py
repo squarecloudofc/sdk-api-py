@@ -126,17 +126,31 @@ class Client(AbstractClient):
 
         return wrapper
 
-    async def me(self) -> UserData:
+    async def me(self, avoid_listener: bool = False) -> UserData:
+        """Get your information
+
+        Args:
+            avoid_listener: whether to avoid the request listener
+
+        Returns:
+            UserData
+        """
         response: Response = await self._http.fetch_user_info()
         payload: UserPayload = response.response
         user_data: UserData = UserData(**payload['user'])
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return user_data
 
-    async def user_info(self, user_id: int | None = None) -> UserData:
+    async def user_info(self, user_id: int | None = None,
+                        avoid_listener: bool = False) -> UserData:
         """
         Get user information
+        Args:
+            user_id: user ID
+            avoid_listener: whether to avoid the request listener
 
         Returns:
             UserData
@@ -144,33 +158,43 @@ class Client(AbstractClient):
         response: Response = await self._http.fetch_user_info(user_id=user_id)
         payload: UserPayload = response.response
         user_data: UserData = UserData(**payload['user'])
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return user_data
 
-    async def get_logs(self, app_id: str) -> LogsData:
+    async def get_logs(self, app_id: str,
+                       avoid_listener: bool = False) -> LogsData:
         """
         Get logs for an application
 
         Args:
             app_id: the application ID
+            avoid_listener: whether to avoid the request listener
 
         Returns:
             LogData
         """
-        response: Response = await self._http.fetch_logs(app_id)
+        response: Response | None = await self._http.fetch_logs(app_id)
+        if not response:
+            return LogsData(logs=None)
         payload: LogsPayload = response.response
         logs_data: LogsData = LogsData(**payload)
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return logs_data
 
-    async def full_logs(self, app_id: str) -> FullLogsData:
+    async def full_logs(self, app_id: str,
+                        avoid_listener: bool = False) -> FullLogsData:
         """
         Get logs for an application'
 
         Args:
             app_id: the application ID
+            avoid_listener: whether to avoid the request listener
 
         Returns:
             FullLogsData
@@ -178,16 +202,20 @@ class Client(AbstractClient):
         response: Response = await self._http.fetch_logs_complete(app_id)
         payload: FullLogsPayload = response.response
         logs_data: FullLogsData = FullLogsData(**payload)
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return logs_data
 
-    async def app_status(self, app_id: str) -> StatusData:
+    async def app_status(self, app_id: str,
+                         avoid_listener: bool = False) -> StatusData:
         """
         Get an application status
 
         Args:
             app_id: the application ID
+            avoid_listener: whether to avoid the request listener
 
         Returns:
             StatusData
@@ -195,96 +223,140 @@ class Client(AbstractClient):
         response: Response = await self._http.fetch_app_status(app_id)
         payload: StatusPayload = response.response
         status: StatusData = StatusData(**payload)
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return status
 
-    async def start_app(self, app_id: str) -> Response:
+    async def start_app(self, app_id: str,
+                        avoid_listener: bool = False) -> Response:
         """
         Start an application
 
         Args:
             app_id: the application ID
+            avoid_listener: whether to avoid the request listener
+        Returns:
+            Response
         """
 
         response: Response = await self._http.start_application(app_id)
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return response
 
-    async def stop_app(self, app_id: str) -> Response:
+    async def stop_app(self, app_id: str,
+                       avoid_listener: bool = False) -> Response:
         """
         Stop an application
 
         Args:
             app_id: the application ID
+            avoid_listener: whether to avoid the request listener
+        Returns:
+            Response
         """
         response: Response = await self._http.stop_application(app_id)
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return response
 
-    async def restart_app(self, app_id: str) -> Response:
+    async def restart_app(self, app_id: str,
+                          avoid_listener: bool = False) -> Response:
         """
         Restart an application
 
         Args:
+            avoid_listener: whether to avoid the request listener
             app_id: the application ID
+        Returns:
+            Response
         """
         response: Response = await self._http.restart_application(app_id)
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return response
 
-    async def backup(self, app_id: str) -> BackupData:
+    async def backup(self, app_id: str,
+                     avoid_listener: bool = False) -> BackupData:
         """
         Backup an application
 
         Args:
             app_id: the application ID
+            avoid_listener: whether to avoid the request listener
         Returns:
             Backup
         """
         response: Response = await self._http.backup(app_id)
         payload: BackupPayload = response.response
         backup: BackupData = BackupData(**payload)
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return backup
 
-    async def delete_app(self, app_id: str) -> Response:
+    async def delete_app(self, app_id: str,
+                         avoid_listener: bool = False) -> Response:
         """
         Delete an application
 
         Args:
             app_id: the application ID
+            avoid_listener: whether to avoid the request listener
+        Returns:
+            Response
         """
         response: Response = await self._http.delete_application(app_id)
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return response
 
-    async def commit(self, app_id: str, file: File) -> Response:
+    async def commit(self, app_id: str, file: File,
+                     avoid_listener: bool = False) -> Response:
         """
         Commit an application
 
         Args:
             app_id: the application ID
             file: the file object to be committed
+            avoid_listener: whether to avoid the request listener
+        Returns:
+            Response
         """
         response: Response = await self._http.commit(app_id, file)
-        endpoint: Endpoint = response.route.endpoint
-        await self._listener.on_request(endpoint=endpoint, response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return response
 
-    async def app(self, app_id: str) -> Application:
+    async def app(self, app_id: str,
+                  avoid_listener: bool = False) -> Application:
         """
         Get an application
 
         Args:
+            avoid_listener: whether to avoid the request listener
             app_id: the application ID
+        Returns:
+            Application
         """
         response: Response = await self._http.fetch_user_info()
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         payload: UserPayload = response.response
         app_data = list(filter(lambda application: application['id'] == app_id,
                                payload['applications']))
@@ -296,14 +368,22 @@ class Client(AbstractClient):
             data=AppData(**app_data))  # type: ignore
         return app
 
-    async def all_apps(self) -> List[Application]:
+    async def all_apps(
+            self, avoid_listener: bool = False) -> List[Application]:
         """
         Get a list of your applications
 
+        Args:
+            avoid_listener: whether to avoid the request listener
+
         Returns:
-            List[AppData]
+            List[Application]
         """
         response: Response = await self._http.fetch_user_info()
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         payload: UserPayload = response.response
         apps_data: List[AppData] = [
             AppData(**app_data) for app_data in  # type: ignore
@@ -313,13 +393,28 @@ class Client(AbstractClient):
             in apps_data]
         return apps
 
-    async def upload_app(self, file: File) -> UploadData:
+    async def upload_app(self, file: File,
+                         avoid_listener: bool = False) -> UploadData:
+        """
+        Upload an application
+
+        Args:
+            file: the file to be uploaded
+            avoid_listener:whether to avoid the request listener
+
+        Returns:
+            UploadData
+        """
         if not isinstance(file, File):
             raise InvalidFile(
                 f'you need provide an {File.__name__} object')
         if file.name.split('.')[-1] != 'zip':
             raise InvalidFile('the file must be a .zip file')
         response: Response = await self._http.upload(file)
+        if not avoid_listener:
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         payload: UploadPayload = response.app
         app: UploadData = UploadData(**payload)
         endpoint: Endpoint = response.route.endpoint

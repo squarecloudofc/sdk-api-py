@@ -16,12 +16,10 @@ from ..payloads import RawResponseData
 from ..square import File
 
 
-class Response(aiohttp.ClientResponse):
+class Response:
     """Represents a request response"""
 
-    def __init__(self, data: RawResponseData, route: Router, *args,
-                 **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, data: RawResponseData, route: Router) -> None:
         self.data = data
         self.route: Router = route
         self.status: Literal['success', 'error'] = data.get('status')
@@ -29,6 +27,9 @@ class Response(aiohttp.ClientResponse):
         self.message: str = data.get('message')
         self.response: dict[str, Any] = data.get('response')
         self.app: dict[str, Any] = data.get('app')
+
+    def __repr__(self):
+        return f'{Response.__name__}({self.status})'
 
 
 class HTTPClient:
@@ -38,7 +39,7 @@ class HTTPClient:
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
 
-    async def request(self, route: Router, **kwargs) -> Response:
+    async def request(self, route: Router, **kwargs) -> Response | None:
         """
         Sends a request to the Square API and returns the response.
 
@@ -76,6 +77,8 @@ class HTTPClient:
                     case 404:
                         logger.debug(msg='request to route: ', extra=extra)
                         msg = f'route [{route.endpoint.name}] returned 404, [{data.get("code")}]'
+                        if route.endpoint == Endpoint.logs():
+                            return
                         raise NotFoundError(msg)
                     case 401:
                         logger.error(msg='request to: ', extra=extra)

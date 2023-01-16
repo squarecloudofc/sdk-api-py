@@ -57,7 +57,10 @@ class UserData:
 @dataclass
 class LogsData:
     """logs data class"""
-    logs: str
+    logs: str | None
+
+    def __eq__(self, other):
+        return isinstance(other, LogsData) and self.logs == other.logs
 
 
 @dataclass

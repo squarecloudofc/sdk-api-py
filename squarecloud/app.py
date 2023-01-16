@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class AppCache:
     def __init__(self):
         self.status: StatusData | None = None
-        self.logs: LogsData | None = None
+        self.logs: LogsData = LogsData(logs=None)
         self.full_logs: FullLogsData | None = None
         self.backup: BackupData | None = None
 
@@ -134,85 +134,87 @@ class Application(AbstractApplication):
 
         return wrapper
 
-    async def logs(self, update_cache: bool = True) -> LogsData:
+    async def logs(self, avoid_listener: bool = False) -> LogsData:
         """get application's logs"""
         logs: LogsData = await self.client.get_logs(self.id)
-        endpoint: Endpoint = Endpoint.logs()
-        await self._listener.on_capture(endpoint=endpoint, logs=logs)
-        if update_cache:
-            self.cache.logs = logs
+        if not avoid_listener:
+            endpoint: Endpoint = Endpoint.logs()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            before=self.cache.logs, after=logs)
         return logs
 
-    async def full_logs(self, update_cache: bool = True) -> FullLogsData:
+    async def full_logs(self, avoid_listener: bool = False) -> FullLogsData:
         """get application's full logs"""
         full_logs: FullLogsData = await self.client.full_logs(self.id)
-        endpoint: Endpoint = Endpoint.full_logs()
-        await self._listener.on_capture(
-            endpoint=endpoint, full_logs=full_logs)
-        if update_cache:
-            self.cache.full_logs = full_logs
+        if not avoid_listener:
+            endpoint: Endpoint = Endpoint.full_logs()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            before=self.cache.full_logs,
+                                            after=full_logs)
         return full_logs
 
-    async def status(self, update_cache: bool = True) -> StatusData:
+    async def status(self, avoid_listener: bool = False) -> StatusData:
         """get application's status"""
         status: StatusData = await self.client.app_status(self.id)
-        endpoint: Endpoint = Endpoint.app_status()
-        await self._listener.on_capture(endpoint=endpoint, status=status)
-        if update_cache:
-            self.cache.status = status
+        if not avoid_listener:
+            endpoint: Endpoint = Endpoint.app_status()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            before=self.cache.status,
+                                            after=status)
         return status
 
-    async def backup(self, update_cache: bool = True) -> BackupData:
+    async def backup(self, avoid_listener: bool = False) -> BackupData:
         """make backup of this application"""
         backup: BackupData = await self.client.backup(self.id)
-        endpoint: Endpoint = Endpoint.backup()
-        await self._listener.on_capture(endpoint=endpoint, backup=backup)
-        if update_cache:
-            self.cache.backup = backup
+        if not avoid_listener:
+            endpoint: Endpoint = Endpoint.backup()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            before=self.cache.backup,
+                                            after=backup)
         return backup
 
-    async def start(self, update_cache: bool = True) -> Response:
+    async def start(self, avoid_listener: bool = False) -> Response:
         """start the application"""
         response: Response = await self.client.start_app(self.id)
-        endpoint: Endpoint = Endpoint.start()
-        if update_cache:
-            self.cache.status.running = True
-        await self._listener.on_capture(endpoint=endpoint,
-                                        response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = Endpoint.start()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            response=response)
         return response
 
-    async def stop(self, update_cache: bool = True) -> Response:
+    async def stop(self, avoid_listener: bool = False) -> Response:
         """stop the application"""
         response: Response = await self.client.stop_app(self.id)
-        endpoint: Endpoint = Endpoint.stop()
-        if update_cache:
-            self.cache.status.running = False
-        await self._listener.on_capture(endpoint=endpoint,
-                                        response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = Endpoint.stop()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            response=response)
         return response
 
-    async def restart(self, update_cache: bool = True) -> Response:
+    async def restart(self, avoid_listener: bool = False) -> Response:
         """restart the application"""
         response: Response = await self.client.restart_app(self.id)
-        endpoint: Endpoint = Endpoint.restart()
-        await self._listener.on_capture(endpoint=endpoint,
-                                        response=response)
-        if update_cache:
-            self.cache.status.status = 'restarting'
+        if not avoid_listener:
+            endpoint: Endpoint = Endpoint.restart()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            response=response)
         return response
 
-    async def delete(self) -> Response:
+    async def delete(self, avoid_listener: bool = False) -> Response:
         """delete the application"""
         response: Response = await self.client.delete_app(self.id)
-        endpoint: Endpoint = Endpoint.delete()
-        await self._listener.on_capture(endpoint=endpoint,
-                                        response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = Endpoint.delete()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            response=response)
         return response
 
-    async def commit(self, file: File) -> Response:
+    async def commit(self, file: File,
+                     avoid_listener: bool = False) -> Response:
         """commit the application"""
         response: Response = await self.client.commit(self.id, file=file)
-        endpoint: Endpoint = Endpoint.commit()
-        await self._listener.on_capture(endpoint=endpoint,
-                                        response=response)
+        if not avoid_listener:
+            endpoint: Endpoint = Endpoint.commit()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            response=response)
         return response
