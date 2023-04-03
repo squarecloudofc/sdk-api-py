@@ -29,7 +29,7 @@ to `dashboard` > `my account` > `Regenerate API/CLI KEY` and copy the key.
 > - [commit_and_upload](docs/commit_and_upload.md)
 > - [request_listeners](docs/request_listeners.md)
 
-## Basict usage
+## Basic usage
 ```python
 import squarecloud as square
 import asyncio
