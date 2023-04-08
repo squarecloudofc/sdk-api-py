@@ -1,43 +1,37 @@
-"""custom logger"""
+"""Custom logger"""
+
 import logging
 
+# Define constants for color codes
+GREEN = '\033[0;32m'
+PURPLE = '\033[0;35m'
+RED = '\033[0;31m'
+END = '\033[m'
+
 # logging config
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
-class CustomFormatter(logging.Formatter):
-    """a custom logging formatter"""
-    green = '\033[0;32m'
-    purple = '\033[0;35m'
-    red = '\033[0;31m'
-    end = '\033[m'
+class CustomLogFormatter(logging.Formatter):
+    """A custom logging formatter"""
 
-    FORMAT_SUCCESS = f'{green}[%(levelname)s] %(status)s %(message)s %(route)s %(request_message)s {end}'
-    FORMAT_ERROR = f'{red}[%(levelname)s]  %(status)s %(message)s %(route)s, error: %(code)s{end}'
+    FORMAT_SUCCESS = f'{GREEN}[%(levelname)s] %(status)s %(message)s %(route)s %(request_message)s {END}'
+    FORMAT_ERROR = f'{RED}[%(levelname)s]  %(status)s %(message)s %(route)s, error: %(code)s{END}'
 
     def format(self, record: logging.LogRecord) -> str:
-        match record.status:
-            case 'success':
-                format_body = self.FORMAT_SUCCESS
-            case _:
-                format_body = self.FORMAT_ERROR
-        # formats_level = {
-        #     logging.INFO: self.purple + format_body + self.end,
-        #     logging.DEBUG: self.green + format_body + self.end,
-        #     logging.ERROR: self.red + format_body + self.end,
-        #     logging.CRITICAL: self.red + format_body + self.end,
-        #     logging.WARN: self.red + format_body + self.end,
-        # }
-        # log_fmt = formats_level.get(record.levelno)
-        # log_fmt = self.purple + format_body + self.end
+        if record.status == 'success':
+            format_body = self.FORMAT_SUCCESS
+        else:
+            format_body = self.FORMAT_ERROR
+        log_fmt = PURPLE + format_body + END
         formatter = logging.Formatter(
-            '\033[0;35m [%(asctime)s]: \033[m ' + format_body)
+            '\033[0;35m [%(asctime)s]: \033[m ' + log_fmt)
         return formatter.format(record)
 
 
 # console handler
 _ch = logging.StreamHandler()
 _ch.setLevel(logging.DEBUG)
-_ch.setFormatter(CustomFormatter())
+_ch.setFormatter(CustomLogFormatter())
 logger.addHandler(_ch)
