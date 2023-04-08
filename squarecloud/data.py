@@ -79,7 +79,7 @@ class BackupData:
 class UploadData:
     id: str
     tag: str
-    description: str
+    description: str | None
     language: str
     avatar: str
     subdomain: str | None
