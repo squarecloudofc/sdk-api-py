@@ -36,7 +36,16 @@ class AppData:
     id: str
     tag: str
     ram: int
-    lang: Literal['javascript', 'typescript', 'python', 'java']
+    lang: Literal[
+        'javascript',
+        'typescript',
+        'python',
+        'java',
+        'rust',
+        'go',
+        'static',
+        'dinamic',
+    ]
     type: Literal['free', 'paid']
     cluster: Literal['free-', 'florida-1']
     isWebsite: bool
