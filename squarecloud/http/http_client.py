@@ -26,7 +26,6 @@ class Response:
         self.code: int = data.get('code')
         self.message: str = data.get('message')
         self.response: dict[str, Any] = data.get('response')
-        self.app: dict[str, Any] = data.get('app')
 
     def __repr__(self):
         return f'{Response.__name__}({self.status})'
@@ -213,7 +212,7 @@ class HTTPClient:
         Args:
             app_id: the application ID
         """
-        route: Router = Router(Endpoint.delete(), app_id=app_id)
+        route: Router = Router(Endpoint.delete_app(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 

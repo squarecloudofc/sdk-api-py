@@ -204,7 +204,7 @@ class Application(AbstractApplication):
         """delete the application"""
         response: Response = await self.client.delete_app(self.id)
         if not avoid_listener:
-            endpoint: Endpoint = Endpoint.delete()
+            endpoint: Endpoint = Endpoint.delete_app()
             await self._listener.on_capture(endpoint=endpoint,
                                             response=response)
         return response
