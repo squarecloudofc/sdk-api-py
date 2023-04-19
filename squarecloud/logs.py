@@ -9,7 +9,6 @@ RED = '\033[0;31m'
 END = '\033[m'
 
 # logging config
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -24,9 +23,9 @@ class CustomLogFormatter(logging.Formatter):
             format_body = self.FORMAT_SUCCESS
         else:
             format_body = self.FORMAT_ERROR
-        log_fmt = PURPLE + format_body + END
+        # log_fmt = PURPLE + format_body + END
         formatter = logging.Formatter(
-            '\033[0;35m [%(asctime)s]: \033[m ' + log_fmt)
+            '\033[0;35m [%(asctime)s]: \033[m ' + format_body)
         return formatter.format(record)
 
 
