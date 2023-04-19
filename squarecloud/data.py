@@ -94,3 +94,11 @@ class UploadData:
     subdomain: str | None
     ram: int
     cpu: int
+
+
+@dataclass
+class FileInfo:
+    type: Literal['file', 'directory']
+    name: str
+    size: int
+    lastModified: int

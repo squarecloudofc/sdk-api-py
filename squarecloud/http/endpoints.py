@@ -34,14 +34,16 @@ class Endpoint:
         'BACKUP': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/backup'},
         'COMMIT': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/commit'},
         'DELETE_APP': {'METHOD': 'DELETE', 'PATH': '/apps/{app_id}/delete'},
-        'UPLOAD': {'METHOD': 'POST', 'PATH': '/apps/upload'},
+        'UPLOAD_APP': {'METHOD': 'POST', 'PATH': '/apps/upload'},
 
-        'FILES_LIST': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/files/list'},
-        'FILES_READ': {'METHOD': 'GET', 'PATH': '/apps/{app_id}}/files/read'},
+        'FILES_LIST': {'METHOD': 'GET',
+                       'PATH': '/apps/{app_id}/files/list?path={path}'},
+        'FILES_READ': {'METHOD': 'GET',
+                       'PATH': '/apps/{app_id}/files/read?path={path}'},
         'FILES_CREATE': {'METHOD': 'POST',
-                         'PATH': '/apps/:appId/files/create'},
+                         'PATH': '/apps/{app_id}/files/create'},
         'FILES_DELETE': {'METHOD': 'DELETE',
-                         'PATH': '/apps/{app_id}/files/delete'}
+                         'PATH': '/apps/{app_id}/files/delete?path={path}'}
     }
 
     def __init__(self, name: str):
@@ -102,7 +104,23 @@ class Endpoint:
 
     @classmethod
     def upload(cls):
-        return cls('UPLOAD')
+        return cls('UPLOAD_APP')
+
+    @classmethod
+    def files_list(cls):
+        return cls('FILES_LIST')
+
+    @classmethod
+    def files_read(cls):
+        return cls('FILES_READ')
+
+    @classmethod
+    def files_create(cls):
+        return cls('FILES_CREATE')
+
+    @classmethod
+    def files_delete(cls):
+        return cls('FILES_DELETE')
 
 
 class Router:

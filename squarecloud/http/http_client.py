@@ -38,7 +38,8 @@ class HTTPClient:
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
 
-    async def request(self, route: Router, **kwargs) -> Response | None:
+    async def request(self, route: Router,
+                      **kwargs) -> Response | None | bytes:
         """
         Sends a request to the Square API and returns the response.
 
@@ -49,10 +50,7 @@ class HTTPClient:
         """
         headers = {'Authorization': self.api_key}
 
-        if route.method == 'POST':
-            kwargs['skip_auto_headers'] = {'Content-Type'}
         if route.endpoint in (Endpoint.commit(), Endpoint.upload()):
-            del kwargs['skip_auto_headers']
             file = kwargs.pop('file')
             form = aiohttp.FormData()
             form.add_field('file', file.bytes, filename=file.name)
@@ -70,8 +68,8 @@ class HTTPClient:
                 }
                 match status_code:
                     case 200:
-                        extra.pop('code')
                         logger.debug(msg='request to route: ', extra=extra)
+                        extra.pop('code')
                         response: Response = Response(data=data, route=route)
                     case 404:
                         logger.debug(msg='request to route: ', extra=extra)
@@ -241,4 +239,26 @@ class HTTPClient:
         """
         route: Router = Router(Endpoint.upload())
         response: Response = await self.request(route, file=file)
+        return response
+
+    async def fetch_app_files_list(self, app_id: str, path: str):
+        route: Router = Router(Endpoint.files_list(), app_id=app_id, path=path)
+        response = await self.request(route)
+        return response
+
+    async def read_app_file(self, app_id: str, path: str):
+        route: Router = Router(Endpoint.files_read(), app_id=app_id, path=path)
+        response = await self.request(route)
+        return response
+
+    async def create_app_file(self, app_id: str, file: list[bytes], path: str):
+        route: Router = Router(Endpoint.files_create(), app_id=app_id)
+        response: Response = await self.request(route, json={'buffer': file,
+                                                             'path': path})
+        return response
+
+    async def file_delete(self, app_id: str, path: str):
+        route: Router = Router(Endpoint.files_delete(), app_id=app_id,
+                               path=path)
+        response: Response = await self.request(route)
         return response
