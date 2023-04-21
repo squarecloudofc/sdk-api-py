@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class AppCache:
     def __init__(self):
         self.status: StatusData | None = None
-        self.logs: LogsData = LogsData(logs=None)
+        self.logs: LogsData | None = None
         self.full_logs: FullLogsData | None = None
         self.backup: BackupData | None = None
 
@@ -141,6 +141,7 @@ class Application(AbstractApplication):
             endpoint: Endpoint = Endpoint.logs()
             await self._listener.on_capture(endpoint=endpoint,
                                             before=self.cache.logs, after=logs)
+        self.cache.update(logs)
         return logs
 
     async def full_logs(self, avoid_listener: bool = False) -> FullLogsData:
@@ -151,6 +152,7 @@ class Application(AbstractApplication):
             await self._listener.on_capture(endpoint=endpoint,
                                             before=self.cache.full_logs,
                                             after=full_logs)
+        self.cache.update(full_logs)
         return full_logs
 
     async def status(self, avoid_listener: bool = False) -> StatusData:
@@ -161,6 +163,7 @@ class Application(AbstractApplication):
             await self._listener.on_capture(endpoint=endpoint,
                                             before=self.cache.status,
                                             after=status)
+        self.cache.update(status)
         return status
 
     async def backup(self, avoid_listener: bool = False) -> BackupData:
@@ -171,6 +174,7 @@ class Application(AbstractApplication):
             await self._listener.on_capture(endpoint=endpoint,
                                             before=self.cache.backup,
                                             after=backup)
+        self.cache.update(backup)
         return backup
 
     async def start(self, avoid_listener: bool = False) -> Response:
