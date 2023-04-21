@@ -141,7 +141,8 @@ class Application(AbstractApplication):
             endpoint: Endpoint = Endpoint.logs()
             await self._listener.on_capture(endpoint=endpoint,
                                             before=self.cache.logs, after=logs)
-        self.cache.update(logs)
+        if kwargs.get('update_cache', True):
+            self.cache.update(logs)
         return logs
 
     async def full_logs(self, **kwargs) -> FullLogsData:
@@ -152,7 +153,8 @@ class Application(AbstractApplication):
             await self._listener.on_capture(endpoint=endpoint,
                                             before=self.cache.full_logs,
                                             after=full_logs)
-        self.cache.update(full_logs)
+        if kwargs.get('update_cache', True):
+            self.cache.update(full_logs)
         return full_logs
 
     async def status(self, **kwargs) -> StatusData:
@@ -163,7 +165,8 @@ class Application(AbstractApplication):
             await self._listener.on_capture(endpoint=endpoint,
                                             before=self.cache.status,
                                             after=status)
-        self.cache.update(status)
+        if kwargs.get('update_cache', True):
+            self.cache.update(status)
         return status
 
     async def backup(self, **kwargs) -> BackupData:
@@ -174,7 +177,8 @@ class Application(AbstractApplication):
             await self._listener.on_capture(endpoint=endpoint,
                                             before=self.cache.backup,
                                             after=backup)
-        self.cache.update(backup)
+        if kwargs.get('update_cache', True):
+            self.cache.update(backup)
         return backup
 
     async def start(self, **kwargs) -> Response:
