@@ -50,7 +50,8 @@ def create_config_file(
         avatar: str | None = None,
         description: str | None = None,
         subdomain: str | None = None,
-        start: str | None = None
+        start: str | None = None,
+        auto_restart: bool | None = None,
 ):
     """
     Creates a config file (squarecloud.app)
@@ -80,6 +81,7 @@ def create_config_file(
         'DESCRIPTION': description,
         'SUBDOMAIN': subdomain,
         'START': start,
+        'AUTORESTART': auto_restart,
     }
     for key, value in optionals.items():
         if value is not None:
