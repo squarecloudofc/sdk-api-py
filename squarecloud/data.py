@@ -45,7 +45,7 @@ class AppData:
         'rust',
         'go',
         'static',
-        'dinamic',
+        'dynamic',
     ]
     type: Literal['free', 'paid']
     cluster: Literal['free-', 'florida-1']
