@@ -34,10 +34,19 @@ class StatusData:
 class AppData:
     """application data class"""
     id: str
-    tag: str
+    name: str
     desc: str
+    avatar: str
+    owner: str
+    cluster: Literal[
+        'florida-ds1-1',
+        'florida-ds1-2',
+        'florida-ds1-3',
+        'florida-ds1-free-1'
+    ]
+    cpu: int
     ram: int
-    lang: Literal[
+    language: Literal[
         'javascript',
         'typescript',
         'python',
@@ -49,9 +58,10 @@ class AppData:
     ]
     type: Literal['free', 'paid']
     cluster: Literal['free-', 'florida-1']
+    domain: str | None
+    custom: str | None
     isWebsite: bool
-    avatar: str
-    domain: str | None = None
+    gitIntegration: bool
 
 
 @dataclass
