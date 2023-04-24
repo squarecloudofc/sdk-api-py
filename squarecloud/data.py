@@ -103,3 +103,12 @@ class FileInfo:
     name: str
     size: int
     lastModified: int
+
+
+@dataclass
+class StatisticsData:
+    users: int
+    apps: int
+    websites: int
+    ping: int
+    time: int

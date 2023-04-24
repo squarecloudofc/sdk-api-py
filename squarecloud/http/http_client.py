@@ -262,3 +262,8 @@ class HTTPClient:
                                path=path)
         response: Response = await self.request(route)
         return response
+
+    async def get_statistics(self):
+        route: Router = Router(Endpoint.statistics())
+        response: Response = await self.request(route)
+        return response

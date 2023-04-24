@@ -36,6 +36,7 @@ class Endpoint:
         'DELETE_APP': {'METHOD': 'DELETE', 'PATH': '/apps/{app_id}/delete'},
         'UPLOAD_APP': {'METHOD': 'POST', 'PATH': '/apps/upload'},
 
+        'STATISTICS': {'METHOD': 'GET', 'PATH': '/service/statistics'},
         'FILES_LIST': {'METHOD': 'GET',
                        'PATH': '/apps/{app_id}/files/list?path={path}'},
         'FILES_READ': {'METHOD': 'GET',
@@ -121,6 +122,10 @@ class Endpoint:
     @classmethod
     def files_delete(cls):
         return cls('FILES_DELETE')
+
+    @classmethod
+    def statistics(cls):
+        return cls('STATISTICS')
 
 
 class Router:

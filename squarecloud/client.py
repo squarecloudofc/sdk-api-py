@@ -14,7 +14,7 @@ from .data import (
     LogsData,
     BackupData,
     FullLogsData,
-    UploadData, FileInfo
+    UploadData, FileInfo, StatisticsData
 )
 from .errors import ApplicationNotFound, InvalidFile, SquareException
 from .http import HTTPClient, Response
@@ -388,6 +388,7 @@ class Client(AbstractClient):
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         payload: UserPayload = response.response
+        print(payload)
         apps_data: List[AppData] = [
             AppData(**app_data) for app_data in  # type: ignore
             payload['applications']]
@@ -448,4 +449,9 @@ class Client(AbstractClient):
 
     async def delete_app_file(self, app_id: str, path: str):
         response: Response = await self._http.file_delete(app_id, path)
-        print(response.data)
+        return response
+
+    async def statistics(self):
+        response: Response = await self._http.get_statistics()
+        data = response.response['statistics']
+        return StatisticsData(**data)
