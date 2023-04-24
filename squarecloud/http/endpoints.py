@@ -60,67 +60,71 @@ class Endpoint:
         return f"{Endpoint.__name__}('{self.name}')"
 
     @classmethod
-    def user_me(cls):
+    def user_me(cls) -> Endpoint:
         return cls('USER_ME')
 
     @classmethod
-    def user_info(cls):
+    def app_data(cls) -> Endpoint:
+        return cls('APP_DATA')
+
+    @classmethod
+    def user_info(cls) -> Endpoint:
         return cls('USER_INFO')
 
     @classmethod
-    def app_status(cls):
+    def app_status(cls) -> Endpoint:
         return cls('APP_STATUS')
 
     @classmethod
-    def logs(cls):
+    def logs(cls) -> Endpoint:
         return cls('LOGS')
 
     @classmethod
-    def start(cls):
+    def start(cls) -> Endpoint:
         return cls('START')
 
     @classmethod
-    def stop(cls):
+    def stop(cls) -> Endpoint:
         return cls('STOP')
 
     @classmethod
-    def restart(cls):
+    def restart(cls) -> Endpoint:
         return cls('RESTART')
 
     @classmethod
-    def backup(cls):
+    def backup(cls) -> Endpoint:
         return cls('BACKUP')
 
     @classmethod
-    def commit(cls):
+    def commit(cls) -> Endpoint:
         return cls('COMMIT')
 
     @classmethod
-    def delete_app(cls):
+    def delete_app(cls) -> Endpoint:
         return cls('DELETE_APP')
 
     @classmethod
-    def upload(cls):
+    def upload(cls) -> Endpoint:
         return cls('UPLOAD_APP')
 
     @classmethod
-    def files_list(cls):
+    def files_list(cls) -> Endpoint:
         return cls('FILES_LIST')
 
     @classmethod
-    def files_read(cls):
+    def files_read(cls) -> Endpoint:
         return cls('FILES_READ')
 
     @classmethod
-    def files_create(cls):
+    def files_create(cls) -> Endpoint:
         return cls('FILES_CREATE')
 
     @classmethod
-    def files_delete(cls):
+    def files_delete(cls) -> Endpoint:
         return cls('FILES_DELETE')
 
     @classmethod
-    def statistics(cls):
+    def statistics(cls) -> Endpoint:
         return cls('STATISTICS')
 
 
