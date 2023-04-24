@@ -17,7 +17,7 @@ class RawResponseData(TypedDict):
 class UserPayload(RawResponseData):
     """user payload"""
     user: Dict[str, Any]
-    applications: Dict[str, Any]
+    applications: list[dict[str, Any]]
 
 
 class LogsPayload(RawResponseData):
@@ -28,11 +28,6 @@ class LogsPayload(RawResponseData):
 class BackupPayload(RawResponseData):
     """backup payload"""
     backup: Dict[str, Any]
-
-
-class FullLogsPayload(RawResponseData):
-    """complete logs payload"""
-    url: Dict[str, Any]
 
 
 class StatusPayload(RawResponseData):

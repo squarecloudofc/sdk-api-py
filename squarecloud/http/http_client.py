@@ -135,20 +135,6 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def fetch_logs_complete(self, app_id: str) -> Response:
-        """
-        Make a request for LOGS_COMPLETE route
-
-        Args:
-            app_id:
-
-        Returns:
-            Response
-        """
-        route: Router = Router(Endpoint.full_logs(), app_id=app_id)
-        response: Response = await self.request(route)
-        return response
-
     async def start_application(self, app_id: str) -> Response:
         """
         Make a request for START route
@@ -265,5 +251,10 @@ class HTTPClient:
 
     async def get_statistics(self):
         route: Router = Router(Endpoint.statistics())
+        response: Response = await self.request(route)
+        return response
+
+    async def get_app_data(self, app_id: str):
+        route: Router = Router(Endpoint('APP_DATA'), app_id=app_id)
         response: Response = await self.request(route)
         return response

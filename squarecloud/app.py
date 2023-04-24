@@ -1,8 +1,7 @@
 from abc import ABC
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Literal
 
-from .data import AppData
-from .data import StatusData, LogsData, FullLogsData, BackupData
+from .data import StatusData, LogsData, BackupData
 from .errors import SquareException
 from .http import Response, HTTPClient, Endpoint
 from .listener import ListenerManager, Listener
@@ -14,16 +13,20 @@ if TYPE_CHECKING:
 
 
 class AppCache:
+    __slots__ = (
+        'status',
+        'logs',
+        'backup',
+    )
+
     def __init__(self):
         self.status: StatusData | None = None
         self.logs: LogsData | None = None
-        self.full_logs: FullLogsData | None = None
         self.backup: BackupData | None = None
 
     def clear(self):
         self.status = None
         self.logs = None
-        self.full_logs = None
         self.backup = None
 
     def update(self, *args):
@@ -32,8 +35,6 @@ class AppCache:
                 self.status = arg
             elif isinstance(arg, LogsData):
                 self.logs = arg
-            elif isinstance(arg, FullLogsData):
-                self.full_logs = arg
             elif isinstance(arg, BackupData):
                 self.backup = arg
             else:
@@ -41,7 +42,6 @@ class AppCache:
                     i.__name__ for i in [
                         StatusData,
                         LogsData,
-                        FullLogsData,
                         BackupData,
                     ]
                 ]
@@ -64,21 +64,56 @@ class Application(AbstractApplication):
         '_listener',
         '_data',
         'cache'
+        '_id',
+        '_tag',
+        '_desc',
+        '_ram',
+        '_lang',
+        '_type',
+        '_cluster',
+        '_isWebsite',
+        '_avatar',
     ]
 
-    def __init__(self, client: 'Client', http: HTTPClient, data: AppData):
+    def __init__(
+            self,
+            client: 'Client',
+            http: HTTPClient,
+            id: str,
+            tag: str,
+            desc: str,
+            ram: int,
+            lang: Literal[
+                'javascript',
+                'typescript',
+                'python',
+                'java',
+                'rust',
+                'go',
+                'static',
+                'dynamic',
+            ],
+            type: Literal['free', 'paid'],
+            cluster: Literal['free-', 'florida-1'],
+            isWebsite: bool,
+            avatar: str,
+    ):
+        self._id = id
+        self._tag = tag
+        self._desc = desc
+        self._ram = ram
+        self._lang = lang
+        self._type = type
+        self._cluster = cluster
+        self._isWebsite = isWebsite
+        self._avatar = avatar
         self._client: 'Client' = client
         self._http = http
         self._listener: ListenerManager = Listener
-        self._data = data
         self.cache: AppCache = AppCache()
 
     def __repr__(self):
         return f'<{self.__class__.__name__} tag={self.tag} id={self.id}>'
-
-    @property
-    def data(self):
-        return self._data
 
     @property
     def client(self):
@@ -88,42 +123,46 @@ class Application(AbstractApplication):
     @property
     def id(self):
         """application's id"""
-        return self.data.id
+        return self._id
 
     @property
     def tag(self):
         """application's tag"""
-        return self.data.tag
+        return self._tag
+
+    @property
+    def desc(self):
+        return self._desc
 
     @property
     def ram(self):
         """application's allocated ram"""
-        return self.data.ram
+        return self._ram
 
     @property
     def lang(self):
         """application's programing language"""
-        return self.data.lang
+        return self._lang
 
     @property
     def type(self):
         """application's type"""
-        return self.data.type
+        return self._type
 
     @property
     def cluster(self):
         """application's cluster"""
-        return self.data.cluster
+        return self._cluster
 
     @property
     def is_website(self):
         """whether the application is a website"""
-        return self.data.isWebsite
+        return self._isWebsite
 
     @property
     def avatar(self):
         """application's avatar"""
-        return self.data.avatar
+        return self._avatar
 
     def capture(self, endpoint: Endpoint) -> Callable:
         def wrapper(func):
@@ -144,18 +183,6 @@ class Application(AbstractApplication):
         if kwargs.get('update_cache', True):
             self.cache.update(logs)
         return logs
-
-    async def full_logs(self, **kwargs) -> FullLogsData:
-        """get application's full logs"""
-        full_logs: FullLogsData = await self.client.full_logs(self.id)
-        if not kwargs.get('avoid_listener'):
-            endpoint: Endpoint = Endpoint.full_logs()
-            await self._listener.on_capture(endpoint=endpoint,
-                                            before=self.cache.full_logs,
-                                            after=full_logs)
-        if kwargs.get('update_cache', True):
-            self.cache.update(full_logs)
-        return full_logs
 
     async def status(self, **kwargs) -> StatusData:
         """get application's status"""

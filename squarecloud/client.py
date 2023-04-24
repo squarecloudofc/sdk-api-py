@@ -13,7 +13,6 @@ from .data import (
     UserData,
     LogsData,
     BackupData,
-    FullLogsData,
     UploadData, FileInfo, StatisticsData
 )
 from .errors import ApplicationNotFound, InvalidFile, SquareException
@@ -26,7 +25,6 @@ from .payloads import (
     StatusPayload,
     LogsPayload,
     BackupPayload,
-    FullLogsPayload,
     UploadPayload,
 )
 from .square import File
@@ -190,27 +188,6 @@ class Client(AbstractClient):
                                             response=response)
         return logs_data
 
-    async def full_logs(self, app_id: str,
-                        avoid_listener: bool = False) -> FullLogsData:
-        """
-        Get logs for an application'
-
-        Args:
-            app_id: the application ID
-            avoid_listener: whether to avoid the request listener
-
-        Returns:
-            FullLogsData
-        """
-        response: Response = await self._http.fetch_logs_complete(app_id)
-        payload: FullLogsPayload = response.response
-        logs_data: FullLogsData = FullLogsData(**payload)
-        if not avoid_listener:
-            endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
-        return logs_data
-
     async def app_status(self, app_id: str,
                          avoid_listener: bool = False) -> StatusData:
         """
@@ -368,7 +345,7 @@ class Client(AbstractClient):
         app_data = app_data.pop()
         app: Application = Application(
             client=self, http=self._http,
-            data=AppData(**app_data))  # type: ignore
+            **app_data)  # type: ignore
         return app
 
     async def all_apps(
@@ -388,12 +365,9 @@ class Client(AbstractClient):
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         payload: UserPayload = response.response
-        print(payload)
-        apps_data: List[AppData] = [
-            AppData(**app_data) for app_data in  # type: ignore
-            payload['applications']]
+        apps_data: list = payload['applications']
         apps: List[Application] = [
-            Application(client=self, http=self._http, data=data) for data
+            Application(client=self, http=self._http, **data) for data
             in apps_data]
         return apps
 
@@ -455,3 +429,6 @@ class Client(AbstractClient):
         response: Response = await self._http.get_statistics()
         data = response.response['statistics']
         return StatisticsData(**data)
+
+    async def app_data(self, app_id: str):
+        return await self._http.get_app_data(app_id)

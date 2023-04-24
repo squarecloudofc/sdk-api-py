@@ -51,6 +51,7 @@ class AppData:
     cluster: Literal['free-', 'florida-1']
     isWebsite: bool
     avatar: str
+    domain: str | None = None
 
 
 @dataclass
@@ -71,12 +72,6 @@ class LogsData:
 
     def __eq__(self, other):
         return isinstance(other, LogsData) and self.logs == other.logs
-
-
-@dataclass
-class FullLogsData:
-    """complete logs data class"""
-    logs: str
 
 
 @dataclass

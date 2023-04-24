@@ -21,11 +21,11 @@ class Endpoint:
 
     ENDPOINTS_V2 = {
         'USER_ME': {'METHOD': 'GET', 'PATH': '/user'},
+        'APP_DATA': {'METHOD': 'GET', 'PATH': '/apps/{app_id}'},
         'USER_INFO': {'METHOD': 'GET', 'PATH': '/user/{user_id}'},
 
         'APP_STATUS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/status'},
         'LOGS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/logs'},
-        'FULL_LOGS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/full-logs'},
 
         'START': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/start'},
         'STOP': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/stop'},
@@ -74,10 +74,6 @@ class Endpoint:
     @classmethod
     def logs(cls):
         return cls('LOGS')
-
-    @classmethod
-    def full_logs(cls):
-        return cls('FULL_LOGS')
 
     @classmethod
     def start(cls):
