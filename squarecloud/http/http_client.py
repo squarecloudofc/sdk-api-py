@@ -5,6 +5,7 @@ from typing import Any, Literal
 import aiohttp
 
 from .endpoints import Endpoint, Router
+from ..data import AppData
 from ..errors import (
     NotFoundError,
     RequestError,
@@ -257,4 +258,4 @@ class HTTPClient:
     async def get_app_data(self, app_id: str):
         route: Router = Router(Endpoint('APP_DATA'), app_id=app_id)
         response: Response = await self.request(route)
-        return response
+        return AppData(**response.response.get('app'))

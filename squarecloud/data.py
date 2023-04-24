@@ -56,7 +56,6 @@ class AppData:
         'static',
         'dynamic',
     ]
-    type: Literal['free', 'paid']
     cluster: Literal['free-', 'florida-1']
     domain: str | None
     custom: str | None
