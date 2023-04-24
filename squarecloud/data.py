@@ -35,6 +35,7 @@ class AppData:
     """application data class"""
     id: str
     tag: str
+    desc: str
     ram: int
     lang: Literal[
         'javascript',
