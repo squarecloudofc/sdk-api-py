@@ -303,10 +303,19 @@ class Application(AbstractApplication):
                                             response=response)
         return response
 
-    async def create_file(self, path: str, **kwargs):
-        response: None = await self.client.read_app_file(self.id, path)
+    async def create_file(self, file: File, path: str, **kwargs):
+        response: Response = await self.client.create_app_file(self.id, file,
+                                                               path)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = Endpoint.files_read()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            response=response)
+        return response
+
+    async def delete_file(self, path: str, **kwargs):
+        response: Response = await self.client.delete_app_file(self.id, path)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = Endpoint.files_delete()
             await self._listener.on_capture(endpoint=endpoint,
                                             response=response)
         return response
