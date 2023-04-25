@@ -23,11 +23,11 @@ register/login, after that go
 to `dashboard` > `my account` > `Regenerate API/CLI KEY` and copy the key.
 
 > ## [Documentation](docs/)
-> - [application](docs/application.md)
-> - [capture_listeners](docs/capture_listeners.md)
-> - [client](docs/client.md)
-> - [commit_and_upload](docs/commit_and_upload.md)
-> - [request_listeners](docs/request_listeners.md)
+> - [application](https://github.com/squarecloudofc/wrapper-api-py/blob/main/docs/application.md)
+> - [capture_listeners](https://github.com/squarecloudofc/wrapper-api-py/blob/main/docs/capture_listeners.md)
+> - [client](https://github.com/squarecloudofc/wrapper-api-py/blob/main/docs/client.md)
+> - [commit_and_upload](https://github.com/squarecloudofc/wrapper-api-py/blob/main/docs/commit_and_upload.md)
+> - [request_listeners](https://github.com/squarecloudofc/wrapper-api-py/blob/main/docs/request_listeners.md)
 
 ## Basic usage
 ```python
