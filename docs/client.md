@@ -15,11 +15,6 @@ async def example():
     print(logs)  # LogsData(logs='Hello World!')
     print(logs.logs)  # 'Hello World'
 
-    full_logs = await client.get_logs(app_id)
-    print(
-        full_logs)  # FullLogsData(logs='https://squarecloud.app/dashboard/logs/...')
-    print(full_logs.logs)  # 'https://squarecloud.app/dashboard/logs/...'
-
     status = await client.app_status(app_id)  # StatusData(...)
 
     print(status.ram)  # '70MB'
