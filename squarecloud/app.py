@@ -292,3 +292,11 @@ class Application(AbstractApplication):
             await self._listener.on_capture(endpoint=endpoint,
                                             response=response)
         return response
+
+    async def read_file(self, path: str, **kwargs):
+        response: Response = await self.client.read_app_file(self.id, path)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = Endpoint.files_read()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            response=response)
+        return response
