@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import TYPE_CHECKING, Callable, Literal
 
-from .data import StatusData, LogsData, BackupData
+from .data import StatusData, LogsData, BackupData, AppData
 from .errors import SquareException
 from .http import Response, HTTPClient, Endpoint
 from .listener import ListenerManager, Listener
@@ -17,17 +17,20 @@ class AppCache:
         'status',
         'logs',
         'backup',
+        'data',
     )
 
     def __init__(self):
         self.status: StatusData | None = None
         self.logs: LogsData | None = None
         self.backup: BackupData | None = None
+        self.data: AppData | None = None
 
     def clear(self):
         self.status = None
         self.logs = None
         self.backup = None
+        self.data = None
 
     def update(self, *args):
         for arg in args:
@@ -37,12 +40,15 @@ class AppCache:
                 self.logs = arg
             elif isinstance(arg, BackupData):
                 self.backup = arg
+            elif isinstance(arg, AppData):
+                self.data = arg
             else:
                 types: list = [
                     i.__name__ for i in [
                         StatusData,
                         LogsData,
                         BackupData,
+                        AppData,
                     ]
                 ]
                 raise SquareException(
@@ -165,13 +171,37 @@ class Application(AbstractApplication):
         return self._avatar
 
     def capture(self, endpoint: Endpoint) -> Callable:
+        allowed_endpoints: tuple[Endpoint, Endpoint, Endpoint, Endpoint] = (
+            Endpoint.logs(),
+            Endpoint.app_status(),
+            Endpoint.backup(),
+            Endpoint.app_data()
+        )
+
         def wrapper(func):
+            if endpoint not in allowed_endpoints:
+                raise SquareException(
+                    f'the endpoint to capture must be {allowed_endpoints}')
+
             if not self._listener.get_capture_listener(endpoint):
                 return self._listener.add_capture_listener(endpoint, func)
             raise SquareException(
                 f'Already exists an capture_listener for {endpoint}')
 
         return wrapper
+
+    async def data(self, **kwargs):
+        app_data: AppData = await self.client.app_data(self.id)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = Endpoint.app_data()
+            await self._listener.on_capture(
+                endpoint=endpoint,
+                before=self.cache.data,
+                after=app_data,
+            )
+        if kwargs.get('update_cache', True):
+            self.cache.update(app_data)
+        return app_data
 
     async def logs(self, **kwargs) -> LogsData:
         """get application's logs"""

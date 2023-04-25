@@ -258,4 +258,4 @@ class HTTPClient:
     async def get_app_data(self, app_id: str):
         route: Router = Router(Endpoint('APP_DATA'), app_id=app_id)
         response: Response = await self.request(route)
-        return AppData(**response.response.get('app'))
+        return response

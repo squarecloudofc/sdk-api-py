@@ -1,6 +1,7 @@
 """This module is a wrapper for using the SquareCloud API"""
 from __future__ import annotations
 
+import io
 import logging
 from abc import ABC, abstractmethod
 from io import BytesIO
@@ -127,7 +128,7 @@ class Client(AbstractClient):
 
         return wrapper
 
-    async def me(self, avoid_listener: bool = False) -> UserData:
+    async def me(self, **kwargs) -> UserData:
         """Get your information
 
         Args:
@@ -139,14 +140,14 @@ class Client(AbstractClient):
         response: Response = await self._http.fetch_user_info()
         payload: UserPayload = response.response
         user_data: UserData = UserData(**payload['user'])
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         return user_data
 
     async def user_info(self, user_id: int | None = None,
-                        avoid_listener: bool = False) -> UserData:
+                        **kwargs) -> UserData:
         """
         Get user information
         Args:
@@ -159,14 +160,14 @@ class Client(AbstractClient):
         response: Response = await self._http.fetch_user_info(user_id=user_id)
         payload: UserPayload = response.response
         user_data: UserData = UserData(**payload['user'])
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         return user_data
 
     async def get_logs(self, app_id: str,
-                       avoid_listener: bool = False) -> LogsData:
+                       **kwargs) -> LogsData:
         """
         Get logs for an application
 
@@ -182,14 +183,14 @@ class Client(AbstractClient):
             return LogsData(logs=None)
         payload: LogsPayload = response.response
         logs_data: LogsData = LogsData(**payload)
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         return logs_data
 
     async def app_status(self, app_id: str,
-                         avoid_listener: bool = False) -> StatusData:
+                         **kwargs) -> StatusData:
         """
         Get an application status
 
@@ -203,14 +204,14 @@ class Client(AbstractClient):
         response: Response = await self._http.fetch_app_status(app_id)
         payload: StatusPayload = response.response
         status: StatusData = StatusData(**payload)
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         return status
 
     async def start_app(self, app_id: str,
-                        avoid_listener: bool = False) -> Response:
+                        **kwargs) -> Response:
         """
         Start an application
 
@@ -222,14 +223,14 @@ class Client(AbstractClient):
         """
 
         response: Response = await self._http.start_application(app_id)
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         return response
 
     async def stop_app(self, app_id: str,
-                       avoid_listener: bool = False) -> Response:
+                       **kwargs) -> Response:
         """
         Stop an application
 
@@ -240,14 +241,14 @@ class Client(AbstractClient):
             Response
         """
         response: Response = await self._http.stop_application(app_id)
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         return response
 
     async def restart_app(self, app_id: str,
-                          avoid_listener: bool = False) -> Response:
+                          **kwargs) -> Response:
         """
         Restart an application
 
@@ -258,14 +259,14 @@ class Client(AbstractClient):
             Response
         """
         response: Response = await self._http.restart_application(app_id)
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         return response
 
     async def backup(self, app_id: str,
-                     avoid_listener: bool = False) -> BackupData:
+                     **kwargs) -> BackupData:
         """
         Backup an application
 
@@ -278,14 +279,14 @@ class Client(AbstractClient):
         response: Response = await self._http.backup(app_id)
         payload: BackupPayload = response.response
         backup: BackupData = BackupData(**payload)
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         return backup
 
     async def delete_app(self, app_id: str,
-                         avoid_listener: bool = False) -> Response:
+                         **kwargs) -> Response:
         """
         Delete an application
 
@@ -296,14 +297,14 @@ class Client(AbstractClient):
             Response
         """
         response: Response = await self._http.delete_application(app_id)
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         return response
 
     async def commit(self, app_id: str, file: File,
-                     avoid_listener: bool = False) -> Response:
+                     **kwargs) -> Response:
         """
         Commit an application
 
@@ -315,14 +316,14 @@ class Client(AbstractClient):
             Response
         """
         response: Response = await self._http.commit(app_id, file)
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
         return response
 
     async def app(self, app_id: str,
-                  avoid_listener: bool = False) -> Application:
+                  **kwargs) -> Application:
         """
         Get an application
 
@@ -333,7 +334,7 @@ class Client(AbstractClient):
             Application
         """
         response: Response = await self._http.fetch_user_info()
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
@@ -349,7 +350,7 @@ class Client(AbstractClient):
         return app
 
     async def all_apps(
-            self, avoid_listener: bool = False) -> List[Application]:
+            self, **kwargs) -> List[Application]:
         """
         Get a list of your applications
 
@@ -360,7 +361,7 @@ class Client(AbstractClient):
             List[Application]
         """
         response: Response = await self._http.fetch_user_info()
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
@@ -372,7 +373,7 @@ class Client(AbstractClient):
         return apps
 
     async def upload_app(self, file: File,
-                         avoid_listener: bool = False) -> UploadData:
+                         **kwargs) -> UploadData:
         """
         Upload an application
 
@@ -389,7 +390,7 @@ class Client(AbstractClient):
         if file.name.split('.')[-1] != 'zip':
             raise InvalidFile('the file must be a .zip file')
         response: Response = await self._http.upload(file)
-        if not avoid_listener:
+        if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
@@ -419,7 +420,7 @@ class Client(AbstractClient):
                 'the file must be an string or a squarecloud.File object')
         file_bytes = list(file.bytes.read())
         await self._http.create_app_file(app_id, file_bytes, path)
-        return file
+        file.bytes.close()
 
     async def delete_app_file(self, app_id: str, path: str):
         response: Response = await self._http.file_delete(app_id, path)
@@ -430,5 +431,10 @@ class Client(AbstractClient):
         data = response.response['statistics']
         return StatisticsData(**data)
 
-    async def app_data(self, app_id: str):
-        return await self._http.get_app_data(app_id)
+    async def app_data(self, app_id: str, **kwargs):
+        response: Response = await self._http.get_app_data(app_id)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
+        return AppData(**response.response.get('app'))
