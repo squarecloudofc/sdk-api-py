@@ -283,3 +283,12 @@ class Application(AbstractApplication):
             await self._listener.on_capture(endpoint=endpoint,
                                             response=response)
         return response
+
+    async def files_list(self, path: str, **kwargs):
+        response: Response = await self.client.app_files_list(self.id, path)
+
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = Endpoint.files_list()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            response=response)
+        return response
