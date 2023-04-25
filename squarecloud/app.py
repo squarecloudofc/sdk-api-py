@@ -319,3 +319,11 @@ class Application(AbstractApplication):
             await self._listener.on_capture(endpoint=endpoint,
                                             response=response)
         return response
+
+    async def data(self, **kwargs):
+        response: AppData = await self.client.app_data(self.id)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = Endpoint.app_data()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            response=response)
+        return response
