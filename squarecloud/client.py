@@ -1,7 +1,6 @@
 """This module is a wrapper for using the SquareCloud API"""
 from __future__ import annotations
 
-import io
 import logging
 from abc import ABC, abstractmethod
 from io import BytesIO
@@ -400,34 +399,55 @@ class Client(AbstractClient):
         await self._listener.on_request(endpoint=endpoint, response=response)
         return app
 
-    async def app_files_list(self, app_id: str, path: str):
+    async def app_files_list(self, app_id: str, path: str, **kwargs):
         response: Response = await self._http.fetch_app_files_list(app_id,
                                                                    path)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
 
         if not response.response[0]:  # type ignore
             return
         return [FileInfo(**data) for data in response.response]
 
-    async def read_app_file(self, app_id: str, path: str):
+    async def read_app_file(self, app_id: str, path: str, **kwargs):
         response: Response = await self._http.read_app_file(app_id, path)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         if response.response:
             return BytesIO(bytes(response.response.get('data')))
 
     async def create_app_file(self, app_id: str, file: File,
-                              path: str):
+                              path: str, **kwargs):
         if not isinstance(file, File):
             raise SquareException(
                 'the file must be an string or a squarecloud.File object')
         file_bytes = list(file.bytes.read())
-        await self._http.create_app_file(app_id, file_bytes, path)
+        response: Response = await self._http.create_app_file(app_id,
+                                                              file_bytes, path)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         file.bytes.close()
 
-    async def delete_app_file(self, app_id: str, path: str):
+    async def delete_app_file(self, app_id: str, path: str, **kwargs):
         response: Response = await self._http.file_delete(app_id, path)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         return response
 
-    async def statistics(self):
+    async def statistics(self, **kwargs):
         response: Response = await self._http.get_statistics()
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(endpoint=endpoint,
+                                            response=response)
         data = response.response['statistics']
         return StatisticsData(**data)
 
