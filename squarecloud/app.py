@@ -286,7 +286,8 @@ class Application(AbstractApplication):
         return response
 
     async def files_list(self, path: str, **kwargs):
-        response: list[FileInfo] = await self.client.app_files_list(self.id, path)
+        response: list[FileInfo] = await self.client.app_files_list(self.id,
+                                                                    path)
 
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = Endpoint.files_list()
@@ -296,6 +297,14 @@ class Application(AbstractApplication):
 
     async def read_file(self, path: str, **kwargs):
         response: BytesIO = await self.client.read_app_file(self.id, path)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = Endpoint.files_read()
+            await self._listener.on_capture(endpoint=endpoint,
+                                            response=response)
+        return response
+
+    async def create_file(self, path: str, **kwargs):
+        response: None = await self.client.read_app_file(self.id, path)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = Endpoint.files_read()
             await self._listener.on_capture(endpoint=endpoint,
