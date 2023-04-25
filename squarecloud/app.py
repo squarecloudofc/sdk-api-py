@@ -1,7 +1,8 @@
 from abc import ABC
+from io import BytesIO
 from typing import TYPE_CHECKING, Callable, Literal
 
-from .data import StatusData, LogsData, BackupData, AppData
+from .data import StatusData, LogsData, BackupData, AppData, FileInfo
 from .errors import SquareException
 from .http import Response, HTTPClient, Endpoint
 from .listener import ListenerManager, Listener
@@ -285,7 +286,7 @@ class Application(AbstractApplication):
         return response
 
     async def files_list(self, path: str, **kwargs):
-        response: Response = await self.client.app_files_list(self.id, path)
+        response: list[FileInfo] = await self.client.app_files_list(self.id, path)
 
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = Endpoint.files_list()
@@ -294,7 +295,7 @@ class Application(AbstractApplication):
         return response
 
     async def read_file(self, path: str, **kwargs):
-        response: Response = await self.client.read_app_file(self.id, path)
+        response: BytesIO = await self.client.read_app_file(self.id, path)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = Endpoint.files_read()
             await self._listener.on_capture(endpoint=endpoint,
