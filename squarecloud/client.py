@@ -386,7 +386,8 @@ class Client(AbstractClient):
         if not isinstance(file, File):
             raise InvalidFile(
                 f'you need provide an {File.__name__} object')
-        if file.name.split('.')[-1] != 'zip':
+        # Se for io.BytesIO o file.filename é nulo.
+        if (file.filename is not None) and (file.filename.split('.')[-1] != 'zip'):
             raise InvalidFile('the file must be a .zip file')
         response: Response = await self._http.upload(file)
         if not kwargs.get('avoid_listener'):
