@@ -54,7 +54,7 @@ class HTTPClient:
         if route.endpoint in (Endpoint.commit(), Endpoint.upload()):
             file = kwargs.pop('file')
             form = aiohttp.FormData()
-            form.add_field('file', file.bytes, filename=file.name)
+            form.add_field('file', file.bytes, filename=file.filename)
             kwargs['data'] = form
         async with self.__session(headers=headers) as session:
             async with session.request(url=route.url, method=route.method,
