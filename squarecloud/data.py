@@ -35,7 +35,6 @@ class AppData:
     """application data class"""
     id: str
     name: str
-    desc: str
     avatar: str
     owner: str
     cluster: Literal[
@@ -61,6 +60,7 @@ class AppData:
     gitIntegration: bool
     domain: str | None = None
     custom: str | None = None
+    desc: str | None = None
 
 
 @dataclass

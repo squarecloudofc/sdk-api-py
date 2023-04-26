@@ -88,7 +88,6 @@ class Application(AbstractApplication):
             http: HTTPClient,
             id: str,
             tag: str,
-            desc: str,
             ram: int,
             lang: Literal[
                 'javascript',
@@ -104,6 +103,7 @@ class Application(AbstractApplication):
             cluster: Literal['free-', 'florida-1'],
             isWebsite: bool,
             avatar: str,
+            desc: str | None = None,
     ):
         self._id = id
         self._tag = tag
