@@ -57,10 +57,10 @@ class AppData:
         'dynamic',
     ]
     cluster: Literal['free-', 'florida-1']
-    domain: str | None
-    custom: str | None
     isWebsite: bool
     gitIntegration: bool
+    domain: str | None = None
+    custom: str | None = None
 
 
 @dataclass
@@ -69,15 +69,15 @@ class UserData:
     id: int
     tag: str
     locale: str
-    email: str | None
     plan: PlanData
     blocklist: bool
+    email: str | None = None
 
 
 @dataclass
 class LogsData:
     """logs data class"""
-    logs: str | None
+    logs: str | None = None
 
     def __eq__(self, other):
         return isinstance(other, LogsData) and self.logs == other.logs
@@ -97,8 +97,8 @@ class UploadData:
     avatar: str
     ram: int
     cpu: int
-    subdomain: str | None
-    description: str | None
+    subdomain: str | None = None
+    description: str | None = None
 
 
 @dataclass
