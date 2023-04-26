@@ -93,12 +93,12 @@ class BackupData:
 class UploadData:
     id: str
     tag: str
-    description: str | None
     language: str
     avatar: str
-    subdomain: str | None
     ram: int
     cpu: int
+    subdomain: str | None
+    description: str | None
 
 
 @dataclass
