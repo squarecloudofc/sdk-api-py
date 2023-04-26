@@ -44,7 +44,7 @@ def create_config_file(
         display_name: str,
         main: str,
         memory: int,
-        version: Literal['recommended', 'latest'],
+        version: Literal['recommended', 'latest'] = 'recommended',
         avatar: str | None = None,
         description: str | None = None,
         subdomain: str | None = None,
