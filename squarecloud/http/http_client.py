@@ -5,7 +5,6 @@ from typing import Any, Literal
 import aiohttp
 
 from .endpoints import Endpoint, Router
-from ..data import AppData
 from ..errors import (
     NotFoundError,
     RequestError,
@@ -26,7 +25,7 @@ class Response:
         self.status: Literal['success', 'error'] = data.get('status')
         self.code: int = data.get('code')
         self.message: str = data.get('message')
-        self.response: dict[str, Any] = data.get('response')
+        self.response: dict[str, Any] | list[Any] = data.get('response')
 
     def __repr__(self):
         return f'{Response.__name__}({self.status})'
