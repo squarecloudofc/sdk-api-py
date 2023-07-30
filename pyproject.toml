@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "squarecloud-api"
+version = "3.0.2"
+description = "SquareCloud API wrapper"
+authors = ["Robert Nogueira <robertlucasnogueira@gmail.com>"]
+license = "MIT License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+aiohttp = "3.8.3"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
