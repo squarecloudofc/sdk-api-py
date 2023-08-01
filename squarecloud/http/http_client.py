@@ -9,7 +9,7 @@ from ..errors import (
     NotFoundError,
     RequestError,
     BadRequestError,
-    AuthenticationFailure
+    AuthenticationFailure,
 )
 from ..logs import logger
 from ..payloads import RawResponseData
@@ -68,8 +68,9 @@ class HTTPClient:
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
 
-    async def request(self, route: Router,
-                      **kwargs) -> Response | None | bytes:
+    async def request(
+        self, route: Router, **kwargs
+    ) -> Response | None | bytes:
         """
         Sends a request to the Square API and returns the response.
 
@@ -86,15 +87,16 @@ class HTTPClient:
             form.add_field('file', file.bytes, filename=file.filename)
             kwargs['data'] = form
         async with self.__session(headers=headers) as session:
-            async with session.request(url=route.url, method=route.method,
-                                       **kwargs) as resp:
+            async with session.request(
+                url=route.url, method=route.method, **kwargs
+            ) as resp:
                 status_code = resp.status
                 data: RawResponseData = await resp.json()
                 extra = {
                     'status': data.get('status'),
                     'route': route.url,
                     'code': data.get('code'),
-                    'request_message': data.get('message', '')
+                    'request_message': data.get('message', ''),
                 }
                 match status_code:
                     case 200:
@@ -116,9 +118,11 @@ class HTTPClient:
                         msg = f'route [{route.endpoint.name}] returned 400, [{data.get("code")}]'
                         raise BadRequestError(msg)
                     case _:
-                        msg = f'An unexpected error occurred while requesting {route.url}, ' \
-                              f'route: [{route.endpoint.name}], status: {data.get("statusCode")}\n' \
-                              f'Error: {data.get("error")}'
+                        msg = (
+                            f'An unexpected error occurred while requesting {route.url}, '
+                            f'route: [{route.endpoint.name}], status: {data.get("statusCode")}\n'
+                            f'Error: {data.get("error")}'
+                        )
                         raise RequestError(msg)
                 return response
 
@@ -286,8 +290,9 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def create_app_file(self, app_id: str, file: list[bytes],
-                              path: str) -> Response:
+    async def create_app_file(
+        self, app_id: str, file: list[bytes], path: str
+    ) -> Response:
         """
         The create_app_file function creates a file in the specified app.
 
@@ -298,8 +303,9 @@ class HTTPClient:
         :return: A Response object
         """
         route: Router = Router(Endpoint.files_create(), app_id=app_id)
-        response: Response = await self.request(route, json={'buffer': file,
-                                                             'path': path})
+        response: Response = await self.request(
+            route, json={'buffer': file, 'path': path}
+        )
         return response
 
     async def file_delete(self, app_id: str, path: str) -> Response:
@@ -311,8 +317,9 @@ class HTTPClient:
         :param path: str: Specify the path of the file to be deleted
         :return: A Response object
         """
-        route: Router = Router(Endpoint.files_delete(), app_id=app_id,
-                               path=path)
+        route: Router = Router(
+            Endpoint.files_delete(), app_id=app_id, path=path
+        )
         response: Response = await self.request(route)
         return response
 

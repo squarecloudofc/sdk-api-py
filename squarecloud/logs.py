@@ -41,7 +41,8 @@ class CustomLogFormatter(logging.Formatter):
             format_body = self.FORMAT_ERROR
         # log_fmt = PURPLE + format_body + END
         formatter = logging.Formatter(
-            '\033[0;35m [%(asctime)s]: \033[m ' + format_body)
+            '\033[0;35m [%(asctime)s]: \033[m ' + format_body
+        )
         return formatter.format(record)
 
 

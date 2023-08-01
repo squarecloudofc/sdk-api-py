@@ -11,6 +11,7 @@ from typing import Dict, Literal, Any
 @dataclass
 class PlanData:
     """plan data class"""
+
     name: str
     memory: Dict[str, Any]
     duration: Dict[str, Any]
@@ -19,6 +20,7 @@ class PlanData:
 @dataclass
 class StatusData:
     """application status class"""
+
     cpu: str
     ram: str
     status: Literal['created', 'starting', 'restarting', 'running', 'deleting']
@@ -33,15 +35,13 @@ class StatusData:
 @dataclass
 class AppData:
     """application data class"""
+
     id: str
     name: str
     avatar: str
     owner: str
     cluster: Literal[
-        'florida-ds1-1',
-        'florida-ds1-2',
-        'florida-ds1-3',
-        'florida-ds1-free-1'
+        'florida-ds1-1', 'florida-ds1-2', 'florida-ds1-3', 'florida-ds1-free-1'
     ]
     cpu: int
     ram: int
@@ -66,6 +66,7 @@ class AppData:
 @dataclass
 class UserData:
     """user data class"""
+
     id: int
     tag: str
     locale: str
@@ -77,6 +78,7 @@ class UserData:
 @dataclass
 class LogsData:
     """logs data class"""
+
     logs: str | None = None
 
     def __eq__(self, other):
@@ -99,6 +101,7 @@ class LogsData:
 @dataclass
 class BackupData:
     """backup data class"""
+
     downloadURL: str
 
 

@@ -20,9 +20,9 @@ class File:
     __slots__ = ('bytes', 'filename')
 
     def __init__(
-            self,
-            fp: str | bytes | os.PathLike[Any] | io.BufferedIOBase,
-            filename: str | None = None
+        self,
+        fp: str | bytes | os.PathLike[Any] | io.BufferedIOBase,
+        filename: str | None = None,
     ):
 
         """
@@ -42,7 +42,8 @@ class File:
         if isinstance(fp, io.BufferedIOBase):
             if not (fp.seekable() and fp.readable()):
                 raise ValueError(
-                    f'File buffer {fp!r} must be seekable and readable')
+                    f'File buffer {fp!r} must be seekable and readable'
+                )
             self.bytes: io.BufferedIOBase = fp
         else:
             self.bytes = open(fp, 'rb')

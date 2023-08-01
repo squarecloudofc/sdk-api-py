@@ -13,7 +13,9 @@ from .data import (
     UserData,
     LogsData,
     BackupData,
-    UploadData, FileInfo, StatisticsData
+    UploadData,
+    FileInfo,
+    StatisticsData,
 )
 from .errors import ApplicationNotFound, InvalidFile, SquareException
 from .http import HTTPClient, Response
@@ -40,16 +42,16 @@ class AbstractClient(ABC):
 
 
 def create_config_file(
-        path: str,
-        display_name: str,
-        main: str,
-        memory: int,
-        version: Literal['recommended', 'latest'] = 'recommended',
-        avatar: str | None = None,
-        description: str | None = None,
-        subdomain: str | None = None,
-        start: str | None = None,
-        auto_restart: bool | None = None,
+    path: str,
+    display_name: str,
+    main: str,
+    memory: int,
+    version: Literal['recommended', 'latest'] = 'recommended',
+    avatar: str | None = None,
+    description: str | None = None,
+    subdomain: str | None = None,
+    start: str | None = None,
+    auto_restart: bool | None = None,
 ):
     """
     The create_config_file function creates a squarecloud.app file in the
@@ -159,7 +161,8 @@ class Client(AbstractClient):
             if not self._listener.get_request_listener(endpoint):
                 return self._listener.add_request_listener(endpoint, func)
             raise SquareException(
-                f'Already exists an capture_listener for {endpoint}')
+                f'Already exists an capture_listener for {endpoint}'
+            )
 
         return wrapper
 
@@ -176,12 +179,14 @@ class Client(AbstractClient):
         user_data: UserData = UserData(**payload['user'])
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return user_data
 
-    async def user_info(self, user_id: int | None = None,
-                        **kwargs) -> UserData:
+    async def user_info(
+        self, user_id: int | None = None, **kwargs
+    ) -> UserData:
         """
         The user_info function is used to get information about a user.
 
@@ -196,12 +201,12 @@ class Client(AbstractClient):
         user_data: UserData = UserData(**payload['user'])
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return user_data
 
-    async def get_logs(self, app_id: str,
-                       **kwargs) -> LogsData:
+    async def get_logs(self, app_id: str, **kwargs) -> LogsData:
         """
         The get_logs function is used to get logs for an application.
 
@@ -218,12 +223,12 @@ class Client(AbstractClient):
         logs_data: LogsData = LogsData(**payload)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return logs_data
 
-    async def app_status(self, app_id: str,
-                         **kwargs) -> StatusData:
+    async def app_status(self, app_id: str, **kwargs) -> StatusData:
         """
         The app_status function is used to get the status of an application.
 
@@ -237,12 +242,12 @@ class Client(AbstractClient):
         status: StatusData = StatusData(**payload)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return status
 
-    async def start_app(self, app_id: str,
-                        **kwargs) -> Response:
+    async def start_app(self, app_id: str, **kwargs) -> Response:
         """
         The start_app function starts an application.
 
@@ -251,16 +256,16 @@ class Client(AbstractClient):
         :param kwargs: Pass a variable number of keyword arguments to the
         function
         :return: A Response object
-    """
+        """
         response: Response = await self._http.start_application(app_id)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return response
 
-    async def stop_app(self, app_id: str,
-                       **kwargs) -> Response:
+    async def stop_app(self, app_id: str, **kwargs) -> Response:
         """
         The stop_app function stops an application.
 
@@ -272,12 +277,12 @@ class Client(AbstractClient):
         response: Response = await self._http.stop_application(app_id)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return response
 
-    async def restart_app(self, app_id: str,
-                          **kwargs) -> Response:
+    async def restart_app(self, app_id: str, **kwargs) -> Response:
         """
         The restart_app function is used to restart an application.
 
@@ -290,12 +295,12 @@ class Client(AbstractClient):
         response: Response = await self._http.restart_application(app_id)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return response
 
-    async def backup(self, app_id: str,
-                     **kwargs) -> BackupData:
+    async def backup(self, app_id: str, **kwargs) -> BackupData:
         """
         The backup function is used to backup an application.
 
@@ -309,12 +314,12 @@ class Client(AbstractClient):
         backup: BackupData = BackupData(**payload)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return backup
 
-    async def delete_app(self, app_id: str,
-                         **kwargs) -> Response:
+    async def delete_app(self, app_id: str, **kwargs) -> Response:
         """
         The delete_app function deletes an application.
 
@@ -327,12 +332,12 @@ class Client(AbstractClient):
         response: Response = await self._http.delete_application(app_id)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return response
 
-    async def commit(self, app_id: str, file: File,
-                     **kwargs) -> Response:
+    async def commit(self, app_id: str, file: File, **kwargs) -> Response:
         """
         The commit function is used to commit an application.
 
@@ -346,12 +351,12 @@ class Client(AbstractClient):
         response: Response = await self._http.commit(app_id, file)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return response
 
-    async def app(self, app_id: str,
-                  **kwargs) -> Application:
+    async def app(self, app_id: str, **kwargs) -> Application:
         """
         The app function is used to get an application.
 
@@ -364,21 +369,25 @@ class Client(AbstractClient):
         response: Response = await self._http.fetch_user_info()
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         payload: UserPayload = response.response
-        app_data = list(filter(lambda application: application['id'] == app_id,
-                               payload['applications']))
+        app_data = list(
+            filter(
+                lambda application: application['id'] == app_id,
+                payload['applications'],
+            )
+        )
         if not app_data:
             raise ApplicationNotFound
         app_data = app_data.pop()
         app: Application = Application(
-            client=self, http=self._http,
-            **app_data)  # type: ignore
+            client=self, http=self._http, **app_data
+        )  # type: ignore
         return app
 
-    async def all_apps(
-            self, **kwargs) -> List[Application]:
+    async def all_apps(self, **kwargs) -> List[Application]:
         """
         The all_apps function returns a list of all applications that the user
         has access to.
@@ -390,17 +399,18 @@ class Client(AbstractClient):
         response: Response = await self._http.fetch_user_info()
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         payload: UserPayload = response.response
         apps_data: list = payload['applications']
         apps: List[Application] = [
-            Application(client=self, http=self._http, **data) for data
-            in apps_data]
+            Application(client=self, http=self._http, **data)
+            for data in apps_data
+        ]
         return apps
 
-    async def upload_app(self, file: File,
-                         **kwargs) -> UploadData:
+    async def upload_app(self, file: File, **kwargs) -> UploadData:
         """
         The upload_app function uploads an application to the server.
 
@@ -412,18 +422,19 @@ class Client(AbstractClient):
         of the application uploaded
         """
         if not isinstance(file, File):
-            raise InvalidFile(
-                f'you need provide an {File.__name__} object')
+            raise InvalidFile(f'you need provide an {File.__name__} object')
 
         # Se for io.BytesIO o file.filename é nulo.
         if (file.filename is not None) and (
-                file.filename.split('.')[-1] != 'zip'):
+            file.filename.split('.')[-1] != 'zip'
+        ):
             raise InvalidFile('the file must be a .zip file')
         response: Response = await self._http.upload(file)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         payload: UploadPayload = response.response.get('app')
         app: UploadData = UploadData(**payload)
         endpoint: Endpoint = response.route.endpoint
@@ -431,7 +442,8 @@ class Client(AbstractClient):
         return app
 
     async def app_files_list(
-            self, app_id: str, path: str, **kwargs) -> list[FileInfo] | None:
+        self, app_id: str, path: str, **kwargs
+    ) -> list[FileInfo] | None:
         """
         The app_files_list function returns a list of your application files.
 
@@ -442,12 +454,14 @@ class Client(AbstractClient):
         function
         :return: A list of your Application files
         """
-        response: Response = await self._http.fetch_app_files_list(app_id,
-                                                                   path)
+        response: Response = await self._http.fetch_app_files_list(
+            app_id, path
+        )
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
 
         if not response.response[0]:  # type ignore
             return
@@ -468,14 +482,16 @@ class Client(AbstractClient):
         response: Response = await self._http.read_app_file(app_id, path)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         if response.response:
             return BytesIO(bytes(response.response.get('data')))
 
-    async def create_app_file(self, app_id: str, file: File,
-                              path: str, **kwargs) -> Response:
-        """""
+    async def create_app_file(
+        self, app_id: str, file: File, path: str, **kwargs
+    ) -> Response:
+        """ ""
         The create_app_file function creates a new file in the specified
         directory.
 
@@ -489,21 +505,25 @@ class Client(AbstractClient):
         """
         if not isinstance(file, File):
             raise SquareException(
-                'the file must be an string or a squarecloud.File object')
+                'the file must be an string or a squarecloud.File object'
+            )
         file_bytes = list(file.bytes.read())
-        response: Response = await self._http.create_app_file(app_id,
-                                                              file_bytes, path)
+        response: Response = await self._http.create_app_file(
+            app_id, file_bytes, path
+        )
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         file.bytes.close()
 
         return response
 
     async def delete_app_file(
-            self, app_id: str, path: str, **kwargs) -> Response:
-        """"
+        self, app_id: str, path: str, **kwargs
+    ) -> Response:
+        """ "
         The delete_app_file function deletes a file in the specified directory.
 
         :param self: Refer to the instance of the class
@@ -517,8 +537,9 @@ class Client(AbstractClient):
         response: Response = await self._http.file_delete(app_id, path)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return response
 
     async def statistics(self, **kwargs) -> StatisticsData:
@@ -533,13 +554,14 @@ class Client(AbstractClient):
         response: Response = await self._http.get_statistics()
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         data = response.response['statistics']
         return StatisticsData(**data)
 
     async def app_data(self, app_id: str, **kwargs) -> AppData:
-        """"
+        """ "
         The app_data function is used to get application data.
 
         :param self: Refer to the instance of the class
@@ -551,6 +573,7 @@ class Client(AbstractClient):
         response: Response = await self._http.get_app_data(app_id)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
-            await self._listener.on_request(endpoint=endpoint,
-                                            response=response)
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
         return AppData(**response.response.get('app'))

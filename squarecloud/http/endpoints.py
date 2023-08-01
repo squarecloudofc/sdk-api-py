@@ -23,28 +23,32 @@ class Endpoint:
         'USER_ME': {'METHOD': 'GET', 'PATH': '/user'},
         'APP_DATA': {'METHOD': 'GET', 'PATH': '/apps/{app_id}'},
         'USER_INFO': {'METHOD': 'GET', 'PATH': '/user/{user_id}'},
-
         'APP_STATUS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/status'},
         'LOGS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/logs'},
-
         'START': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/start'},
         'STOP': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/stop'},
         'RESTART': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/restart'},
-
         'BACKUP': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/backup'},
         'COMMIT': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/commit'},
         'DELETE_APP': {'METHOD': 'DELETE', 'PATH': '/apps/{app_id}/delete'},
         'UPLOAD_APP': {'METHOD': 'POST', 'PATH': '/apps/upload'},
-
         'STATISTICS': {'METHOD': 'GET', 'PATH': '/service/statistics'},
-        'FILES_LIST': {'METHOD': 'GET',
-                       'PATH': '/apps/{app_id}/files/list?path={path}'},
-        'FILES_READ': {'METHOD': 'GET',
-                       'PATH': '/apps/{app_id}/files/read?path={path}'},
-        'FILES_CREATE': {'METHOD': 'POST',
-                         'PATH': '/apps/{app_id}/files/create'},
-        'FILES_DELETE': {'METHOD': 'DELETE',
-                         'PATH': '/apps/{app_id}/files/delete?path={path}'}
+        'FILES_LIST': {
+            'METHOD': 'GET',
+            'PATH': '/apps/{app_id}/files/list?path={path}',
+        },
+        'FILES_READ': {
+            'METHOD': 'GET',
+            'PATH': '/apps/{app_id}/files/read?path={path}',
+        },
+        'FILES_CREATE': {
+            'METHOD': 'POST',
+            'PATH': '/apps/{app_id}/files/create',
+        },
+        'FILES_DELETE': {
+            'METHOD': 'DELETE',
+            'PATH': '/apps/{app_id}/files/delete?path={path}',
+        },
     }
 
     def __init__(self, name: str) -> None:
@@ -60,7 +64,7 @@ class Endpoint:
         :param name: str: Set the name of the endpoint
         :return: None
         """
-        endpoint: Dict[str: Dict[str, Any]] = self.ENDPOINTS_V2[name]
+        endpoint: Dict[str : Dict[str, Any]] = self.ENDPOINTS_V2[name]
         self.name: str = name
         self.method: str = endpoint['METHOD']
         self.path: str = endpoint['PATH']
@@ -159,6 +163,7 @@ class Endpoint:
 
 class Router:
     """Represents a route"""
+
     # BASE_V1: str = 'https://api.squarecloud.app/v1/public'
     BASE_V2: str = 'https://api.squarecloud.app/v2'
 
