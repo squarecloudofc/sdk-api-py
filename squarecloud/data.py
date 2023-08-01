@@ -80,6 +80,19 @@ class LogsData:
     logs: str | None = None
 
     def __eq__(self, other):
+        """
+        The __eq__ function is a special function that allows us to compare
+        two objects of the same class.
+        In this case, we are comparing two LogsData objects. The __eq__
+        function returns True if the logs
+        of both LogsData objects are equal and False otherwise.
+
+        :param self: Refer to the object itself
+        :param other: Compare the current instance of LogsData to another
+        instance of LogsData
+        :return: A boolean value that is true if the two objects are equal and
+        false otherwise
+        """
         return isinstance(other, LogsData) and self.logs == other.logs
 
 

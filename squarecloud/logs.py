@@ -12,6 +12,9 @@ END = '\033[m'
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=line-too-long
+
+
 class CustomLogFormatter(logging.Formatter):
     """A custom logging formatter"""
 
@@ -19,6 +22,19 @@ class CustomLogFormatter(logging.Formatter):
     FORMAT_ERROR = f'{RED}[%(levelname)s]  %(status)s %(message)s %(route)s, error: %(code)s{END}'
 
     def format(self, record: logging.LogRecord) -> str:
+
+        """
+        The format function is called by the logging system to format a log
+        record.
+        The function should return a string that will be used as the message
+        of the log record.
+
+
+        :param self: Represent the instance of the class
+        :param record: logging.LogRecord: Pass the log record to the format
+        function
+        :return: A string that will be used to format the log message
+        """
         if record.status == 'success':
             format_body = self.FORMAT_SUCCESS
         else:

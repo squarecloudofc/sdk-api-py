@@ -52,22 +52,29 @@ def create_config_file(
         auto_restart: bool | None = None,
 ):
     """
-    Creates a config file (squarecloud.app)
-    Args:
+    The create_config_file function creates a squarecloud.app file in the
+    specified path, with the given parameters.
+    The function takes in 8 arguments:
 
-        display_name: name of your application
-        main: name of your main file
-        memory: amount of memory to be allocated
-        version: version of python and node.js, you can choose between
-        'recommended' and 'latest'
-        avatar: your application avatar url
-        description: your application description
-        subdomain: subdomain of your application
-        start: the command to start your application
-        path: the path where the file should be saved
-
-    Returns:
-        TextIOWrapper
+    :param path: str: Specify the path to the folder where you want to create
+    your config file
+    :param display_name: str: Set the display name of your app
+    :param main: str: Specify the file that will be executed when the app
+    is started
+    :param memory: int: Set the memory of the app
+    :param version: Literal['recommended', 'latest']: Ensure that the version
+    is either 'recommended' or 'latest'.
+    :param avatar: str | None: Specify the avatar of the application
+    :param description: str | None: Specify a description for the app
+    :param subdomain: str | None: Specify the subdomain of your app
+    :param start: str | None: Specify the command that should be run when the
+    application starts
+    :param auto_restart: bool | None: Determine if the app should restart
+    automatically after a crash
+    :param : Specify the path to the directory where you want to create a
+    configuration file
+    :return: A File object
+    :doc-author: Trelent
     """
     content: str = ''
     optionals: dict[str, Any] = {
@@ -94,12 +101,18 @@ class Client(AbstractClient):
     """A client for interacting with the SquareCloud API."""
 
     def __init__(self, api_key: str, debug: bool = True) -> None:
-        """With this class you can manage/get information from
-        your applications
 
-        Args:
-            api_key:Your API key, get in https://squarecloud.app/dashboard/me
-            debug: if True logs are generated with information about requests
+        """
+        The __init__ function is called when the class is instantiated.
+        It sets up the instance of the class, and defines all of its
+        attributes.
+
+
+        :param self: Refer to the instance of the class
+        :param api_key: str: Your API key, get in:
+         https://squarecloud.app/dashboard/me
+        :param debug: bool: Set the logging level to debug
+        :return: None
         """
         self.debug = debug
         self._api_key = api_key
@@ -111,15 +124,38 @@ class Client(AbstractClient):
     @property
     def api_key(self) -> str:
         """
-        Get client api key
+        The api_key function returns the api key for the client.
 
-        Returns:
-            self.__api_key
+        :param self: Refer to the instance of the class
+        :return: The api key
         """
         return self._api_key
 
     def on_request(self, endpoint: Endpoint):
+        """
+        The on_request function is a decorator that allows you to register a
+        function as an endpoint listener.
+
+        :param self: Refer to the instance of the class
+        :param endpoint: Endpoint: Specify the endpoint that will be used to
+        capture the request
+        :return: A wrapper function
+        """
+
         def wrapper(func: Callable):
+            """
+            The wrapper function is a decorator that wraps the function passed
+            to it.
+            It takes in a function, and returns another function. The wrapper
+            will call
+            the wrapped function with all of its arguments, and then do
+            something extra
+            with the result.
+
+            :param func: Callable: Specify the type of the parameter
+            :return: The function itself, if the endpoint is not already
+            registered
+            """
             if not self._listener.get_request_listener(endpoint):
                 return self._listener.add_request_listener(endpoint, func)
             raise SquareException(
@@ -128,13 +164,12 @@ class Client(AbstractClient):
         return wrapper
 
     async def me(self, **kwargs) -> UserData:
-        """Get your information
+        """
+        This function is used to get your information.
 
-        Args:
-            avoid_listener: whether to avoid the request listener
-
-        Returns:
-            UserData
+        :param self: Refer to the instance of the class
+        :param kwargs: Pass in a dictionary of arguments
+        :return: A userdata object
         """
         response: Response = await self._http.fetch_user_info()
         payload: UserPayload = response.response
@@ -148,13 +183,13 @@ class Client(AbstractClient):
     async def user_info(self, user_id: int | None = None,
                         **kwargs) -> UserData:
         """
-        Get user information
-        Args:
-            user_id: user ID
-            avoid_listener: whether to avoid the request listener
+        The user_info function is used to get information about a user.
 
-        Returns:
-            UserData
+        :param self: Refer to the instance of the class
+        :param user_id: int | None: Specify the user id of the user you want
+        to get information about
+        :param kwargs: Pass in keyword arguments to a function
+        :return: A UserData object
         """
         response: Response = await self._http.fetch_user_info(user_id=user_id)
         payload: UserPayload = response.response
@@ -168,14 +203,13 @@ class Client(AbstractClient):
     async def get_logs(self, app_id: str,
                        **kwargs) -> LogsData:
         """
-        Get logs for an application
+        The get_logs function is used to get logs for an application.
 
-        Args:
-            app_id: the application ID
-            avoid_listener: whether to avoid the request listener
-
-        Returns:
-            LogData
+        :param self: Refer to the instance of the class
+        :param app_id: str: Identify the application id
+        :param kwargs: Pass in any additional parameters that may be required
+        for the function to work
+        :return: A LogsData object, which is a named tuple
         """
         response: Response | None = await self._http.fetch_logs(app_id)
         if not response:
@@ -191,14 +225,12 @@ class Client(AbstractClient):
     async def app_status(self, app_id: str,
                          **kwargs) -> StatusData:
         """
-        Get an application status
+        The app_status function is used to get the status of an application.
 
-        Args:
-            app_id: the application ID
-            avoid_listener: whether to avoid the request listener
-
-        Returns:
-            StatusData
+        :param self: Refer to the instance of the class
+        :param app_id: str: Specify the application id
+        :param kwargs: Pass in keyword arguments to a function
+        :return: A StatusData object
         """
         response: Response = await self._http.fetch_app_status(app_id)
         payload: StatusPayload = response.response
@@ -212,15 +244,14 @@ class Client(AbstractClient):
     async def start_app(self, app_id: str,
                         **kwargs) -> Response:
         """
-        Start an application
+        The start_app function starts an application.
 
-        Args:
-            app_id: the application ID
-            avoid_listener: whether to avoid the request listener
-        Returns:
-            Response
-        """
-
+        :param self: Refer to the instance of the class
+        :param app_id: str: Identify the application to start
+        :param kwargs: Pass a variable number of keyword arguments to the
+        function
+        :return: A Response object
+    """
         response: Response = await self._http.start_application(app_id)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -231,13 +262,12 @@ class Client(AbstractClient):
     async def stop_app(self, app_id: str,
                        **kwargs) -> Response:
         """
-        Stop an application
+        The stop_app function stops an application.
 
-        Args:
-            app_id: the application ID
-            avoid_listener: whether to avoid the request listener
-        Returns:
-            Response
+        :param self: Refer to the instance of the class
+        :param app_id: str: Specify the application id
+        :param kwargs: Pass in keyword arguments to the function
+        :return: A Response object
         """
         response: Response = await self._http.stop_application(app_id)
         if not kwargs.get('avoid_listener'):
@@ -249,13 +279,13 @@ class Client(AbstractClient):
     async def restart_app(self, app_id: str,
                           **kwargs) -> Response:
         """
-        Restart an application
+        The restart_app function is used to restart an application.
 
-        Args:
-            avoid_listener: whether to avoid the request listener
-            app_id: the application ID
-        Returns:
-            Response
+        :param self: Refer to the instance of the class
+        :param app_id: str: Specify the application id
+        :param kwargs: Pass a variable number of keyword arguments to the
+        function
+        :return: A Response object
         """
         response: Response = await self._http.restart_application(app_id)
         if not kwargs.get('avoid_listener'):
@@ -267,13 +297,12 @@ class Client(AbstractClient):
     async def backup(self, app_id: str,
                      **kwargs) -> BackupData:
         """
-        Backup an application
+        The backup function is used to backup an application.
 
-        Args:
-            app_id: the application ID
-            avoid_listener: whether to avoid the request listener
-        Returns:
-            Backup
+        :param self: Refer to the instance of the class
+        :param app_id: str: Identify the application to be backed up
+        :param kwargs: Pass in additional parameters to the function
+        :return: A BackupData object
         """
         response: Response = await self._http.backup(app_id)
         payload: BackupPayload = response.response
@@ -287,13 +316,13 @@ class Client(AbstractClient):
     async def delete_app(self, app_id: str,
                          **kwargs) -> Response:
         """
-        Delete an application
+        The delete_app function deletes an application.
 
-        Args:
-            app_id: the application ID
-            avoid_listener: whether to avoid the request listener
-        Returns:
-            Response
+        :param self: Refer to the instance of the class
+        :param app_id: str: Specify the application id
+        :param kwargs: Pass a variable number of keyword arguments to the
+        function
+        :return: A Response object
         """
         response: Response = await self._http.delete_application(app_id)
         if not kwargs.get('avoid_listener'):
@@ -305,14 +334,14 @@ class Client(AbstractClient):
     async def commit(self, app_id: str, file: File,
                      **kwargs) -> Response:
         """
-        Commit an application
+        The commit function is used to commit an application.
 
-        Args:
-            app_id: the application ID
-            file: the file object to be committed
-            avoid_listener: whether to avoid the request listener
-        Returns:
-            Response
+        :param self: Bind the method commit to an object
+        :param app_id: str: Identify the application
+        :param file: File: Specify the file object to be committed
+        :param kwargs: Pass a variable number of keyword arguments to the
+        function
+        :return: A response object
         """
         response: Response = await self._http.commit(app_id, file)
         if not kwargs.get('avoid_listener'):
@@ -324,13 +353,13 @@ class Client(AbstractClient):
     async def app(self, app_id: str,
                   **kwargs) -> Application:
         """
-        Get an application
+        The app function is used to get an application.
 
-        Args:
-            avoid_listener: whether to avoid the request listener
-            app_id: the application ID
-        Returns:
-            Application
+        :param self: Refer to the instance of the class
+        :param app_id: str: The application id
+        :param kwargs: Pass a variable number of keyword arguments to the
+        function
+        :return: An application object
         """
         response: Response = await self._http.fetch_user_info()
         if not kwargs.get('avoid_listener'):
@@ -351,13 +380,12 @@ class Client(AbstractClient):
     async def all_apps(
             self, **kwargs) -> List[Application]:
         """
-        Get a list of your applications
+        The all_apps function returns a list of all applications that the user
+        has access to.
 
-        Args:
-            avoid_listener: whether to avoid the request listener
-
-        Returns:
-            List[Application]
+        :param self: Refer to the instance of the class
+        :param kwargs: Pass in the avoid_listener parameter
+        :return: A list of Application objects
         """
         response: Response = await self._http.fetch_user_info()
         if not kwargs.get('avoid_listener'):
@@ -374,20 +402,22 @@ class Client(AbstractClient):
     async def upload_app(self, file: File,
                          **kwargs) -> UploadData:
         """
-        Upload an application
+        The upload_app function uploads an application to the server.
 
-        Args:
-            file: the file to be uploaded
-            avoid_listener:whether to avoid the request listener
-
-        Returns:
-            UploadData
+        :param self: Refer to the instance of the class
+        :param file: File: Upload a file
+        :param kwargs: Pass a variable number of keyword arguments to a
+        function
+        :return: An UploadData object, which is a class that contains the data
+        of the application uploaded
         """
         if not isinstance(file, File):
             raise InvalidFile(
                 f'you need provide an {File.__name__} object')
+
         # Se for io.BytesIO o file.filename é nulo.
-        if (file.filename is not None) and (file.filename.split('.')[-1] != 'zip'):
+        if (file.filename is not None) and (
+                file.filename.split('.')[-1] != 'zip'):
             raise InvalidFile('the file must be a .zip file')
         response: Response = await self._http.upload(file)
         if not kwargs.get('avoid_listener'):
@@ -400,7 +430,18 @@ class Client(AbstractClient):
         await self._listener.on_request(endpoint=endpoint, response=response)
         return app
 
-    async def app_files_list(self, app_id: str, path: str, **kwargs):
+    async def app_files_list(
+            self, app_id: str, path: str, **kwargs) -> list[FileInfo] | None:
+        """
+        The app_files_list function returns a list of your application files.
+
+        :param self: Refer to the instance of the class
+        :param app_id: str: Identify the application id
+        :param path: str: Specify the path to the file
+        :param kwargs: Pass a variable number of keyword arguments to a
+        function
+        :return: A list of your Application files
+        """
         response: Response = await self._http.fetch_app_files_list(app_id,
                                                                    path)
         if not kwargs.get('avoid_listener'):
@@ -412,7 +453,18 @@ class Client(AbstractClient):
             return
         return [FileInfo(**data) for data in response.response]
 
-    async def read_app_file(self, app_id: str, path: str, **kwargs):
+    async def read_app_file(self, app_id: str, path: str, **kwargs) -> BytesIO:
+        """
+        The read_app_file function reads a file from the specified path and
+        returns a BytesIO representation.
+
+        :param self: Refer to the instance of the class
+        :param app_id: str: Specify the application id
+        :param path: str: Specify the path of the file to be read
+        :param kwargs: Pass in additional arguments to the function
+        :return: A BytesIO representation of the file
+        :doc-author: Trelent
+        """
         response: Response = await self._http.read_app_file(app_id, path)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -422,7 +474,19 @@ class Client(AbstractClient):
             return BytesIO(bytes(response.response.get('data')))
 
     async def create_app_file(self, app_id: str, file: File,
-                              path: str, **kwargs):
+                              path: str, **kwargs) -> Response:
+        """""
+        The create_app_file function creates a new file in the specified
+        directory.
+
+        :param self: Refer to the instance of the class
+        :param app_id: str: Specify the application id
+        :param file: File: Pass the file to be created
+        :param path: str: Specify the directory to create the file in
+        :param kwargs: Pass a variable number of keyword arguments to the
+        function
+        :return: A Response object
+        """
         if not isinstance(file, File):
             raise SquareException(
                 'the file must be an string or a squarecloud.File object')
@@ -435,7 +499,21 @@ class Client(AbstractClient):
                                             response=response)
         file.bytes.close()
 
-    async def delete_app_file(self, app_id: str, path: str, **kwargs):
+        return response
+
+    async def delete_app_file(
+            self, app_id: str, path: str, **kwargs) -> Response:
+        """"
+        The delete_app_file function deletes a file in the specified directory.
+
+        :param self: Refer to the instance of the class
+        :param app_id: str: Specify the application id
+        :param path: str: Specify the directory where the file should be
+        deleted
+        :param kwargs: Pass a variable number of keyword arguments to the
+        function
+        :return: A Response object
+        """
         response: Response = await self._http.file_delete(app_id, path)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -443,7 +521,15 @@ class Client(AbstractClient):
                                             response=response)
         return response
 
-    async def statistics(self, **kwargs):
+    async def statistics(self, **kwargs) -> StatisticsData:
+        """
+        The statistics function returns a StatisticsData object
+
+        :param self: Represent the instance of a class
+        :param kwargs: Pass in a dictionary of parameters
+        :return: A StatisticsData object, which is a class that contains all
+        the data returned by the endpoint
+        """
         response: Response = await self._http.get_statistics()
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -452,7 +538,16 @@ class Client(AbstractClient):
         data = response.response['statistics']
         return StatisticsData(**data)
 
-    async def app_data(self, app_id: str, **kwargs):
+    async def app_data(self, app_id: str, **kwargs) -> AppData:
+        """"
+        The app_data function is used to get application data.
+
+        :param self: Refer to the instance of the class
+        :param app_id: str: The application id
+        :param kwargs: Pass a variable number of keyword arguments to the
+        function
+        :return: An AppData object
+        """
         response: Response = await self._http.get_app_data(app_id)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint

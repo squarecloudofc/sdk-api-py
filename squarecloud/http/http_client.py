@@ -20,6 +20,18 @@ class Response:
     """Represents a request response"""
 
     def __init__(self, data: RawResponseData, route: Router) -> None:
+        """
+        The __init__ function is called when the class is instantiated.
+        It sets up the instance of the class, and defines all of its
+        attributes.
+
+
+        :param self: Represent the instance of the class
+        :param data: RawResponseData: Pass the data from the response to this
+        class
+        :param route: Router: Store the route of the request
+        :return: None
+        """
         self.data = data
         self.route: Router = route
         self.status: Literal['success', 'error'] = data.get('status')
@@ -28,6 +40,14 @@ class Response:
         self.response: dict[str, Any] | list[Any] = data.get('response')
 
     def __repr__(self):
+        """
+        The __repr__ function is used to compute the &quot;official&quot;
+        string representation of an object.
+        This is how you would make an object of the class.
+
+        :param self: Refer to the instance of the class
+        :return: The name of the class and the status
+        """
         return f'{Response.__name__}({self.status})'
 
 
@@ -35,6 +55,16 @@ class HTTPClient:
     """A client that handles requests and responses"""
 
     def __init__(self, api_key: str) -> None:
+        """
+        The __init__ function is called when the class is instantiated.
+        It sets up the class with all of its attributes and other things it
+        needs to function properly.
+
+        :param self: Represent the instance of the class
+        :param api_key: str: Store the api key that is passed in when the
+        class is instantiated
+        :return: None
+        """
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
 
@@ -214,7 +244,7 @@ class HTTPClient:
         response: Response = await self.request(route, file=file)
         return response
 
-    async def upload(self, file: File):
+    async def upload(self, file: File) -> Response:
         """
         Make a request to UPLOAD route
         Args:
@@ -227,34 +257,87 @@ class HTTPClient:
         response: Response = await self.request(route, file=file)
         return response
 
-    async def fetch_app_files_list(self, app_id: str, path: str):
+    async def fetch_app_files_list(self, app_id: str, path: str) -> Response:
+        """
+        The fetch_app_files_list function returns a list of files in the
+        specified path.
+
+        :param self: Represent the instance of the class
+        :param app_id: str: Specify the application id to be used in the
+        request
+        :param path: str: Specify the path of the file
+        :return: A Response object
+        """
         route: Router = Router(Endpoint.files_list(), app_id=app_id, path=path)
-        response = await self.request(route)
+        response: Response = await self.request(route)
         return response
 
-    async def read_app_file(self, app_id: str, path: str):
+    async def read_app_file(self, app_id: str, path: str) -> Response:
+        """
+        The read_app_file function reads the contents of a file in an app.
+
+        :param self: Represent the instance of the class
+        :param app_id: str: Specify the app id of the application you want to
+        read from
+        :param path: str: Specify the path of the file to be read
+        :return: A Response object
+        """
         route: Router = Router(Endpoint.files_read(), app_id=app_id, path=path)
-        response = await self.request(route)
+        response: Response = await self.request(route)
         return response
 
-    async def create_app_file(self, app_id: str, file: list[bytes], path: str):
+    async def create_app_file(self, app_id: str, file: list[bytes],
+                              path: str) -> Response:
+        """
+        The create_app_file function creates a file in the specified app.
+
+        :param self: Reference the object that is calling the function
+        :param app_id: str: Specify the app that you want to create a file for
+        :param file: list[bytes]: Specify the file to be uploaded
+        :param path: str: Specify the path of the file
+        :return: A Response object
+        """
         route: Router = Router(Endpoint.files_create(), app_id=app_id)
         response: Response = await self.request(route, json={'buffer': file,
                                                              'path': path})
         return response
 
-    async def file_delete(self, app_id: str, path: str):
+    async def file_delete(self, app_id: str, path: str) -> Response:
+        """
+        The file_delete function deletes a file from the application.
+
+        :param self: Represent the instance of a class
+        :param app_id: str: Identify the application
+        :param path: str: Specify the path of the file to be deleted
+        :return: A Response object
+        """
         route: Router = Router(Endpoint.files_delete(), app_id=app_id,
                                path=path)
         response: Response = await self.request(route)
         return response
 
-    async def get_statistics(self):
+    async def get_statistics(self) -> Response:
+        """
+        The get_statistics function returns the statistics of the current
+        market.
+
+        :param self: Access the attributes and methods of a class
+        :return: A Response object
+        """
         route: Router = Router(Endpoint.statistics())
         response: Response = await self.request(route)
         return response
 
-    async def get_app_data(self, app_id: str):
+    async def get_app_data(self, app_id: str) -> Response:
+        """
+        The get_app_data function returns a Response object containing the
+        app data for the specified app_id.
+
+        :param self: Refer to the current instance of a class
+        :param app_id: str: Specify the app_id of the application you want to
+        get data
+        :return: A Response object
+        """
         route: Router = Router(Endpoint('APP_DATA'), app_id=app_id)
         response: Response = await self.request(route)
         return response

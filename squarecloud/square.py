@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import io
 import os
-
 from typing import Any
+
+
+# pylint: disable=too-few-public-methods
 
 
 class File:
@@ -18,13 +20,29 @@ class File:
     __slots__ = ('bytes', 'filename')
 
     def __init__(
-        self,
-        fp: str | bytes | os.PathLike[Any] | io.BufferedIOBase,
-        filename: str | None = None
+            self,
+            fp: str | bytes | os.PathLike[Any] | io.BufferedIOBase,
+            filename: str | None = None
     ):
-        if isinstance(fp, io.IOBase):
+
+        """
+        The __init__ function is called when the class is instantiated.
+        It sets up the instance of the class, and it's where you put all your
+        initialization code.
+        The __init__ function takes at least one argument: self, which refers
+        to the object being created.
+
+        :param self: Represent the instance of the class
+        :param fp: str | bytes | os.PathLike[Any] | io.BufferedIOBase: Define
+        the file path,
+        :param filename: str | None: Set the filename attribute of the class
+        :return: None
+        :doc-author: Trelent
+        """
+        if isinstance(fp, io.BufferedIOBase):
             if not (fp.seekable() and fp.readable()):
-                raise ValueError(f'File buffer {fp!r} must be seekable and readable')
+                raise ValueError(
+                    f'File buffer {fp!r} must be seekable and readable')
             self.bytes: io.BufferedIOBase = fp
         else:
             self.bytes = open(fp, 'rb')

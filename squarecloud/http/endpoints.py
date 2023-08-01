@@ -47,16 +47,45 @@ class Endpoint:
                          'PATH': '/apps/{app_id}/files/delete?path={path}'}
     }
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
+        """
+        The __init__ function is called when the class is instantiated.
+        It sets up the instance of the class, and defines its attributes.
+        The __init__ function takes in a name parameter, which it uses to look
+        up an endpoint from ENDPOINTS_V2.
+        ENDPOINTS_V2 is a dictionary that contains all of our endpoints for
+        version 2 of our API.
+
+        :param self: Represent the instance of the class
+        :param name: str: Set the name of the endpoint
+        :return: None
+        """
         endpoint: Dict[str: Dict[str, Any]] = self.ENDPOINTS_V2[name]
         self.name: str = name
         self.method: str = endpoint['METHOD']
         self.path: str = endpoint['PATH']
 
     def __eq__(self, other: Endpoint):
+        """
+        The __eq__ function is used to compare two objects of the same class.
+        It returns True if they are equal, and False otherwise.
+
+        :param self: Refer to the current instance of the class
+        :param other: Endpoint: Check if the other object is an instance of
+        endpoint
+        :return: A boolean value
+        """
         return isinstance(other, Endpoint) and self.name == other.name
 
     def __repr__(self):
+        """
+        The __repr__ function is used to compute the &quot;official&quot;
+        string representation of an object.
+        This is how you would make an object of the class. The goal of
+
+        :param self: Represent the instance of the class
+        :return: A string that is the representation of an object
+        """
         return f"{Endpoint.__name__}('{self.name}')"
 
     @classmethod
@@ -135,6 +164,17 @@ class Router:
 
     # noinspection StrFormat
     def __init__(self, endpoint: Endpoint, **params) -> None:
+        """
+        The __init__ function is called when the class is instantiated.
+        It sets up the instance of the class, and it's where you define your
+        attributes.
+
+
+        :param self: Represent the instance of the class
+        :param endpoint: Endpoint: Define the endpoint
+        :param **params: Pass in the parameters for the url
+        :return: None
+        """
         self.endpoint: Endpoint = endpoint
         self.method: str = endpoint.method
         self.path: str = endpoint.path
@@ -144,4 +184,13 @@ class Router:
         self.url = url
 
     def __repr__(self):
+        """
+        The __repr__ function is used to generate a string representation of
+        an object.
+        This function should return a printable representation of the object,
+        and it will be used whenever you call str() on that object.
+
+        :param self: Represent the instance of the class
+        :return: A string that is a valid python expression
+        """
         return f"{Router.__name__}(path='{self.path}', method='{self.method}')"
