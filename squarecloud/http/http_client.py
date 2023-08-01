@@ -4,7 +4,6 @@ from typing import Any, Literal
 
 import aiohttp
 
-from .endpoints import Endpoint, Router
 from .. import File
 from ..errors import (
     AuthenticationFailure,
@@ -14,6 +13,7 @@ from ..errors import (
 )
 from ..logs import logger
 from ..payloads import RawResponseData
+from .endpoints import Endpoint, Router
 
 
 class Response:
