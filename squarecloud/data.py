@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Literal, Any
-
+from typing import Any, Dict, Literal
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=invalid-name

@@ -1,5 +1,5 @@
 import asyncio
-from typing import Callable, Any
+from typing import Any, Callable
 
 from .http import Response
 from .http.endpoints import Endpoint

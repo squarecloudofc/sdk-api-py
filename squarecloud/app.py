@@ -3,10 +3,10 @@ from io import BytesIO
 from typing import TYPE_CHECKING, Callable, Literal
 
 from . import File
-from .data import StatusData, LogsData, BackupData, AppData, FileInfo
+from .data import AppData, BackupData, FileInfo, LogsData, StatusData
 from .errors import SquareException
-from .http import Response, HTTPClient, Endpoint
-from .listener import ListenerManager, Listener
+from .http import Endpoint, HTTPClient, Response
+from .listener import Listener, ListenerManager
 
 # avoid circular imports
 if TYPE_CHECKING:

@@ -1,9 +1,14 @@
+# pylint: disable=missing-module-docstring
+
 from __future__ import annotations
 
-from typing import Dict, Any
+from typing import Any, Dict
 
+
+# pylint: disable=missing-function-docstring
 
 class Endpoint:
+    """Endpoint"""
     # ENDPOINTS_V1 = {
     #     'USER_ME': {'METHOD': 'GET', 'PATH': '/user'},
     #     'USER_INFO': {'METHOD': 'GET', 'PATH': '/user/{user_id}'},
@@ -64,7 +69,7 @@ class Endpoint:
         :param name: str: Set the name of the endpoint
         :return: None
         """
-        endpoint: Dict[str : Dict[str, Any]] = self.ENDPOINTS_V2[name]
+        endpoint: Dict[str: Dict[str, Any]] = self.ENDPOINTS_V2[name]
         self.name: str = name
         self.method: str = endpoint['METHOD']
         self.path: str = endpoint['PATH']
@@ -161,6 +166,7 @@ class Endpoint:
         return cls('STATISTICS')
 
 
+# pylint: disable=too-few-public-methods
 class Router:
     """Represents a route"""
 

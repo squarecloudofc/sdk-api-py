@@ -37,7 +37,6 @@ class File:
         the file path,
         :param filename: str | None: Set the filename attribute of the class
         :return: None
-        :doc-author: Trelent
         """
         if isinstance(fp, io.BufferedIOBase):
             if not (fp.seekable() and fp.readable()):

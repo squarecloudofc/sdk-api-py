@@ -4,32 +4,32 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from io import BytesIO
-from typing import List, Literal, Any, Callable
+from typing import Any, Callable, List, Literal
 
+from . import File
 from .app import Application
 from .data import (
     AppData,
-    StatusData,
-    UserData,
-    LogsData,
     BackupData,
-    UploadData,
     FileInfo,
+    LogsData,
     StatisticsData,
+    StatusData,
+    UploadData,
+    UserData,
 )
 from .errors import ApplicationNotFound, InvalidFile, SquareException
 from .http import HTTPClient, Response
 from .http.endpoints import Endpoint
-from .listener import ListenerManager, Listener
+from .listener import Listener, ListenerManager
 from .logs import logger
 from .payloads import (
-    UserPayload,
-    StatusPayload,
-    LogsPayload,
     BackupPayload,
+    LogsPayload,
+    StatusPayload,
     UploadPayload,
+    UserPayload,
 )
-from . import File
 
 
 class AbstractClient(ABC):

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Literal, TypedDict
+from typing import Any, Dict, Literal, Optional, TypedDict
 
 
 class RawResponseData(TypedDict):
