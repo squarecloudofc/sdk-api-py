@@ -27,7 +27,7 @@ from .payloads import (
     BackupPayload,
     UploadPayload,
 )
-from .square import File
+from . import File
 
 
 class AbstractClient(ABC):

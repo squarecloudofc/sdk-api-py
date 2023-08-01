@@ -6,7 +6,7 @@ from .data import StatusData, LogsData, BackupData, AppData, FileInfo
 from .errors import SquareException
 from .http import Response, HTTPClient, Endpoint
 from .listener import ListenerManager, Listener
-from .square import File
+from . import File
 
 # avoid circular imports
 if TYPE_CHECKING:

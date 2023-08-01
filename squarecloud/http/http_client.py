@@ -13,7 +13,7 @@ from ..errors import (
 )
 from ..logs import logger
 from ..payloads import RawResponseData
-from ..square import File
+from .. import File
 
 
 class Response:
