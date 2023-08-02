@@ -32,3 +32,7 @@ class MissingConfigFile(RequestError):
 
 class MissingDependenciesFile(RequestError):
     """raised when the configuration file is missing"""
+
+
+class TooManyRequests(RequestError):
+    """raised when there are too many requests"""

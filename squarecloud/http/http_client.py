@@ -5,15 +5,17 @@ from typing import Any, Literal
 import aiohttp
 
 from squarecloud.file import File
-from .endpoints import Endpoint, Router
+
 from ..errors import (
     AuthenticationFailure,
     BadRequestError,
     NotFoundError,
     RequestError,
+    TooManyRequests,
 )
 from ..logs import logger
 from ..payloads import RawResponseData
+from .endpoints import Endpoint, Router
 
 
 class Response:
@@ -69,7 +71,7 @@ class HTTPClient:
         self.__session = aiohttp.ClientSession
 
     async def request(
-            self, route: Router, **kwargs
+        self, route: Router, **kwargs
     ) -> Response | None | bytes:
         """
         Sends a request to the Square API and returns the response.
@@ -88,7 +90,7 @@ class HTTPClient:
             kwargs['data'] = form
         async with self.__session(headers=headers) as session:
             async with session.request(
-                    url=route.url, method=route.method, **kwargs
+                url=route.url, method=route.method, **kwargs
             ) as resp:
                 status_code = resp.status
                 data: RawResponseData = await resp.json()
@@ -98,6 +100,7 @@ class HTTPClient:
                     'code': data.get('code'),
                     'request_message': data.get('message', ''),
                 }
+                msg_error = f'route [{route.endpoint.name}] returned {status_code}, [{data.get("code")}]'
                 match status_code:
                     case 200:
                         logger.debug(msg='request to route: ', extra=extra)
@@ -105,18 +108,18 @@ class HTTPClient:
                         response: Response = Response(data=data, route=route)
                     case 404:
                         logger.debug(msg='request to route: ', extra=extra)
-                        msg = f'route [{route.endpoint.name}] returned 404, [{data.get("code")}]'
                         if route.endpoint == Endpoint.logs():
                             return
-                        raise NotFoundError(msg)
+                        raise NotFoundError(msg_error)
                     case 401:
                         logger.error(msg='request to: ', extra=extra)
-                        msg = 'Invalid api token has been passed'
-                        raise AuthenticationFailure(msg)
+                        raise AuthenticationFailure(msg_error)
                     case 400:
                         logger.error(msg='request to: ', extra=extra)
-                        msg = f'route [{route.endpoint.name}] returned 400, [{data.get("code")}]'
-                        raise BadRequestError(msg)
+                        raise BadRequestError(msg_error)
+                    case 429:
+                        logger.error(msg='request to: ', extra=extra)
+                        raise TooManyRequests(msg_error)
                     case _:
                         msg = (
                             f'An unexpected error occurred while requesting {route.url}, '
@@ -291,7 +294,7 @@ class HTTPClient:
         return response
 
     async def create_app_file(
-            self, app_id: str, file: list[bytes], path: str
+        self, app_id: str, file: list[bytes], path: str
     ) -> Response:
         """
         The create_app_file function creates a file in the specified app.
