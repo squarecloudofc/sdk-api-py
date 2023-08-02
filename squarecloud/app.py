@@ -1,10 +1,11 @@
+import logging
 from abc import ABC
 from io import BytesIO
 from typing import TYPE_CHECKING, Callable, Literal
 
-from . import File
 from .data import AppData, BackupData, FileInfo, LogsData, StatusData
 from .errors import SquareException
+from .file import File
 from .http import Endpoint, HTTPClient, Response
 from .listener import Listener, ListenerManager
 
@@ -351,10 +352,10 @@ class Application(AbstractApplication):
                     f'the endpoint to capture must be {allowed_endpoints}'
                 )
 
-            if not self._listener.get_capture_listener(endpoint):
+            if self._listener.get_capture_listener(endpoint) is None:
                 return self._listener.add_capture_listener(endpoint, func)
             raise SquareException(
-                f'Already exists an capture_listener for {endpoint}'
+                f'Already exists an capture_listener for {endpoint} {self._listener.get_capture_listener(endpoint)}'
             )
 
         return wrapper

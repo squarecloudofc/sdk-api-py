@@ -4,7 +4,8 @@ from typing import Any, Literal
 
 import aiohttp
 
-from .. import File
+from squarecloud.file import File
+from .endpoints import Endpoint, Router
 from ..errors import (
     AuthenticationFailure,
     BadRequestError,
@@ -13,7 +14,6 @@ from ..errors import (
 )
 from ..logs import logger
 from ..payloads import RawResponseData
-from .endpoints import Endpoint, Router
 
 
 class Response:
@@ -69,7 +69,7 @@ class HTTPClient:
         self.__session = aiohttp.ClientSession
 
     async def request(
-        self, route: Router, **kwargs
+            self, route: Router, **kwargs
     ) -> Response | None | bytes:
         """
         Sends a request to the Square API and returns the response.
@@ -88,7 +88,7 @@ class HTTPClient:
             kwargs['data'] = form
         async with self.__session(headers=headers) as session:
             async with session.request(
-                url=route.url, method=route.method, **kwargs
+                    url=route.url, method=route.method, **kwargs
             ) as resp:
                 status_code = resp.status
                 data: RawResponseData = await resp.json()
@@ -291,7 +291,7 @@ class HTTPClient:
         return response
 
     async def create_app_file(
-        self, app_id: str, file: list[bytes], path: str
+            self, app_id: str, file: list[bytes], path: str
     ) -> Response:
         """
         The create_app_file function creates a file in the specified app.

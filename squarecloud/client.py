@@ -4,9 +4,8 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from io import BytesIO
-from typing import Any, Callable, List, Literal
+from typing import TYPE_CHECKING, Any, Callable, List, Literal
 
-from . import File
 from .app import Application
 from .data import (
     AppData,
@@ -19,6 +18,7 @@ from .data import (
     UserData,
 )
 from .errors import ApplicationNotFound, InvalidFile, SquareException
+from .file import File
 from .http import HTTPClient, Response
 from .http.endpoints import Endpoint
 from .listener import Listener, ListenerManager
