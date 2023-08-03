@@ -24,11 +24,11 @@ class AppCache:
 
     def __init__(self) -> None:
         """
-        The __init__ function is called when the class is instantiated.
+        The `__init__` function is called when the class is instantiated.
         It sets up the instance of the class, and defines all of its attributes.
 
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :return: The instance of the class
         :rtype: None
         """
@@ -42,7 +42,7 @@ class AppCache:
         The clear function is used to clear the status, logs, backup and data
         variables.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :return: None
         """
         self.status = None
@@ -59,7 +59,7 @@ class AppCache:
         If any other type is provided as an argument to this function,
         a SquareException will be raised.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param args: Pass a variable number of arguments to a function
         :return: None
         """
@@ -145,19 +145,19 @@ class Application(AbstractApplication):
         desc: str | None = None,
     ) -> None:
         """
-        The __init__ function is called when the class is instantiated.
+        The `__init__` function is called when the class is instantiated.
         It sets up all the attributes that are passed in as arguments,
         and does any other initialization your class needs before it's ready
         for use.
 
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance.
         :param client: 'Client': Store a reference to the client that created
-        this app
-        :param http: HTTPClient: Make http requests to the api
-        :param id: str: Set the id of the app
-        :param tag: str: Get the tag of the app
-        :param ram: int: Set the amount of ram that is used by the app
+        this app.
+        :param http: HTTPClient: Make http requests to the api.
+        :param id: str: The id of the app.
+        :param tag: str: The tag of the app.
+        :param ram: int: The amount of ram that is allocated.
         :param lang: Literal[
                         'javascript',
                         'typescript',
@@ -167,9 +167,8 @@ class Application(AbstractApplication):
                         'go',
                         'static',
                         'dynamic',
-                    ]: Specify the language of the app
-        :param type: Literal['free', 'paid] : Determine whether the app is a
-        free or paid app
+                    ]: The language of the app.
+        :param type: Literal['free', 'paid]: The app type
         :param cluster: Literal[
                 'florida-free-1',
                 'fl-haswell-4',
@@ -177,7 +176,7 @@ class Application(AbstractApplication):
                 'fl-haswell-2',
                 'fl-haswell-1',
                 'fl-vps-1',
-            ]: Determine the cluster that the app is hosted on
+            ]: The cluster that the app is hosted on
         :param isWebsite: bool: Whether if the app is a website
         :param avatar: str: The app avatar
         :param desc: str | None: Define the description of the app
@@ -224,7 +223,7 @@ class Application(AbstractApplication):
         someone looking at the results in the interactive interpreter.
 
 
-        :param self: Refer to the current instance of the class
+        :param self: Refer to the class instance
         :return: The class name, tag and id of the element
         """
         return f'<{self.__class__.__name__} tag={self.tag} id={self.id}>'
@@ -232,9 +231,9 @@ class Application(AbstractApplication):
     @property
     def client(self) -> Client:
         """
-        The client function returns the client object.
+        The client function is a property that returns the client object.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :return: The client instance
         :rtype: Client
         """
@@ -243,9 +242,10 @@ class Application(AbstractApplication):
     @property
     def id(self) -> str:
         """
-        The id function returns the id of the application.
+        The id function is a property that returns
+         the id of the application.
 
-        :param self: Represent the instance of the object itself
+        :param self: Refer to the class instance
         :return: The id of the application
         :rtype: str
         """
@@ -254,9 +254,9 @@ class Application(AbstractApplication):
     @property
     def tag(self) -> str:
         """
-        The tag function returns the application tag.
+        The avatar function is a property that returns the application tag.
 
-        :param self: Represent the instance of the object itself
+        :param self: Refer to the class instance
         :return: The tag of the application
         :rtype: str
         """
@@ -265,9 +265,10 @@ class Application(AbstractApplication):
     @property
     def desc(self) -> str | None:
         """
-        The desc function returns the description of the application.
+        The desc function is a property that returns the description of
+        the application.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :return: The description of the application
         :rtype: str | None
         """
@@ -277,9 +278,10 @@ class Application(AbstractApplication):
     def ram(self) -> int:
 
         """
-        The ram function returns the amount of ram allocated to the application
+        The avatar function is a property that returns
+        the amount of ram allocated to the application
 
-        :param self: Refer to the object itself
+        :param self: Refer to the class instance
         :return: The application ram
         :rtype: int
         """
@@ -299,9 +301,10 @@ class Application(AbstractApplication):
         'dynamic',
     ]:
         """
-        The lang function returns the application's programing language.
+        The lang function is a property that returns the application's
+        programing language.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :return: The application's programing language
         :rtype: Literal[
             'javascript',
@@ -319,9 +322,9 @@ class Application(AbstractApplication):
     @property
     def type(self) -> Literal['free', 'paid']:
         """
-        The type function returns the application's type.
+        The avatar function is a property that returns the application's type.
 
-        :param self: Represent the instance of the object itself
+        :param self: Refer to the class instance
         :return: The application's type
         :rtype: Literal['free', 'paid']
         """
@@ -339,12 +342,13 @@ class Application(AbstractApplication):
         'fl-vps-1',
     ]:
         """
-        The cluster function returns the cluster that the application is
+        The cluster function is a property that returns the
+        cluster that the application is
         running on.
 
 
-        :param self: Represent the instance of the class
-        :return: The cluster that the application is assigned to
+        :param self: Refer to the class instance
+        :return: The cluster that the application is running
         :rtype: Literal[
             'florida-free-1',
             'fl-haswell-4',
@@ -359,10 +363,10 @@ class Application(AbstractApplication):
     @property
     def is_website(self) -> bool:
         """
-        The is_website function returns a boolean value indicating whether the
-        application is a website.
+        The is_website function is a property that returns a boolean value
+        indicating whether th application is a website.
 
-        :param self: Refer to the object itself
+        :param self: Refer to the class instance
         :return: A boolean value, true or false
         :rtype: bool
         """
@@ -429,7 +433,7 @@ class Application(AbstractApplication):
         """
         The data function is used to retrieve the data of an app.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param kwargs: Pass a variable number of keyword arguments to the
         function
         :return: A AppData object
@@ -451,7 +455,7 @@ class Application(AbstractApplication):
         """
         The logs function is used to get the application's logs.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param kwargs: Pass a variable number of keyword arguments to a
         function
         :return: A LogsData object
@@ -471,7 +475,7 @@ class Application(AbstractApplication):
         """
         The status function returns the status of an application.
 
-        :param self: Refer to the object itself
+        :param self: Refer to the class instance
         :param kwargs: Pass a variable number of keyword arguments to a
         function
         :return: A StatusData object
@@ -491,7 +495,7 @@ class Application(AbstractApplication):
         """
         The backup function is used to create a backup of the application.
 
-        :param self: Refer to the current instance of the class
+        :param self: Refer to the class instance
         :param kwargs: Pass a variable number of keyword arguments to a
         function
         :return: A BackupData object
@@ -511,7 +515,7 @@ class Application(AbstractApplication):
         """
         The start function starts the application.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param kwargs: Pass a variable number of keyword arguments to the
         function
         :return: A Response object
@@ -529,7 +533,7 @@ class Application(AbstractApplication):
         """
         The stop function stops the application.
 
-        :param self: Refer to the current instance of a class
+        :param self: Refer to the class instance
         :param kwargs: Pass a variable number of keyword arguments to the
         function
         :return: A Response object
@@ -547,7 +551,7 @@ class Application(AbstractApplication):
         """
         The restart function restarts the application.
 
-        :param self: Refer to the current instance of a class
+        :param self: Refer to the class instance
         :param kwargs: Pass a variable number of keyword arguments to the
         function
         :return: The Response object
@@ -565,7 +569,7 @@ class Application(AbstractApplication):
         """
         The delete function deletes the application.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param kwargs: Pass in keyword arguments as a dictionary
         :return: A Response object
         :rtype: Response
@@ -583,8 +587,8 @@ class Application(AbstractApplication):
         The commit function is used to commit the application.
 
 
-        :param self: Refer to the current object
-        :param file: File: Upload the file to be committed
+        :param self: Refer to the class instance
+        :param file: File: The squarecloud.File to be committed
         :param kwargs: Pass a variable number of keyword arguments to the
          function
         :return: A Response object
@@ -603,7 +607,7 @@ class Application(AbstractApplication):
         The files_list function returns a list of files and folders in the
         specified directory.
 
-        :param self: Make the function a method of the class
+        :param self: Refer to the class instance
         :param path: str: Specify the path of the file to be listed
         :param kwargs: Pass a variable number of keyword arguments to the
         function
@@ -625,10 +629,10 @@ class Application(AbstractApplication):
         """
         The read_file function reads the contents of a file from an app.
 
-        :param self: Refer to the object itself
+        :param self: Refer to the class instance
         :param path: str: Specify the path of the file to be read
         :param kwargs: Pass in keyword arguments to the function
-        :return: A ButesIO object
+        :return: A BytesIO object
         :rtype: BytesIO
         """
         response: BytesIO = await self.client.read_app_file(self.id, path)
@@ -644,7 +648,7 @@ class Application(AbstractApplication):
         """
         The create_file function creates a file in the specified path.
 
-        :param self: Refer to the object itself
+        :param self: Refer to the class instance
         :param file: File: Specify the file that is to be uploaded
         :param path: str: Specify the path of the file to be created
         :param kwargs: Pass additional keyword arguments to the function
@@ -665,7 +669,7 @@ class Application(AbstractApplication):
         """
         The delete_file function deletes a file from the app.
 
-        :param self: Refer to the current instance of a class
+        :param self: Refer to the class instance
         :param path: str: Specify the path of the file to be deleted
         :param kwargs: Pass in a dictionary of additional arguments
         :return: A Response object

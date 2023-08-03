@@ -110,7 +110,7 @@ class Client(AbstractClient):
         attributes.
 
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param api_key: str: Your API key, get in:
          https://squarecloud.app/dashboard/me
         :param debug: bool: Set the logging level to debug
@@ -128,7 +128,7 @@ class Client(AbstractClient):
         """
         The api_key function returns the api key for the client.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :return: The api key
         """
         return self._api_key
@@ -138,7 +138,7 @@ class Client(AbstractClient):
         The on_request function is a decorator that allows you to register a
         function as an endpoint listener.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param endpoint: Endpoint: Specify the endpoint that will be used to
         capture the request
         :return: A wrapper function
@@ -170,7 +170,7 @@ class Client(AbstractClient):
         """
         This function is used to get your information.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param kwargs: Pass in a dictionary of arguments
         :return: A userdata object
         """
@@ -190,7 +190,7 @@ class Client(AbstractClient):
         """
         The user_info function is used to get information about a user.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param user_id: int | None: Specify the user id of the user you want
         to get information about
         :param kwargs: Pass in keyword arguments to a function
@@ -210,7 +210,7 @@ class Client(AbstractClient):
         """
         The get_logs function is used to get logs for an application.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Identify the application id
         :param kwargs: Pass in any additional parameters that may be required
         for the function to work
@@ -232,7 +232,7 @@ class Client(AbstractClient):
         """
         The app_status function is used to get the status of an application.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Specify the application id
         :param kwargs: Pass in keyword arguments to a function
         :return: A StatusData object
@@ -251,7 +251,7 @@ class Client(AbstractClient):
         """
         The start_app function starts an application.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Identify the application to start
         :param kwargs: Pass a variable number of keyword arguments to the
         function
@@ -269,7 +269,7 @@ class Client(AbstractClient):
         """
         The stop_app function stops an application.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Specify the application id
         :param kwargs: Pass in keyword arguments to the function
         :return: A Response object
@@ -286,7 +286,7 @@ class Client(AbstractClient):
         """
         The restart_app function is used to restart an application.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Specify the application id
         :param kwargs: Pass a variable number of keyword arguments to the
         function
@@ -304,7 +304,7 @@ class Client(AbstractClient):
         """
         The backup function is used to backup an application.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Identify the application to be backed up
         :param kwargs: Pass in additional parameters to the function
         :return: A BackupData object
@@ -323,7 +323,7 @@ class Client(AbstractClient):
         """
         The delete_app function deletes an application.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Specify the application id
         :param kwargs: Pass a variable number of keyword arguments to the
         function
@@ -341,7 +341,7 @@ class Client(AbstractClient):
         """
         The commit function is used to commit an application.
 
-        :param self: Bind the method commit to an object
+        :param self: Refer to the class instance
         :param app_id: str: Identify the application
         :param file: File: Specify the file object to be committed
         :param kwargs: Pass a variable number of keyword arguments to the
@@ -360,7 +360,7 @@ class Client(AbstractClient):
         """
         The app function is used to get an application.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: The application id
         :param kwargs: Pass a variable number of keyword arguments to the
         function
@@ -392,7 +392,7 @@ class Client(AbstractClient):
         The all_apps function returns a list of all applications that the user
         has access to.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param kwargs: Pass in the avoid_listener parameter
         :return: A list of Application objects
         """
@@ -414,7 +414,7 @@ class Client(AbstractClient):
         """
         The upload_app function uploads an application to the server.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param file: File: Upload a file
         :param kwargs: Pass a variable number of keyword arguments to a
         function
@@ -447,7 +447,7 @@ class Client(AbstractClient):
         """
         The app_files_list function returns a list of your application files.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Identify the application id
         :param path: str: Specify the path to the file
         :param kwargs: Pass a variable number of keyword arguments to a
@@ -472,7 +472,7 @@ class Client(AbstractClient):
         The read_app_file function reads a file from the specified path and
         returns a BytesIO representation.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Specify the application id
         :param path: str: Specify the path of the file to be read
         :param kwargs: Pass in additional arguments to the function
@@ -495,7 +495,7 @@ class Client(AbstractClient):
         The create_app_file function creates a new file in the specified
         directory.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Specify the application id
         :param file: File: Pass the file to be created
         :param path: str: Specify the directory to create the file in
@@ -526,7 +526,7 @@ class Client(AbstractClient):
         """ "
         The delete_app_file function deletes a file in the specified directory.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: Specify the application id
         :param path: str: Specify the directory where the file should be
         deleted
@@ -546,7 +546,7 @@ class Client(AbstractClient):
         """
         The statistics function returns a StatisticsData object
 
-        :param self: Represent the instance of a class
+        :param self: Refer to the class instance
         :param kwargs: Pass in a dictionary of parameters
         :return: A StatisticsData object, which is a class that contains all
         the data returned by the endpoint
@@ -564,7 +564,7 @@ class Client(AbstractClient):
         """ "
         The app_data function is used to get application data.
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :param app_id: str: The application id
         :param kwargs: Pass a variable number of keyword arguments to the
         function

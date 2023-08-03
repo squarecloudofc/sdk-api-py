@@ -15,7 +15,7 @@ class ListenerManager:
         in the class.
 
 
-        :param self: Refer to the instance of the class
+        :param self: Refer to the class instance
         :return: A dictionary of the capture listeners and request listeners
         """
         self.capture_listeners: dict[str, Callable] = {}
@@ -26,7 +26,7 @@ class ListenerManager:
         The get_capture_listener function is used to get the capture listener
         for a given endpoint.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param endpoint: Endpoint: Get the capture listener from the endpoint
         name
         :return: The capture listener for the given endpoint
@@ -41,7 +41,7 @@ class ListenerManager:
         function that will be called when
         the endpoint's data has been captured.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param endpoint: Endpoint: Specify the endpoint that you want to
         listen to
         :param call: Callable: Define the function that will be called when a
@@ -56,7 +56,7 @@ class ListenerManager:
         The remove_capture_listener function removes a capture listener from
         the list of listeners.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param endpoint: Endpoint: Identify the endpoint to remove
         :return: The capture_listener that was removed from the dictionary
         """
@@ -67,7 +67,7 @@ class ListenerManager:
         """
         The clear_capture_listeners function clears the capture_listeners list.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :return: None
         """
         self.capture_listeners = None
@@ -77,7 +77,7 @@ class ListenerManager:
         The get_request_listener function is a helper function that returns
         the request listener for an endpoint.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param endpoint: Endpoint: Get the name of the endpoint
         :return: The request listener for a given endpoint
         """
@@ -88,7 +88,7 @@ class ListenerManager:
         The add_request_listener function adds a request listener to the list
         of listeners.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param endpoint: Endpoint: Specify the endpoint that you want to
         listen for
         :param call: Callable: Specify the function that will be called when a
@@ -105,7 +105,7 @@ class ListenerManager:
         The function takes an endpoint as its only argument and returns
         the removed request listener.
 
-        :param self: Represent the instance of a class
+        :param self: Refer to the class instance
         :param endpoint: Endpoint: Identify the endpoint that is being removed
         from the capture_listeners dictionary
         :return: The listener that was removed
@@ -117,7 +117,7 @@ class ListenerManager:
         """
         The clear_request_listeners function clears the capture_listeners list.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :return: None
         """
         self.capture_listeners = None
@@ -126,7 +126,7 @@ class ListenerManager:
         """
         The on_capture function is called when a capture event occurs.
 
-        :param self: Access the class attributes
+        :param self: Refer to the class instance
         :param endpoint: Endpoint: Get the endpoint that is being called
         :param kwargs: Pass a dictionary of arguments to the function
         :return: The result of the call function

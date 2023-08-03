@@ -28,7 +28,7 @@ class File:
         The __init__ function takes at least one argument: self, which refers
         to the object being created.
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param fp: str | bytes | os.PathLike[Any] | io.BufferedIOBase: Define
         the file path,
         :param filename: str | None: Set the filename attribute of the class

@@ -30,7 +30,7 @@ class CustomLogFormatter(logging.Formatter):
         of the log record.
 
 
-        :param self: Represent the instance of the class
+        :param self: Refer to the class instance
         :param record: logging.LogRecord: Pass the log record to the format
         function
         :return: A string that will be used to format the log message
