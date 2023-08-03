@@ -22,7 +22,7 @@ class AppCache:
         'data',
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         The __init__ function is called when the class is instantiated.
         It sets up the instance of the class, and defines all of its attributes.
@@ -30,6 +30,7 @@ class AppCache:
 
         :param self: Represent the instance of the class
         :return: The instance of the class
+        :rtype: None
         """
         self.status: StatusData | None = None
         self.logs: LogsData | None = None
@@ -142,11 +143,11 @@ class Application(AbstractApplication):
         isWebsite: bool,
         avatar: str,
         desc: str | None = None,
-    ):
+    ) -> None:
         """
         The __init__ function is called when the class is instantiated.
         It sets up all the attributes that are passed in as arguments,
-        and does any other initialization your class needs before its ready
+        and does any other initialization your class needs before it's ready
         for use.
 
 
@@ -167,7 +168,8 @@ class Application(AbstractApplication):
                         'static',
                         'dynamic',
                     ]: Specify the language of the app
-        :param type: Literal['free', 'paid] : Determine whether the app is a free or paid app
+        :param type: Literal['free', 'paid] : Determine whether the app is a
+        free or paid app
         :param cluster: Literal[
                 'florida-free-1',
                 'fl-haswell-4',
@@ -180,22 +182,39 @@ class Application(AbstractApplication):
         :param avatar: str: The app avatar
         :param desc: str | None: Define the description of the app
         :return: None
+        :rtype: None
         """
-        self._id = id
-        self._tag = tag
-        self._desc = desc
-        self._ram = ram
-        self._lang = lang
-        self._type = type
-        self._cluster = cluster
-        self._isWebsite = isWebsite
-        self._avatar = avatar
+        self._id: str = id
+        self._tag: str = tag
+        self._desc: str | None = desc
+        self._ram: int = ram
+        self._lang: Literal[
+            'javascript',
+            'typescript',
+            'python',
+            'java',
+            'rust',
+            'go',
+            'static',
+            'dynamic',
+        ] = lang
+        self._type: Literal['free', 'paid'] = type
+        self._cluster: Literal[
+            'florida-free-1',
+            'fl-haswell-4',
+            'fl-haswell-3',
+            'fl-haswell-2',
+            'fl-haswell-1',
+            'fl-vps-1',
+        ] = cluster
+        self._isWebsite: bool = isWebsite
+        self._avatar: str = avatar
         self._client: 'Client' = client
-        self._http = http
+        self._http: HTTPClient = http
         self._listener: ListenerManager = Listener
         self.cache: AppCache = AppCache()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         The __repr__ function is used to create a string representation of an
         object.
@@ -211,80 +230,114 @@ class Application(AbstractApplication):
         return f'<{self.__class__.__name__} tag={self.tag} id={self.id}>'
 
     @property
-    def client(self):
+    def client(self) -> Client:
         """
         The client function returns the client object.
 
         :param self: Represent the instance of the class
         :return: The client instance
+        :rtype: Client
         """
         return self._client
 
     @property
-    def id(self):
+    def id(self) -> str:
         """
-        The id function returns the id of a given instance of the class.
+        The id function returns the id of the application.
 
         :param self: Represent the instance of the object itself
         :return: The id of the application
+        :rtype: str
         """
         return self._id
 
     @property
-    def tag(self):
+    def tag(self) -> str:
         """
         The tag function returns the application tag.
 
         :param self: Represent the instance of the object itself
         :return: The tag of the application
+        :rtype: str
         """
         return self._tag
 
     @property
-    def desc(self):
+    def desc(self) -> str | None:
         """
         The desc function returns the description of the application.
 
         :param self: Represent the instance of the class
         :return: The description of the application
+        :rtype: str | None
         """
         return self._desc
 
     @property
-    def ram(self):
+    def ram(self) -> int:
 
         """
         The ram function returns the amount of ram allocated to the application
 
-
         :param self: Refer to the object itself
         :return: The application ram
-        :doc-author: Trelent
+        :rtype: int
         """
         return self._ram
 
     @property
-    def lang(self):
+    def lang(
+        self,
+    ) -> Literal[
+        'javascript',
+        'typescript',
+        'python',
+        'java',
+        'rust',
+        'go',
+        'static',
+        'dynamic',
+    ]:
         """
         The lang function returns the application's programing language.
 
         :param self: Represent the instance of the class
         :return: The application's programing language
+        :rtype: Literal[
+            'javascript',
+            'typescript',
+            'python',
+            'java',
+            'rust',
+            'go',
+            'static',
+            'dynamic',
+        ]
         """
         return self._lang
 
     @property
-    def type(self):
+    def type(self) -> Literal['free', 'paid']:
         """
         The type function returns the application's type.
 
         :param self: Represent the instance of the object itself
         :return: The application's type
+        :rtype: Literal['free', 'paid']
         """
         return self._type
 
     @property
-    def cluster(self):
+    def cluster(
+        self,
+    ) -> Literal[
+        'florida-free-1',
+        'fl-haswell-4',
+        'fl-haswell-3',
+        'fl-haswell-2',
+        'fl-haswell-1',
+        'fl-vps-1',
+    ]:
         """
         The cluster function returns the cluster that the application is
         running on.
@@ -292,28 +345,38 @@ class Application(AbstractApplication):
 
         :param self: Represent the instance of the class
         :return: The cluster that the application is assigned to
+        :rtype: Literal[
+            'florida-free-1',
+            'fl-haswell-4',
+            'fl-haswell-3',
+            'fl-haswell-2',
+            'fl-haswell-1',
+            'fl-vps-1',
+        ]
         """
         return self._cluster
 
     @property
-    def is_website(self):
+    def is_website(self) -> bool:
         """
         The is_website function returns a boolean value indicating whether the
         application is a website.
 
         :param self: Refer to the object itself
         :return: A boolean value, true or false
+        :rtype: bool
         """
         return self._isWebsite
 
     @property
-    def avatar(self):
+    def avatar(self) -> str:
         """
         The avatar function is a property that returns the avatar of the
         application.
 
-        :param self: Refer to the object itself
-        :return: The avatar
+        :param self: Refer to the class instance
+        :return: The application avatar
+        :rtype: str
         """
         return self._avatar
 
@@ -326,6 +389,7 @@ class Application(AbstractApplication):
         :param endpoint: Endpoint: Specify which endpoint the function will be
         called on
         :return: A decorator
+        :rtype: Callable
         """
         allowed_endpoints: tuple[Endpoint, Endpoint, Endpoint, Endpoint] = (
             Endpoint.logs(),
@@ -334,7 +398,7 @@ class Application(AbstractApplication):
             Endpoint.app_data(),
         )
 
-        def wrapper(func):
+        def wrapper(func) -> None:
             """
             The wrapper function is a decorator that takes in the endpoint as
             an argument.
@@ -346,6 +410,7 @@ class Application(AbstractApplication):
 
             :param func: Pass the function to be wrapped
             :return: The wrapper function itself
+            :rtype: None
             """
             if endpoint not in allowed_endpoints:
                 raise SquareException(
@@ -360,7 +425,7 @@ class Application(AbstractApplication):
 
         return wrapper
 
-    async def data(self, **kwargs):
+    async def data(self, **kwargs) -> AppData:
         """
         The data function is used to retrieve the data of an app.
 
@@ -368,6 +433,7 @@ class Application(AbstractApplication):
         :param kwargs: Pass a variable number of keyword arguments to the
         function
         :return: A AppData object
+        :rtype: AppData
         """
         app_data: AppData = await self.client.app_data(self.id)
         if not kwargs.get('avoid_listener'):
@@ -389,6 +455,7 @@ class Application(AbstractApplication):
         :param kwargs: Pass a variable number of keyword arguments to a
         function
         :return: A LogsData object
+        :rtype: LogsData
         """
         logs: LogsData = await self.client.get_logs(self.id)
         if not kwargs.get('avoid_listener'):
@@ -408,6 +475,7 @@ class Application(AbstractApplication):
         :param kwargs: Pass a variable number of keyword arguments to a
         function
         :return: A StatusData object
+        :rtype: StatusData
         """
         status: StatusData = await self.client.app_status(self.id)
         if not kwargs.get('avoid_listener'):
@@ -427,6 +495,7 @@ class Application(AbstractApplication):
         :param kwargs: Pass a variable number of keyword arguments to a
         function
         :return: A BackupData object
+        :rtype: BackupData
         """
         backup: BackupData = await self.client.backup(self.id)
         if not kwargs.get('avoid_listener'):
@@ -446,6 +515,7 @@ class Application(AbstractApplication):
         :param kwargs: Pass a variable number of keyword arguments to the
         function
         :return: A Response object
+        :rtype: Response
         """
         response: Response = await self.client.start_app(self.id)
         if not kwargs.get('avoid_listener'):
@@ -463,6 +533,7 @@ class Application(AbstractApplication):
         :param kwargs: Pass a variable number of keyword arguments to the
         function
         :return: A Response object
+        :rtype: Response
         """
         response: Response = await self.client.stop_app(self.id)
         if not kwargs.get('avoid_listener'):
@@ -480,6 +551,7 @@ class Application(AbstractApplication):
         :param kwargs: Pass a variable number of keyword arguments to the
         function
         :return: The Response object
+        :rtype: Response
         """
         response: Response = await self.client.restart_app(self.id)
         if not kwargs.get('avoid_listener'):
@@ -496,6 +568,7 @@ class Application(AbstractApplication):
         :param self: Represent the instance of the class
         :param kwargs: Pass in keyword arguments as a dictionary
         :return: A Response object
+        :rtype: Response
         """
         response: Response = await self.client.delete_app(self.id)
         if not kwargs.get('avoid_listener'):
@@ -515,6 +588,7 @@ class Application(AbstractApplication):
         :param kwargs: Pass a variable number of keyword arguments to the
          function
         :return: A Response object
+        :rtype: Response
         """
         response: Response = await self.client.commit(self.id, file=file)
         if not kwargs.get('avoid_listener'):
@@ -534,6 +608,7 @@ class Application(AbstractApplication):
         :param kwargs: Pass a variable number of keyword arguments to the
         function
         :return: A list of FileInfo objects.
+        :rtype: list[FileInfo]
         """
         response: list[FileInfo] = await self.client.app_files_list(
             self.id, path
@@ -554,6 +629,7 @@ class Application(AbstractApplication):
         :param path: str: Specify the path of the file to be read
         :param kwargs: Pass in keyword arguments to the function
         :return: A ButesIO object
+        :rtype: BytesIO
         """
         response: BytesIO = await self.client.read_app_file(self.id, path)
         if not kwargs.get('avoid_listener'):
@@ -573,6 +649,7 @@ class Application(AbstractApplication):
         :param path: str: Specify the path of the file to be created
         :param kwargs: Pass additional keyword arguments to the function
         :return: A Response object
+        :rtype: Response
         """
         response: Response = await self.client.create_app_file(
             self.id, file, path
@@ -592,6 +669,7 @@ class Application(AbstractApplication):
         :param path: str: Specify the path of the file to be deleted
         :param kwargs: Pass in a dictionary of additional arguments
         :return: A Response object
+        :rtype: Response
         """
         response: Response = await self.client.delete_app_file(self.id, path)
         if not kwargs.get('avoid_listener'):
