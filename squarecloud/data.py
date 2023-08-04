@@ -122,6 +122,7 @@ class FileInfo:
     name: str
     size: int
     lastModified: int | float
+    path: str
 
 
 @dataclass
