@@ -16,10 +16,10 @@ if TYPE_CHECKING:
 
 class AppCache:
     __slots__ = (
-        'status',
-        'logs',
-        'backup',
-        'data',
+        '_status',
+        '_logs',
+        '_backup',
+        '_app_data',
     )
 
     def __init__(self) -> None:
@@ -32,10 +32,54 @@ class AppCache:
         :return: The instance of the class
         :rtype: None
         """
-        self.status: StatusData | None = None
-        self.logs: LogsData | None = None
-        self.backup: BackupData | None = None
-        self.data: AppData | None = None
+        self._status: StatusData | None = None
+        self._logs: LogsData | None = None
+        self._backup: BackupData | None = None
+        self._app_data: AppData | None = None
+
+    @property
+    def status(self) -> StatusData:
+        """
+        The status function returns the status of the application.
+
+        :param self: Refer to the class instance
+        :return: The status of the application.
+        :rtype: StatusData
+        """
+        return self._status
+
+    @property
+    def logs(self) -> LogsData:
+        """
+        The logs function the logs of the application.
+
+        :param self: Refer to the class instance
+        :return: The logs of your application
+        :rtype: LogsData
+        """
+        return self._logs
+
+    @property
+    def backup(self) -> BackupData:
+        """
+        The backup function is used to create a backup of the application.
+
+        :param self: Refer to the class instance
+        :return: The value of the _backup attribute
+        :rtype: BackupData
+        """
+        return self._backup
+
+    @property
+    def app_data(self) -> AppData:
+        """
+        The app_data function is a property that returns the AppData object.
+
+        :param self: Refer to the class instance
+        :return: The data from the app_data
+        :rtype: AppData
+        """
+        return self._app_data
 
     def clear(self):
         """
@@ -44,11 +88,12 @@ class AppCache:
 
         :param self: Refer to the class instance
         :return: None
+        :rtype: None
         """
-        self.status = None
-        self.logs = None
-        self.backup = None
-        self.data = None
+        self._status = None
+        self._logs = None
+        self._backup = None
+        self._app_data = None
 
     def update(self, *args):
         """
@@ -62,16 +107,17 @@ class AppCache:
         :param self: Refer to the class instance
         :param args: Pass a variable number of arguments to a function
         :return: None
+        :rtype: None
         """
         for arg in args:
             if isinstance(arg, StatusData):
-                self.status = arg
+                self._status = arg
             elif isinstance(arg, LogsData):
-                self.logs = arg
+                self._logs = arg
             elif isinstance(arg, BackupData):
-                self.backup = arg
+                self._backup = arg
             elif isinstance(arg, AppData):
-                self.data = arg
+                self._app_data = arg
             else:
                 types: list = [
                     i.__name__
@@ -229,7 +275,7 @@ class Application(AbstractApplication):
         return f'<{self.__class__.__name__} tag={self.tag} id={self.id}>'
 
     @property
-    def client(self) -> Client:
+    def client(self) -> 'Client':
         """
         The client function is a property that returns the client object.
 
