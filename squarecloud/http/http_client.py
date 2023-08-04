@@ -50,7 +50,7 @@ class Response:
         :param self: Refer to the instance of the class
         :return: The name of the class and the status
         """
-        return f'{Response.__name__}({self.status})'
+        return f'{Response.__name__}({self.data})'
 
 
 class HTTPClient:
@@ -307,7 +307,7 @@ class HTTPClient:
         """
         route: Router = Router(Endpoint.files_create(), app_id=app_id)
         response: Response = await self.request(
-            route, json={'buffer': file, 'path': path}
+            route, json={'buffer': file, 'path': '/' + path}
         )
         return response
 
