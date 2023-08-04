@@ -463,9 +463,12 @@ class Client(AbstractClient):
                 endpoint=endpoint, response=response
             )
 
-        if not response.response[0]:  # type ignore
+        if not response.response:  # type ignore
             return
-        return [FileInfo(**data) for data in response.response]
+        return [
+            FileInfo(**data, path=path + f'{data.get("name")}')
+            for data in response.response
+        ]
 
     async def read_app_file(self, app_id: str, path: str, **kwargs) -> BytesIO:
         """
@@ -509,7 +512,7 @@ class Client(AbstractClient):
             )
         file_bytes = list(file.bytes.read())
         response: Response = await self._http.create_app_file(
-            app_id, file_bytes, path
+            app_id, file_bytes, path=path
         )
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
