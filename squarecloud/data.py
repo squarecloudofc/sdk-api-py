@@ -121,7 +121,7 @@ class FileInfo:
     type: Literal['file', 'directory']
     name: str
     size: int
-    lastModified: int
+    lastModified: int | float
 
 
 @dataclass
