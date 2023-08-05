@@ -36,3 +36,9 @@ class MissingDependenciesFile(RequestError):
 
 class TooManyRequests(RequestError):
     """raised when there are too many requests"""
+
+
+class FewMemory(RequestError):
+    """
+    raised when there is insufficient memory available to host an application.
+    """
