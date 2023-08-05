@@ -11,7 +11,7 @@ from ..errors import (
     BadRequestError,
     NotFoundError,
     RequestError,
-    TooManyRequests,
+    TooManyRequests, FewMemory,
 )
 from ..logs import logger
 from ..payloads import RawResponseData
@@ -116,7 +116,11 @@ class HTTPClient:
                         raise AuthenticationFailure(msg_error)
                     case 400:
                         logger.error(msg='request to: ', extra=extra)
-                        raise BadRequestError(msg_error)
+                        match data.get('code'):
+                            case 'FEW_MEMORY':
+                                raise FewMemory(msg_error)
+                            case _:
+                                raise BadRequestError(msg_error)
                     case 429:
                         logger.error(msg='request to: ', extra=extra)
                         raise TooManyRequests(msg_error)
