@@ -9,8 +9,8 @@ class RequestError(SquareException):
         self.route = route
         self.status = status_code
         self.code = code
-        message = f'route [{route}] returned {status_code}, [{code}]'
-        super().__init__(message)
+        self.message = f'route [{route}] returned {status_code}, [{code}]'
+        super().__init__(self.message)
 
 
 class AuthenticationFailure(RequestError):
