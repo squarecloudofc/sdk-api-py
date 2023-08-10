@@ -112,17 +112,33 @@ class HTTPClient:
                         logger.debug(msg='request to route: ', extra=extra)
                         if route.endpoint == Endpoint.logs():
                             return
-                        raise NotFoundError(msg_error)
+                        raise NotFoundError(
+                            route=route.endpoint.name,
+                            status_code=status_code,
+                            code=code
+                        )
                     case 401:
                         logger.error(msg='request to: ', extra=extra)
-                        raise AuthenticationFailure(msg_error)
+                        raise AuthenticationFailure(
+                            route=route.endpoint.name,
+                            status_code=status_code,
+                            code=code
+                        )
                     case 400:
                         logger.error(msg='request to: ', extra=extra)
                         match data.get('code'):
                             case 'FEW_MEMORY':
-                                raise FewMemory(msg_error)
+                                raise FewMemory(
+                                    route=route.endpoint.name,
+                                    status_code=status_code,
+                                    code=code
+                                )
                             case _:
-                                raise BadRequestError(msg_error)
+                                raise BadRequestError(
+                                    route=route.endpoint.name,
+                                    status_code=status_code,
+                                    code=code
+                                )
                     case 429:
                         logger.error(msg='request to: ', extra=extra)
                         raise TooManyRequests(
@@ -131,12 +147,11 @@ class HTTPClient:
                             code=code
                         )
                     case _:
-                        msg = (
-                            f'An unexpected error occurred while requesting {route.url}, '
-                            f'route: [{route.endpoint.name}], status: {data.get("statusCode")}\n'
-                            f'Error: {data.get("error")}'
+                        raise RequestError(
+                            route=route.endpoint.name,
+                            status_code=status_code,
+                            code=code
                         )
-                        raise RequestError(msg)
                 return response
 
     async def fetch_user_info(self, user_id: int | None = None) -> Response:
