@@ -7,9 +7,10 @@ from rich.table import Table
 
 from squarecloud.client import Client
 from squarecloud.data import StatisticsData
-from . import run_async, cli
+
+from .. import ApplicationNotFound, RequestError
+from . import cli, run_async
 from .app import app_group
-from .. import RequestError
 
 load_dotenv()
 
@@ -25,7 +26,7 @@ __version__ = '3.1.0'
     required=True,
     type=click.STRING,
     prompt='API KEY',
-    hide_input=True
+    hide_input=True,
 )
 @run_async
 async def get_squarecloud_statistics(token: str):
@@ -47,7 +48,7 @@ async def get_squarecloud_statistics(token: str):
         str(statistics_data.time),
         str(statistics_data.ping),
         str(statistics_data.users),
-        style='green'
+        style='green',
     )
     print(table)
 
@@ -61,3 +62,11 @@ def safe_entry_point():
     except RequestError as e:
         title = e.__class__.__name__
         print(Panel(e.message, title=title, title_align='left', style='red'))
+    except ApplicationNotFound as e:
+        print(
+            Panel(
+                f'No application was found with id: {e.app_id}',
+                title_align='left',
+                style='red',
+            ),
+        )

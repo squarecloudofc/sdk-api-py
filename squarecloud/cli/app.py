@@ -7,8 +7,8 @@ from rich.table import Table
 
 from squarecloud import Client
 from squarecloud.app import Application
-from squarecloud.cli import run_async, cli
-from squarecloud.data import StatusData, AppData, LogsData, BackupData
+from squarecloud.cli import cli, run_async
+from squarecloud.data import AppData, BackupData, LogsData, StatusData
 
 
 @cli.group(name='app', invoke_without_command=True)
@@ -24,7 +24,7 @@ from squarecloud.data import StatusData, AppData, LogsData, BackupData
     required=True,
     type=click.STRING,
     prompt='API KEY',
-    hide_input=True
+    hide_input=True,
 )
 @click.pass_context
 @run_async
@@ -75,12 +75,15 @@ async def get_app_status(ctx: Context):
 
         table = Table(title='Status', header_style='purple')
 
-        status_list = [attr for attr in dir(status) if
-                       not attr.startswith('__')]
+        status_list = [
+            attr for attr in dir(status) if not attr.startswith('__')
+        ]
         for s in status_list:
             table.add_column(s.capitalize(), justify='center')
-        table.add_row(*[str(getattr(status, attr)) for attr in status_list],
-                      style='green')
+        table.add_row(
+            *[str(getattr(status, attr)) for attr in status_list],
+            style='green',
+        )
     print(table)
 
 
@@ -131,8 +134,10 @@ async def app_data(ctx: Context):
         status_list = [attr for attr in dir(data) if not attr.startswith('__')]
         for s in status_list:
             table.add_column(s.capitalize(), justify='center')
-        table.add_row(*[str(getattr(data, attr)) for attr in status_list],
-                      style='green')
+        table.add_row(
+            *[str(getattr(data, attr)) for attr in status_list],
+            style='green',
+        )
 
     print(table)
 
@@ -150,7 +155,7 @@ async def app_logs(ctx: Context):
             title='Logs',
             title_align='left',
             style='green',
-            border_style='purple'
+            border_style='purple',
         )
     print(panel)
 
@@ -168,6 +173,6 @@ async def app_backup(ctx: Context):
             title='Backup URL',
             title_align='left',
             style='green',
-            border_style='purple'
+            border_style='purple',
         )
     print(panel)

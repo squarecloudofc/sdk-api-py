@@ -115,14 +115,14 @@ class HTTPClient:
                         raise NotFoundError(
                             route=route.endpoint.name,
                             status_code=status_code,
-                            code=code
+                            code=code,
                         )
                     case 401:
                         logger.error(msg='request to: ', extra=extra)
                         raise AuthenticationFailure(
                             route=route.endpoint.name,
                             status_code=status_code,
-                            code=code
+                            code=code,
                         )
                     case 400:
                         logger.error(msg='request to: ', extra=extra)
@@ -131,26 +131,26 @@ class HTTPClient:
                                 raise FewMemory(
                                     route=route.endpoint.name,
                                     status_code=status_code,
-                                    code=code
+                                    code=code,
                                 )
                             case _:
                                 raise BadRequestError(
                                     route=route.endpoint.name,
                                     status_code=status_code,
-                                    code=code
+                                    code=code,
                                 )
                     case 429:
                         logger.error(msg='request to: ', extra=extra)
                         raise TooManyRequests(
                             route=route.endpoint.name,
                             status_code=status_code,
-                            code=code
+                            code=code,
                         )
                     case _:
                         raise RequestError(
                             route=route.endpoint.name,
                             status_code=status_code,
-                            code=code
+                            code=code,
                         )
                 return response
 
