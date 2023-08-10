@@ -9,9 +9,10 @@ from squarecloud.file import File
 from ..errors import (
     AuthenticationFailure,
     BadRequestError,
+    FewMemory,
     NotFoundError,
     RequestError,
-    TooManyRequests, FewMemory,
+    TooManyRequests,
 )
 from ..logs import logger
 from ..payloads import RawResponseData
@@ -100,7 +101,8 @@ class HTTPClient:
                     'code': data.get('code'),
                     'request_message': data.get('message', ''),
                 }
-                msg_error = f'route [{route.endpoint.name}] returned {status_code}, [{data.get("code")}]'
+                code: str = data.get('code')
+                msg_error = f'route [{route.endpoint.name}] returned {status_code}, [{code}]'
                 match status_code:
                     case 200:
                         logger.debug(msg='request to route: ', extra=extra)
@@ -123,7 +125,11 @@ class HTTPClient:
                                 raise BadRequestError(msg_error)
                     case 429:
                         logger.error(msg='request to: ', extra=extra)
-                        raise TooManyRequests(msg_error)
+                        raise TooManyRequests(
+                            route=route.endpoint.name,
+                            status_code=status_code,
+                            code=code
+                        )
                     case _:
                         msg = (
                             f'An unexpected error occurred while requesting {route.url}, '
