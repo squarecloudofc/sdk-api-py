@@ -15,6 +15,7 @@ from squarecloud.data import AppData, BackupData, LogsData, StatusData
 @click.option(
     '--app-id',
     type=click.STRING,
+    required=True,
 )
 @click.option(
     '--token',
