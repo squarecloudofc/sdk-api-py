@@ -10,7 +10,7 @@ from squarecloud.data import StatisticsData
 
 from .. import ApplicationNotFound, RequestError
 from . import cli, run_async
-from .app import app_group
+from .app import app_group, app_list
 
 load_dotenv()
 
@@ -54,6 +54,7 @@ async def get_squarecloud_statistics(token: str):
 
 
 cli.add_command(app_group)
+cli.add_command(app_list)
 
 
 def safe_entry_point():

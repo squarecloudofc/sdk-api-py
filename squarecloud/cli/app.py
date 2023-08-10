@@ -88,11 +88,21 @@ async def get_app_status(ctx: Context):
     print(table)
 
 
-@app_group.command(name='list')
+@app_group.command(name='app-list')
+@click.option(
+    '--token',
+    '-t',
+    help='your api token',
+    envvar='SQUARECLOUD-TOKEN',
+    required=True,
+    type=click.STRING,
+    prompt='API KEY',
+    hide_input=True,
+)
 @click.pass_context
 @run_async
-async def app_list(ctx: Context):
-    client: Client = ctx.obj['client']
+async def app_list(ctx: Context, token: str):
+    client = Client(token, debug=False)
     with Console().status('loading'):
         apps: list[Application] = await client.all_apps()
         table = Table(title='App List', header_style='purple')
