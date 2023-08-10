@@ -380,7 +380,7 @@ class Client(AbstractClient):
             )
         )
         if not app_data:
-            raise ApplicationNotFound
+            raise ApplicationNotFound(app_id=app_id)
         app_data = app_data.pop()
         app: Application = Application(
             client=self, http=self._http, **app_data
