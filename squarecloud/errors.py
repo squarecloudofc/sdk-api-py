@@ -37,6 +37,10 @@ class BadRequestError(RequestError):
 class ApplicationNotFound(SquareException):
     """raises when an application is not found"""
 
+    def __init__(self, app_id: str):
+        self.app_id = app_id
+        super().__init__()
+
 
 class InvalidFile(SquareException):
     """raised when a file is invalid"""
