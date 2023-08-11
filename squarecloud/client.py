@@ -91,12 +91,12 @@ def create_config_file(
         'AUTORESTART': auto_restart,
     }
     for key, value in optionals.items():
-        if value is not None:
+        if value:
             string: str = f'{key}={value}\n'
             content += string
     with open(f'./{path}/squarecloud.app', 'w', encoding='utf-8') as file:
         file.write(content)
-        return file
+    return file
 
 
 class Client(AbstractClient):
