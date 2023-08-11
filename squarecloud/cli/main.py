@@ -59,7 +59,7 @@ async def get_squarecloud_statistics(token: str):
 @click.command(name='create-config-file')
 @click.argument(
     'output_file',
-    type=click.File('w', encoding='utf-8'),
+    type=click.Path(),
     required=False,
 )
 @click.option(
@@ -125,7 +125,7 @@ async def get_squarecloud_statistics(token: str):
     required=False,
 )
 def create_config(
-    output_file: click.utils.LazyFile,
+    output_file: str,
     display_name: str,
     main: str,
     memory: int,
@@ -151,9 +151,10 @@ def create_config(
         save=False
     )
     if output_file:
-        output_file.write(content)  # type: ignore
+        with open(output_file, 'w') as f:
+            f.write(content)
         print(Panel(
-            f'\u2728  file saved successfully at {output_file.name}',
+            f'\u2728  file saved successfully at {output_file}',
             border_style='green',
             style='green',
         ))
