@@ -1,6 +1,7 @@
 import click
-from click import Context
+from click import Context, prompt
 from rich import print
+from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -182,6 +183,24 @@ async def app_backup(ctx: Context):
         panel = Panel(
             backup.downloadURL,
             title='Backup URL',
+            title_align='left',
+            style='green',
+            border_style='purple',
+        )
+    print(panel)
+
+
+@app_group.command(name='start')
+@click.pass_context
+@run_async
+async def start_app(ctx: Context):
+    client: Client = ctx.obj['client']
+    app_id = ctx.obj['app_id']
+    with Console().status('loading'):
+        await client.start_app(app_id)
+        panel = Panel(
+            f'Application with id {app_id} has been started',
+            title='App started',
             title_align='left',
             style='green',
             border_style='purple',
