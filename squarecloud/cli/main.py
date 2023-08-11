@@ -191,7 +191,6 @@ cli.add_command(app_group)
 cli.add_command(app_list)
 cli.add_command(create_config)
 cli.add_command(upload_app)
-cli.add_command(file_list)
 
 
 def safe_entry_point():

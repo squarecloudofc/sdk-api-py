@@ -91,7 +91,7 @@ async def read_file(ctx: Context, path: str):
 )
 @click.pass_context
 @run_async
-async def file_list(ctx: Context, path: str):
+async def file_delete(ctx: Context, path: str):
     client: Client = ctx.obj['client']
     app_id = ctx.obj['app_id']
     with Console().status('loading'):
