@@ -1,11 +1,14 @@
+from typing import Literal
+
 import click
+from click import prompt
 from dotenv import load_dotenv
 from rich import print
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from squarecloud.client import Client
+from squarecloud.client import Client, create_config_file
 from squarecloud.data import StatisticsData
 
 from .. import ApplicationNotFound, RequestError
@@ -53,8 +56,138 @@ async def get_squarecloud_statistics(token: str):
     print(table)
 
 
+@click.command(name='create-config-file')
+@click.argument(
+    'output_file',
+    type=click.File('w', encoding='utf-8'),
+    required=False,
+)
+@click.option(
+    '--display-name',
+    help='Set the display name of your app',
+    prompt='Enter display name',
+)
+@click.option(
+    '--main',
+    help='Set the display name of your app',
+    prompt='Enter main',
+)
+@click.option(
+    '--memory',
+    help='Set the memory of the app',
+    prompt='Enter memory',
+    type=click.IntRange(100),
+)
+@click.option(
+    '--version',
+    help='Ensure that the version is either "recommended" or "latest"',
+    type=click.Choice(['recommended', 'latest']),
+    default='recommended',
+    prompt='Enter version',
+    required=False,
+)
+@click.option(
+    '--avatar',
+    help='Specify the avatar of the application',
+    type=click.STRING,
+    prompt='Enter avatar (optional)',
+    default='',
+    required=False,
+)
+@click.option(
+    '--description',
+    help='Specify a description for the app',
+    type=click.STRING,
+    prompt='Enter description (optional)',
+    default='',
+    required=False,
+)
+@click.option(
+    '--subdomain',
+    help='Specify the subdomain of your app',
+    prompt='Enter subdomain (optional)',
+    default='',
+    type=click.STRING,
+)
+@click.option(
+    '--start',
+    prompt='Enter start (optional)',
+    default='',
+    required=False,
+    help='Specify the command that should be run when the application starts',
+)
+@click.option(
+    '--auto_restart',
+    help='Determine if the app should restart automatically after a crash',
+    prompt='Enter auto restart (optional)',
+    type=click.BOOL,
+    default=False,
+    required=False,
+)
+def create_config(
+    output_file: click.File,
+    display_name: str,
+    main: str,
+    memory: int,
+    version: Literal['recommended', 'latest'] = 'recommended',
+    avatar: str | None = None,
+    description: str | None = None,
+    subdomain: str | None = None,
+    start: str | None = None,
+    auto_restart: bool | None = None,
+):
+
+    content = create_config_file(
+        path='/',
+        display_name=display_name,
+        main=main,
+        memory=memory,
+        version=version,
+        avatar=avatar,
+        description=description,
+        subdomain=subdomain,
+        start=start,
+        auto_restart=auto_restart,
+        save=False
+    )
+    if output_file:
+        output_file.write(content)  # type: ignore
+        print(Panel(
+            f'\u2728  file saved successfully at {output_file.name}',
+            border_style='green',
+            style='green',
+        ))
+        return
+    else:
+        print(
+            Panel(
+                content,
+                title='squarecloud.app',
+                border_style='purple',
+                style='green',
+            )
+        )
+        r = prompt(
+            'would you like to save the file? [Y/N]',
+            type=click.BOOL,
+            default='Y',
+        )
+    if r:
+        path = prompt(
+            'where do you want to save the file', default='squarecloud.app'
+        )
+        with open(path, 'w') as f:
+            f.write(content)
+        print(Panel(
+            f'\u2728  file saved successfully at {path}',
+            border_style='green',
+            style='green',
+        ))
+
+
 cli.add_command(app_group)
 cli.add_command(app_list)
+cli.add_command(create_config)
 
 
 def safe_entry_point():

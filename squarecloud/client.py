@@ -52,6 +52,7 @@ def create_config_file(
     subdomain: str | None = None,
     start: str | None = None,
     auto_restart: bool | None = None,
+    **kwargs,
 ):
     """
     The create_config_file function creates a squarecloud.app file in the
@@ -94,9 +95,11 @@ def create_config_file(
         if value:
             string: str = f'{key}={value}\n'
             content += string
-    with open(f'./{path}/squarecloud.app', 'w', encoding='utf-8') as file:
-        file.write(content)
-    return file
+    if kwargs.get('save', True):
+        with open(f'./{path}/squarecloud.app', 'w', encoding='utf-8') as file:
+            file.write(content)
+        return file
+    return content
 
 
 class Client(AbstractClient):
