@@ -224,3 +224,21 @@ async def stop_app(ctx: Context):
             border_style='purple',
         )
     print(panel)
+
+
+@app_group.command(name='restart')
+@click.pass_context
+@run_async
+async def restart_app(ctx: Context):
+    client: Client = ctx.obj['client']
+    app_id = ctx.obj['app_id']
+    with Console().status('loading'):
+        await client.restart_app(app_id)
+        panel = Panel(
+            f'Application with id {app_id} has been restarted',
+            title='App restarted',
+            title_align='left',
+            style='yellow',
+            border_style='purple',
+        )
+    print(panel)
