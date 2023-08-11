@@ -10,6 +10,7 @@ from rich.table import Table
 
 from squarecloud.client import Client, create_config_file
 from squarecloud.data import StatisticsData
+from .files import file_list
 
 from .. import ApplicationNotFound, RequestError
 from . import cli, run_async
@@ -190,6 +191,7 @@ cli.add_command(app_group)
 cli.add_command(app_list)
 cli.add_command(create_config)
 cli.add_command(upload_app)
+cli.add_command(file_list)
 
 
 def safe_entry_point():
