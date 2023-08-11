@@ -13,7 +13,7 @@ from squarecloud.data import StatisticsData
 
 from .. import ApplicationNotFound, RequestError
 from . import cli, run_async
-from .app import app_group, app_list
+from .app import app_group, app_list, upload_app
 
 load_dotenv()
 
@@ -125,7 +125,7 @@ async def get_squarecloud_statistics(token: str):
     required=False,
 )
 def create_config(
-    output_file: click.File,
+    output_file: click.utils.LazyFile,
     display_name: str,
     main: str,
     memory: int,
@@ -168,7 +168,7 @@ def create_config(
             )
         )
         r = prompt(
-            'would you like to save the file? [Y/N]',
+            'would you like to save the file? [y/N]',
             type=click.BOOL,
             default='Y',
         )
@@ -188,6 +188,7 @@ def create_config(
 cli.add_command(app_group)
 cli.add_command(app_list)
 cli.add_command(create_config)
+cli.add_command(upload_app)
 
 
 def safe_entry_point():
@@ -204,3 +205,5 @@ def safe_entry_point():
                 style='red',
             ),
         )
+    except Exception as e:
+        raise e

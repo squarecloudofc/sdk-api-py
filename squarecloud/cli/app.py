@@ -1,3 +1,5 @@
+from io import BufferedReader
+
 import click
 from click import Context, prompt
 from rich import print
@@ -6,15 +8,17 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+import squarecloud
 from squarecloud import Client
 from squarecloud.app import Application
 from squarecloud.cli import cli, run_async
-from squarecloud.data import AppData, BackupData, LogsData, StatusData
+from squarecloud.data import AppData, BackupData, LogsData, StatusData, \
+    UploadData
 
 
 @cli.group(name='app', invoke_without_command=True)
-@click.option(
-    '--app-id',
+@click.argument(
+    'app_id',
     type=click.STRING,
     required=True,
 )
@@ -251,7 +255,6 @@ async def restart_app(ctx: Context):
 @click.pass_context
 @run_async
 async def start_app(ctx: Context):
-    pass
     client: Client = ctx.obj['client']
     app_id = ctx.obj['app_id']
     with Console().status('loading'):
@@ -261,6 +264,39 @@ async def start_app(ctx: Context):
             title='App deleted',
             title_align='left',
             style='red',
+            border_style='purple',
+        )
+    print(panel)
+
+
+@cli.command(name='upload')
+@click.argument(
+    'file',
+    type=click.File('rb'),
+    required=True,
+)
+@click.option(
+    '--token',
+    '-t',
+    help='your api token',
+    envvar='SQUARECLOUD-TOKEN',
+    required=True,
+    type=click.STRING,
+    prompt='API KEY',
+    hide_input=True,
+)
+@run_async
+async def upload_app(token: str, file: BufferedReader):
+    client = Client(token, debug=False)
+    with Console().status('loading'):
+        upload_data: UploadData = await client.upload_app(
+            file=squarecloud.File(file)
+        )
+        panel = Panel(
+            f'Application with id {upload_data.id} has been uploaded',
+            title='App uploaded',
+            title_align='left',
+            style='green',
             border_style='purple',
         )
     print(panel)
