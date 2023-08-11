@@ -12,8 +12,13 @@ import squarecloud
 from squarecloud import Client
 from squarecloud.app import Application
 from squarecloud.cli import cli, run_async
-from squarecloud.data import AppData, BackupData, LogsData, StatusData, \
-    UploadData
+from squarecloud.data import (
+    AppData,
+    BackupData,
+    LogsData,
+    StatusData,
+    UploadData,
+)
 
 
 @cli.group(name='app', invoke_without_command=True)

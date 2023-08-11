@@ -10,11 +10,11 @@ from rich.table import Table
 
 from squarecloud.client import Client, create_config_file
 from squarecloud.data import StatisticsData
-from .files import file_list
 
 from .. import ApplicationNotFound, RequestError
 from . import cli, run_async
 from .app import app_group, app_list, upload_app
+from .files import file_list
 
 load_dotenv()
 
