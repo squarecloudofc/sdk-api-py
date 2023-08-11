@@ -206,3 +206,21 @@ async def start_app(ctx: Context):
             border_style='purple',
         )
     print(panel)
+
+
+@app_group.command(name='stop')
+@click.pass_context
+@run_async
+async def stop_app(ctx: Context):
+    client: Client = ctx.obj['client']
+    app_id = ctx.obj['app_id']
+    with Console().status('loading'):
+        await client.stop_app(app_id)
+        panel = Panel(
+            f'Application with id {app_id} has been stopped',
+            title='App stopped',
+            title_align='left',
+            style='red',
+            border_style='purple',
+        )
+    print(panel)
