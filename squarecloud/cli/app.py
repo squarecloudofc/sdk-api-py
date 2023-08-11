@@ -242,3 +242,25 @@ async def restart_app(ctx: Context):
             border_style='purple',
         )
     print(panel)
+
+
+@app_group.command(name='delete')
+@click.confirmation_option(
+    prompt='Are you sure you want to delete this application?',
+)
+@click.pass_context
+@run_async
+async def start_app(ctx: Context):
+    pass
+    client: Client = ctx.obj['client']
+    app_id = ctx.obj['app_id']
+    with Console().status('loading'):
+        await client.delete_app(app_id)
+        panel = Panel(
+            f'Application with id {app_id} has been deleted',
+            title='App deleted',
+            title_align='left',
+            style='red',
+            border_style='purple',
+        )
+    print(panel)
