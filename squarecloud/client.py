@@ -53,7 +53,7 @@ def create_config_file(
     start: str | None = None,
     auto_restart: bool = False,
     **kwargs,
-):
+) -> str:
     """
     The create_config_file function creates a squarecloud.app file in the
     specified path, with the given parameters.
@@ -74,8 +74,8 @@ def create_config_file(
     application starts
     :param auto_restart: bool | None: Determine if the app should restart
     automatically after a crash
-    :return: A File object
-    :doc-author: Trelent
+    :return: File content
+    :rtype: str
     """
     content: str = ''
     optionals: dict[str, Any] = {
@@ -101,7 +101,14 @@ def create_config_file(
 
 
 class Client(AbstractClient):
-    """A client for interacting with the SquareCloud API."""
+    """A client for interacting with the SquareCloud API.
+
+    :ivar api_key: the api key for the client
+    :ivar debug: weather the debug messages is enabled
+
+    :type api_key: str
+    :type debug: bool
+    """
 
     def __init__(self, api_key: str, debug: bool = True) -> None:
 
