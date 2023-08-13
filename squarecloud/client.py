@@ -74,8 +74,6 @@ def create_config_file(
     application starts
     :param auto_restart: bool | None: Determine if the app should restart
     automatically after a crash
-    :param : Specify the path to the directory where you want to create a
-    configuration file
     :return: A File object
     :doc-author: Trelent
     """
