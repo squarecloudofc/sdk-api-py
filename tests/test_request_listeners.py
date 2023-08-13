@@ -1,37 +1,9 @@
-# # todo: tests upload and delete
-# from time import sleep
-#
-# import pytest
-#
-# from squarecloud import File, InvalidFile
-# from squarecloud.data import UploadData
-# from tests import client
-#
-#
-# @pytest.mark.asyncio
-# class TestUpload:
-#     async def test_upload_app(self):
-#         print(await client.me())
-#         upload_data: UploadData = await client.upload_app(
-#             File('test_upload/test_upload.zip')
-#         )
-#         sleep(3)
-#         await client.delete_app(upload_data.id)
-#
-#     async def test_raises(self):
-#         with pytest.raises(InvalidFile) as e_info:
-#             await client.upload_app('test_upload/test_upload.zip')
-#
-# # TODO: testar sabosta
-
 import pytest
 
 from squarecloud import Endpoint, File
 from squarecloud.data import UploadData, LogsData
 from squarecloud.http import Response
 from . import client
-
-# file = File('test_upload/test_upload.zip')
 
 
 @pytest.mark.asyncio
