@@ -147,7 +147,9 @@ async def file_create(ctx: Context, file: io.BufferedReader, path: str):
         full_path = f'/{path}/{file.name}'
     with Console().status('loading'):
         response: Response = await client.create_app_file(
-            app_id, squarecloud.File(file), full_path,
+            app_id,
+            squarecloud.File(file),
+            full_path,
         )
 
     match response.status:

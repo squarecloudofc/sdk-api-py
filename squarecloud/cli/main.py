@@ -149,16 +149,18 @@ def create_config(
         subdomain=subdomain,
         start=start,
         auto_restart=auto_restart,
-        save=False
+        save=False,
     )
     if output_file:
         with open(output_file, 'w') as f:
             f.write(content)
-        print(Panel(
-            f'\u2728  file saved successfully at {output_file}',
-            border_style='green',
-            style='green',
-        ))
+        print(
+            Panel(
+                f'\u2728  file saved successfully at {output_file}',
+                border_style='green',
+                style='green',
+            )
+        )
         return
     else:
         print(
@@ -180,11 +182,13 @@ def create_config(
         )
         with open(path, 'w') as f:
             f.write(content)
-        print(Panel(
-            f'\u2728  file saved successfully at {path}',
-            border_style='green',
-            style='green',
-        ))
+        print(
+            Panel(
+                f'\u2728  file saved successfully at {path}',
+                border_style='green',
+                style='green',
+            )
+        )
 
 
 cli.add_command(app_group)

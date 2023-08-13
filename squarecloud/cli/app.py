@@ -315,9 +315,11 @@ async def commit(ctx: Context, file: BufferedReader):
     with Console().status('loading'):
         client: Client = ctx.obj['client']
         app_id = ctx.obj['app_id']
-        response = await client.commit(app_id, squarecloud.File(file))
-    print(Panel(
-        f'File {file.name} has been committed to app with id {app_id}',
-        border_style='purple',
-        style='green',
-    ))
+        await client.commit(app_id, squarecloud.File(file))
+    print(
+        Panel(
+            f'File {file.name} has been committed to app with id {app_id}',
+            border_style='purple',
+            style='green',
+        )
+    )
