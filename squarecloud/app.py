@@ -28,7 +28,6 @@ class AppCache:
         It sets up the instance of the class, and defines all of its attributes.
 
 
-        :param self: Refer to the class instance
         :return: The instance of the class
         :rtype: None
         """
@@ -42,7 +41,6 @@ class AppCache:
         """
         The status function returns the status of the application.
 
-        :param self: Refer to the class instance
         :return: The status of the application.
         :rtype: StatusData
         """
@@ -53,7 +51,6 @@ class AppCache:
         """
         The logs function the logs of the application.
 
-        :param self: Refer to the class instance
         :return: The logs of your application
         :rtype: LogsData
         """
@@ -64,7 +61,6 @@ class AppCache:
         """
         The backup function is used to create a backup of the application.
 
-        :param self: Refer to the class instance
         :return: The value of the _backup attribute
         :rtype: BackupData
         """
@@ -75,7 +71,6 @@ class AppCache:
         """
         The app_data function is a property that returns the AppData object.
 
-        :param self: Refer to the class instance
         :return: The data from the app_data
         :rtype: AppData
         """
@@ -213,7 +208,7 @@ class Application(AbstractApplication):
                         'go',
                         'static',
                         'dynamic',
-                    ]: The language of the app.
+                    ]: The programming language of the app.
         :param type: Literal['free', 'paid]: The app type
         :param cluster: Literal[
                 'florida-free-1',
@@ -226,6 +221,7 @@ class Application(AbstractApplication):
         :param isWebsite: bool: Whether if the app is a website
         :param avatar: str: The app avatar
         :param desc: str | None: Define the description of the app
+
         :return: None
         :rtype: None
         """
@@ -279,7 +275,6 @@ class Application(AbstractApplication):
         """
         The client function is a property that returns the client object.
 
-        :param self: Refer to the class instance
         :return: The client instance
         :rtype: Client
         """
@@ -291,7 +286,6 @@ class Application(AbstractApplication):
         The id function is a property that returns
          the id of the application.
 
-        :param self: Refer to the class instance
         :return: The id of the application
         :rtype: str
         """
@@ -302,7 +296,6 @@ class Application(AbstractApplication):
         """
         The avatar function is a property that returns the application tag.
 
-        :param self: Refer to the class instance
         :return: The tag of the application
         :rtype: str
         """
@@ -314,7 +307,6 @@ class Application(AbstractApplication):
         The desc function is a property that returns the description of
         the application.
 
-        :param self: Refer to the class instance
         :return: The description of the application
         :rtype: str | None
         """
@@ -327,7 +319,6 @@ class Application(AbstractApplication):
         The avatar function is a property that returns
         the amount of ram allocated to the application
 
-        :param self: Refer to the class instance
         :return: The application ram
         :rtype: int
         """
@@ -350,7 +341,6 @@ class Application(AbstractApplication):
         The lang function is a property that returns the application's
         programing language.
 
-        :param self: Refer to the class instance
         :return: The application's programing language
         :rtype: Literal[
             'javascript',
@@ -370,7 +360,6 @@ class Application(AbstractApplication):
         """
         The avatar function is a property that returns the application's type.
 
-        :param self: Refer to the class instance
         :return: The application's type
         :rtype: Literal['free', 'paid']
         """
@@ -393,7 +382,6 @@ class Application(AbstractApplication):
         running on.
 
 
-        :param self: Refer to the class instance
         :return: The cluster that the application is running
         :rtype: Literal[
             'florida-free-1',
@@ -412,7 +400,6 @@ class Application(AbstractApplication):
         The is_website function is a property that returns a boolean value
         indicating whether th application is a website.
 
-        :param self: Refer to the class instance
         :return: A boolean value, true or false
         :rtype: bool
         """
@@ -424,7 +411,6 @@ class Application(AbstractApplication):
         The avatar function is a property that returns the avatar of the
         application.
 
-        :param self: Refer to the class instance
         :return: The application avatar
         :rtype: str
         """

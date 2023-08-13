@@ -51,7 +51,7 @@ def create_config_file(
     description: str | None = None,
     subdomain: str | None = None,
     start: str | None = None,
-    auto_restart: bool | None = None,
+    auto_restart: bool = False,
     **kwargs,
 ):
     """
@@ -131,8 +131,8 @@ class Client(AbstractClient):
         """
         The api_key function returns the api key for the client.
 
-        :param self: Refer to the class instance
         :return: The api key
+        :rtype: str
         """
         return self._api_key
 
