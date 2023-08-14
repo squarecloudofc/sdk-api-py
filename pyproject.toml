@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "squarecloud-api"
-version = "3.0.2"
+version = "3.1.0"
 description = "SquareCloud API wrapper"
 authors = ["Robert Nogueira <robertlucasnogueira@gmail.com>"]
 license = "MIT License"
@@ -13,7 +13,6 @@ aiohttp = "3.8.3"
 click = "^8.1.6"
 rich = "^13.5.2"
 
-
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
 pytest-cov = "^4.1.0"
@@ -22,12 +21,15 @@ isort = "^5.12.0"
 taskipy = "^1.12.0"
 python-dotenv = "^1.0.0"
 pytest-asyncio = "^0.21.1"
-
+pre-commit = "^3.3.3"
 
 [tool.poetry.group.doc.dependencies]
 mkdocs-material = "^9.1.21"
 mkdocstrings = "^0.22.0"
 mkdocstrings-python = "^1.2.1"
+
+[tool.poetry.group.docs.dependencies]
+termynal = "^0.10.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -47,6 +49,9 @@ pre_test = "task lint"
 test = "pytest -s -x --cov=squarecloud -vv"
 post_test = "coverage html"
 squarecloud = "poetry run squarecloud"
+publish-test = "poetry publish -r test-pypi --build"
+install-test = "pip install -i https://test.pypi.org/pypi/ --extra-index-url https://pypi.org/simple --upgrade squarecloud-api"
+docs = "mkdocs serve"
 
 [tool.poetry.scripts]
 squarecloud = "squarecloud.cli.main:safe_entry_point"
