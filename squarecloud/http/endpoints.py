@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+
 # pylint: disable=missing-function-docstring
 
 
@@ -101,70 +102,133 @@ class Endpoint:
 
     @classmethod
     def user_me(cls) -> Endpoint:
+        """Returns an Endpoint object that represents the /user/me endpoint."""
         return cls('USER_ME')
 
     @classmethod
     def app_data(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the /apps/{app_id} endpoint.
+        """
         return cls('APP_DATA')
 
     @classmethod
     def user_info(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the /user/{user_id} endpoint.
+        """
         return cls('USER_INFO')
 
     @classmethod
     def app_status(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/status endpoint.
+        """
         return cls('APP_STATUS')
 
     @classmethod
     def logs(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/logs endpoint.
+        """
         return cls('LOGS')
 
     @classmethod
     def start(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/start endpoint.
+        """
         return cls('START')
 
     @classmethod
     def stop(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/stop endpoint.
+        """
         return cls('STOP')
 
     @classmethod
     def restart(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/restart endpoint.
+        """
         return cls('RESTART')
 
     @classmethod
     def backup(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/backup endpoint.
+        """
         return cls('BACKUP')
 
     @classmethod
     def commit(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/commit endpoint.
+        """
         return cls('COMMIT')
 
     @classmethod
     def delete_app(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/delete endpoint.
+        """
         return cls('DELETE_APP')
 
     @classmethod
     def upload(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/upload endpoint.
+        """
         return cls('UPLOAD_APP')
 
     @classmethod
     def files_list(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/files/list endpoint.
+        """
         return cls('FILES_LIST')
 
     @classmethod
     def files_read(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/files/read endpoint.
+        """
         return cls('FILES_READ')
 
     @classmethod
     def files_create(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/files/create endpoint.
+        """
         return cls('FILES_CREATE')
 
     @classmethod
     def files_delete(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/files/delete endpoint.
+        """
         return cls('FILES_DELETE')
 
     @classmethod
     def statistics(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /service/statistics endpoint.
+        """
         return cls('STATISTICS')
 
 
