@@ -31,7 +31,6 @@ class StatusData:
     """
     Application status class
 
-    
     :ivar cpu: the cpu used
     :ivar ram: the ram used
     :ivar status: the actual status of the application
@@ -75,7 +74,6 @@ class AppData:
     """
     Application data class
 
-    
     :ivar id: The application ID
     :ivar name: The application name
     :ivar avatar: The application avatar
@@ -150,7 +148,7 @@ class UserData:
     :ivar plan: User plan
     :ivar blocklist: Whether to user is blocked
     :ivar email: User email
-    
+
     :type id: int
     :type tag: str
     :type locale: str
@@ -248,7 +246,7 @@ class UploadData:
     :ivar cpu: Cpu of the uploaded application
     :ivar description: Description of the uploaded application
     :ivar subdomain: Subdomain of the uploaded application (only in websites)
-    
+
     :type id: str
     :type tag: str
     :type language: str
@@ -258,6 +256,7 @@ class UploadData:
     :type subdomain: str | None = None
     :type description: str | None = None
     """
+
     id: str
     tag: str
     language: str
@@ -285,6 +284,7 @@ class FileInfo:
     :type lastModified: int | float
     :type path: str
     """
+
     type: Literal['file', 'directory']
     name: str
     size: int
@@ -309,6 +309,7 @@ class StatisticsData:
     :type ping: int
     :type time: int
     """
+
     users: int
     apps: int
     websites: int

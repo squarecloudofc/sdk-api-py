@@ -1,9 +1,8 @@
 from io import BufferedReader
 
 import click
-from click import Context, prompt
+from click import Context
 from rich import print
-from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
