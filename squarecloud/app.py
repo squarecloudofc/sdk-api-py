@@ -1,4 +1,3 @@
-import logging
 from abc import ABC
 from io import BytesIO
 from typing import TYPE_CHECKING, Callable, Literal
