@@ -46,7 +46,7 @@ line_length = 79
 [tool.taskipy.tasks]
 lint = "isort squarecloud && blue --check --diff squarecloud"
 pre_test = "task lint"
-test = "pytest -s -x --cov=squarecloud -vv"
+test = "pytest -s -x --cov=squarecloud -vv tests"
 post_test = "coverage html"
 squarecloud = "poetry run squarecloud"
 publish-test = "poetry publish -r test-pypi --build"
