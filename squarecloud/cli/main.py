@@ -11,7 +11,7 @@ from rich.table import Table
 from squarecloud.client import Client, create_config_file
 from squarecloud.data import StatisticsData
 
-from .. import ApplicationNotFound, RequestError
+from .. import ApplicationNotFound, RequestError, SquareException
 from . import cli, run_async
 from .app import app_list, upload_app
 from .files import app_group
@@ -211,5 +211,11 @@ def safe_entry_point():
                 style='red',
             ),
         )
-    except Exception as e:
-        raise e
+    except SquareException as e:
+        print(
+            Panel(
+                e.message,
+                title_align='left',
+                style='red',
+            ),
+        )
