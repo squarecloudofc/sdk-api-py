@@ -112,32 +112,41 @@ async def get_app_status(ctx: Context):
 @run_async
 async def app_list(ctx: Context, token: str):
     client = Client(token, debug=False)
-    with Console().status('loading'):
+    with Console().status('loading') as status:
         apps: list[Application] = await client.all_apps()
-        table = Table(title='App List', header_style='purple')
+    if not apps:
+        print(
+            Panel(
+                f'You do not have any application',
+                title_align='left',
+                style='red',
+            ),
+        )
+        return
+    table = Table(title='App List', header_style='purple')
 
-        table.add_column('Tag', justify='center')
-        table.add_column('ID', justify='center')
-        table.add_column('Type', justify='center')
-        table.add_column('RAM', justify='center')
-        table.add_column('Language', justify='center')
-        table.add_column('Description', justify='center')
-        table.add_column('Is Website', justify='center')
-        table.add_column('Avatar', justify='center')
-        table.add_column('Cluster', justify='center')
-        for app in apps:
-            table.add_row(
-                app.tag,
-                app.id,
-                app.type,
-                str(app.ram),
-                app.lang,
-                app.desc,
-                str(app.is_website),
-                app.avatar,
-                app.cluster,
-                style='green',
-            )
+    table.add_column('Tag', justify='center')
+    table.add_column('ID', justify='center')
+    table.add_column('Type', justify='center')
+    table.add_column('RAM', justify='center')
+    table.add_column('Language', justify='center')
+    table.add_column('Description', justify='center')
+    table.add_column('Is Website', justify='center')
+    table.add_column('Avatar', justify='center')
+    table.add_column('Cluster', justify='center')
+    for app in apps:
+        table.add_row(
+            app.tag,
+            app.id,
+            app.type,
+            str(app.ram),
+            app.lang,
+            app.desc,
+            str(app.is_website),
+            app.avatar,
+            app.cluster,
+            style='green',
+        )
     print(table)
 
 

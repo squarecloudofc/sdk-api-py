@@ -13,7 +13,8 @@ from squarecloud.data import StatisticsData
 
 from .. import ApplicationNotFound, RequestError
 from . import cli, run_async
-from .app import app_group, app_list, upload_app
+from .app import app_list, upload_app
+from .files import app_group
 
 load_dotenv()
 
