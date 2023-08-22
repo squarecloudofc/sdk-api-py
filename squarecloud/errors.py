@@ -1,6 +1,9 @@
 class SquareException(BaseException):
     """abstract class SquareException"""
 
+    def __init__(self, message: str):
+        self.message = message
+
 
 class RequestError(SquareException):
     """raised when a request fails"""
