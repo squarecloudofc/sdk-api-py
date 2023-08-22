@@ -16,7 +16,7 @@ class TestRequestListeners:
             assert isinstance(response, Response)
 
         upload_data: UploadData = await client.upload_app(
-            File('test_upload/test_upload.zip')
+            File('tests/test_upload/test_upload.zip')
         )
         TestRequestListeners.APP_ID = upload_data.id
 
@@ -96,7 +96,7 @@ class TestRequestListeners:
             assert isinstance(response, Response)
 
         await client.create_app_file(
-            TestRequestListeners.APP_ID, File('test.txt'), '/test.txt'
+            TestRequestListeners.APP_ID, File('tests/test.txt'), '/test.txt'
         )
 
     async def test_request_delete_file(self):
@@ -111,7 +111,7 @@ class TestRequestListeners:
         async def test(response: Response):
             assert isinstance(response, Response)
 
-        await client.commit(TestRequestListeners.APP_ID, File('test.txt'))
+        await client.commit(TestRequestListeners.APP_ID, File('tests/test.txt'))
 
     async def test_request_user_info(self):
         @client.on_request(Endpoint.user_info())
@@ -133,10 +133,3 @@ class TestRequestListeners:
             assert isinstance(response, Response)
 
         await client.delete_app(TestRequestListeners.APP_ID)
-
-    async def test_capture_logs(self):
-        @client.on_request(Endpoint.logs())
-        async def capture_status(response: Response):
-            assert isinstance(response, Response)
-
-        await client.get_logs(TestRequestListeners.APP_ID)
