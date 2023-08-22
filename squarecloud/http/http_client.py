@@ -71,9 +71,7 @@ class HTTPClient:
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
 
-    async def request(
-        self, route: Router, **kwargs
-    ) -> Response | None | bytes:
+    async def request(self, route: Router, **kwargs) -> Response | bytes:
         """
         Sends a request to the Square API and returns the response.
 
@@ -102,16 +100,16 @@ class HTTPClient:
                     'request_message': data.get('message', ''),
                 }
                 code: str = data.get('code')
-                msg_error = f'route [{route.endpoint.name}] returned {status_code}, [{code}]'
                 match status_code:
                     case 200:
                         logger.debug(msg='request to route: ', extra=extra)
                         extra.pop('code')
                         response: Response = Response(data=data, route=route)
                     case 404:
-                        logger.debug(msg='request to route: ', extra=extra)
-                        if route.endpoint == Endpoint.logs():
-                            return
+                        if code is None:
+                            logger.debug(msg='request to route: ', extra=extra)
+                            return Response(data=data, route=route)
+                        logger.error(msg='request to route: ', extra=extra)
                         raise NotFoundError(
                             route=route.endpoint.name,
                             status_code=status_code,
@@ -183,7 +181,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def fetch_logs(self, app_id: str) -> Response:
+    async def fetch_logs(self, app_id: str) -> Response | None:
         """
         Make a request for LOGS route
 
@@ -194,8 +192,7 @@ class HTTPClient:
             Response
         """
         route: Router = Router(Endpoint.logs(), app_id=app_id)
-        response: Response = await self.request(route)
-        return response
+        return await self.request(route)
 
     async def start_application(self, app_id: str) -> Response:
         """

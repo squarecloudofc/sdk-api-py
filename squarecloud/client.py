@@ -225,8 +225,8 @@ class Client(AbstractClient):
         :return: A LogsData object, which is a named tuple
         """
         response: Response | None = await self._http.fetch_logs(app_id)
-        if not response:
-            return LogsData(logs=None)
+        if response.code is None:
+            return LogsData()
         payload: LogsPayload = response.response
         logs_data: LogsData = LogsData(**payload)
         if not kwargs.get('avoid_listener'):

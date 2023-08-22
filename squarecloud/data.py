@@ -171,10 +171,10 @@ class LogsData:
 
     :ivar logs: A string containing logs of your application
 
-    :type logs: str | None = None
+    :type logs: str | str = ''
     """
 
-    logs: str | None = None
+    logs: str = ''
 
     def __eq__(self, other) -> bool:
         """
