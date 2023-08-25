@@ -206,7 +206,7 @@ def safe_entry_point():
     except ApplicationNotFound as e:
         print(
             Panel(
-                f'No application was found with id: {e.app_id}',
+                e.message,
                 title_align='left',
                 style='red',
             ),
