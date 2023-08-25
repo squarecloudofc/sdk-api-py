@@ -24,7 +24,7 @@ from squarecloud.data import (
 @click.argument(
     'app_id',
     type=click.STRING,
-    required=True,
+    required=False,
 )
 @click.option(
     '--token',
@@ -39,6 +39,9 @@ from squarecloud.data import (
 @click.pass_context
 @run_async
 async def app_group(ctx: Context, app_id: str, token: str):
+    if not app_id:
+        click.echo(ctx.get_help())
+        return
     client = Client(token, debug=False)
     if not ctx.invoked_subcommand:
         with Console().status('loading'):
@@ -97,7 +100,7 @@ async def get_app_status(ctx: Context):
     print(table)
 
 
-@app_group.command(name='app-list')
+@click.command(name='app-list')
 @click.option(
     '--token',
     '-t',
