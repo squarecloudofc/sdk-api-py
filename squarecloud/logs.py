@@ -10,6 +10,7 @@ END = '\033[m'
 
 # logging config
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.CRITICAL)
 
 
 # pylint: disable=line-too-long
