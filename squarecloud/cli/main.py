@@ -203,14 +203,6 @@ def safe_entry_point():
     except RequestError as e:
         title = e.__class__.__name__
         print(Panel(e.message, title=title, title_align='left', style='red'))
-    except ApplicationNotFound as e:
-        print(
-            Panel(
-                e.message,
-                title_align='left',
-                style='red',
-            ),
-        )
     except SquareException as e:
         print(
             Panel(
