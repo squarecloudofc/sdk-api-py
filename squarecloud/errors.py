@@ -42,7 +42,7 @@ class ApplicationNotFound(SquareException):
 
     def __init__(self, app_id: str):
         self.app_id = app_id
-        super().__init__()
+        super().__init__(f'No application was found with id: {app_id}')
 
 
 class InvalidFile(SquareException):
