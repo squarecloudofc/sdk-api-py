@@ -27,9 +27,7 @@ pre-commit = "^3.3.3"
 mkdocs-material = "^9.1.21"
 mkdocstrings = "^0.22.0"
 mkdocstrings-python = "^1.2.1"
-
-[tool.poetry.group.docs.dependencies]
-termynal = "^0.10.0"
+termynal = "^0.11.0"
 
 [build-system]
 requires = ["poetry-core"]
