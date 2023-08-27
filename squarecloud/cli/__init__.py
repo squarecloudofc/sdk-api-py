@@ -3,6 +3,8 @@ from functools import wraps
 
 import click
 
+__version__ = '3.0.2'
+
 
 def run_async(func):
     @wraps(func)
@@ -13,5 +15,6 @@ def run_async(func):
 
 
 @click.group()
+@click.version_option(__version__, '-v', prog_name='squarecloud-api')
 def cli():
     pass
