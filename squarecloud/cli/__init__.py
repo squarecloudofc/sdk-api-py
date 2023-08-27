@@ -15,6 +15,8 @@ def run_async(func):
 
 
 @click.group()
-@click.version_option(__version__, '-v', prog_name='squarecloud-api')
+@click.version_option(
+    __version__, '--version', '-v', prog_name='squarecloud-api'
+)
 def cli():
     pass
