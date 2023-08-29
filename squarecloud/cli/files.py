@@ -16,7 +16,10 @@ from squarecloud.data import FileInfo
 from squarecloud.http import Response
 
 
-@app_group.command(name='file-list')
+@app_group.command(
+    name='file-list',
+    help='Get information about all files in a directory',
+)
 @click.argument(
     'path',
     default='/',
@@ -46,7 +49,7 @@ async def file_list(ctx: Context, path: str):
     print(table)
 
 
-@app_group.command(name='file-read')
+@app_group.command(name='file-read', help='Read a file from a directory')
 @click.argument(
     'path',
     default='/',
@@ -83,7 +86,7 @@ async def read_file(ctx: Context, path: str):
     print(panel)
 
 
-@app_group.command(name='file-delete')
+@app_group.command(name='file-delete', help='Delete a file')
 @click.argument(
     'path',
     default='/',
@@ -126,7 +129,10 @@ async def file_delete(ctx: Context, path: str):
     print(panel)
 
 
-@app_group.command(name='file-create')
+@app_group.command(
+    name='file-create',
+    help='Create a file in the specified directory',
+)
 @click.argument(
     'file',
     type=click.File('rb'),

@@ -20,7 +20,11 @@ from squarecloud.data import (
 )
 
 
-@cli.group(name='app', invoke_without_command=True)
+@cli.group(
+    name='app',
+    invoke_without_command=True,
+    help='Manage your applications',
+)
 @click.argument(
     'app_id',
     type=click.STRING,
@@ -77,7 +81,7 @@ async def app_group(ctx: Context, app_id: str, token: str):
     ctx.obj['client'] = client
 
 
-@app_group.command('status')
+@app_group.command('status', help='Get the application status')
 @click.pass_context
 @run_async
 async def get_app_status(ctx: Context):
@@ -100,7 +104,7 @@ async def get_app_status(ctx: Context):
     print(table)
 
 
-@click.command(name='app-list')
+@click.command(name='app-list', help='Get a list of all applications')
 @click.option(
     '--token',
     '-t',
@@ -153,7 +157,7 @@ async def app_list(ctx: Context, token: str):
     print(table)
 
 
-@app_group.command(name='data')
+@app_group.command(name='data', help='Get the application data')
 @click.pass_context
 @run_async
 async def app_data(ctx: Context):
@@ -174,7 +178,7 @@ async def app_data(ctx: Context):
     print(table)
 
 
-@app_group.command(name='logs')
+@app_group.command(name='logs', help='Get logs of the application')
 @click.pass_context
 @run_async
 async def app_logs(ctx: Context):
@@ -192,7 +196,7 @@ async def app_logs(ctx: Context):
     print(panel)
 
 
-@app_group.command(name='backup')
+@app_group.command(name='backup', help='Backup the application')
 @click.pass_context
 @run_async
 async def app_backup(ctx: Context):
@@ -210,7 +214,7 @@ async def app_backup(ctx: Context):
     print(panel)
 
 
-@app_group.command(name='start')
+@app_group.command(name='start', help='Start the application')
 @click.pass_context
 @run_async
 async def start_app(ctx: Context):
@@ -228,7 +232,7 @@ async def start_app(ctx: Context):
     print(panel)
 
 
-@app_group.command(name='stop')
+@app_group.command(name='stop', help='Stop the application')
 @click.pass_context
 @run_async
 async def stop_app(ctx: Context):
@@ -246,7 +250,7 @@ async def stop_app(ctx: Context):
     print(panel)
 
 
-@app_group.command(name='restart')
+@app_group.command(name='restart', help='Stop the application')
 @click.pass_context
 @run_async
 async def restart_app(ctx: Context):
@@ -264,7 +268,7 @@ async def restart_app(ctx: Context):
     print(panel)
 
 
-@app_group.command(name='delete')
+@app_group.command(name='delete', help='Delete a application')
 @click.confirmation_option(
     prompt='Are you sure you want to delete this application?',
 )
@@ -285,7 +289,7 @@ async def start_app(ctx: Context):
     print(panel)
 
 
-@cli.command(name='upload')
+@cli.command(name='upload', help='Upload a new application')
 @click.argument(
     'file',
     type=click.File('rb'),
@@ -318,7 +322,7 @@ async def upload_app(token: str, file: BufferedReader):
     print(panel)
 
 
-@app_group.command(name='commit')
+@app_group.command(name='commit', help='Commit a file to an application')
 @click.argument('file', type=click.File('rb'))
 @click.pass_context
 @run_async

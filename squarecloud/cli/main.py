@@ -21,7 +21,10 @@ load_dotenv()
 __version__ = '3.1.0'
 
 
-@cli.command(name='statistics')
+@cli.command(
+    name='statistics',
+    help='Get statistics information about the host',
+)
 @click.option(
     '--token',
     '-t',
@@ -57,7 +60,10 @@ async def get_squarecloud_statistics(token: str):
     print(table)
 
 
-@click.command(name='create-config-file')
+@click.command(
+    name='create-config-file',
+    help='Create a config file to upload an application',
+)
 @click.argument(
     'output_file',
     type=click.Path(),
