@@ -211,3 +211,11 @@ def safe_entry_point():
                 style='red',
             ),
         )
+    except Exception as e:
+        print(
+            Panel(
+                str(e),
+                title_align='left',
+                style='red',
+            ),
+        )
