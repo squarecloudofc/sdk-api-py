@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "squarecloud-api"
-version = "3.0.2"
+version = "3.0.3"
 description = "SquareCloud API wrapper"
 authors = ["Robert Nogueira <robertlucasnogueira@gmail.com>"]
 license = "MIT License"
