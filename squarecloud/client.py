@@ -394,7 +394,7 @@ class Client(AbstractClient):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(endpoint=endpoint,
                                             response=response)
-        payload: UploadPayload = response.response.get('app')
+        payload: UploadPayload = response.response
         app: UploadData = UploadData(**payload)
         endpoint: Endpoint = response.route.endpoint
         await self._listener.on_request(endpoint=endpoint, response=response)
