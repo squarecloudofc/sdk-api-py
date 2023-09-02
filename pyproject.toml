@@ -5,6 +5,7 @@ description = "SquareCloud API wrapper"
 authors = ["Robert Nogueira <robertlucasnogueira@gmail.com>"]
 license = "MIT License"
 readme = "README.md"
+packages = [{ include = "squarecloud" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
