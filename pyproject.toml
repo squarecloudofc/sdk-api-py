@@ -44,7 +44,7 @@ profile = "black"
 line_length = 79
 
 [tool.taskipy.tasks]
-lint = "isort squarecloud && blue --check --diff squarecloud"
+lint = "isort . && blue --check --diff ."
 pre_test = "task lint"
 test = "pytest -s -x --cov=squarecloud -vv tests"
 post_test = "coverage html"
