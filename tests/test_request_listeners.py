@@ -1,8 +1,9 @@
 import pytest
 
 from squarecloud import Endpoint, File
-from squarecloud.data import UploadData, LogsData
+from squarecloud.data import LogsData, UploadData
 from squarecloud.http import Response
+
 from . import client
 
 
@@ -111,7 +112,9 @@ class TestRequestListeners:
         async def test(response: Response):
             assert isinstance(response, Response)
 
-        await client.commit(TestRequestListeners.APP_ID, File('tests/test.txt'))
+        await client.commit(
+            TestRequestListeners.APP_ID, File('tests/test.txt')
+        )
 
     async def test_request_user_info(self):
         @client.on_request(Endpoint.user_info())

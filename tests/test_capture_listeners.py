@@ -2,7 +2,8 @@ import pytest
 
 from squarecloud import Endpoint
 from squarecloud.app import Application
-from squarecloud.data import BackupData, StatusData, LogsData
+from squarecloud.data import BackupData, LogsData, StatusData
+
 from . import client
 
 apps: list[Application] = []

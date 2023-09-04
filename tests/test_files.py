@@ -5,6 +5,7 @@ import pytest
 
 import squarecloud as square
 from squarecloud.data import FileInfo
+
 from . import client
 
 created_file = None
@@ -17,8 +18,9 @@ class TestFileClient:
     async def test_files_list(self):
         apps = await client.all_apps()
         app = apps[0]
-        TestFileClient.TEST_FILES = await client.app_files_list(app.id,
-                                                                path='/')
+        TestFileClient.TEST_FILES = await client.app_files_list(
+            app.id, path='/'
+        )
 
         assert isinstance(TestFileClient.TEST_FILES, list)
         for file in TestFileClient.TEST_FILES:
@@ -33,18 +35,14 @@ class TestFileClient:
     async def test_read_file(self):
         apps = await client.all_apps()
         app = apps[0]
-        file_read = await app.read_file(
-            TestFileClient.TEST_FILES[0].path
-        )
+        file_read = await app.read_file(TestFileClient.TEST_FILES[0].path)
         assert isinstance(file_read, BytesIO)
 
     async def test_create_file(self):
         apps = await client.all_apps()
         app = apps[0]
         await client.create_app_file(
-            app_id=app.id,
-            file=square.File('test.txt'),
-            path='/test.txt'
+            app_id=app.id, file=square.File('test.txt'), path='/test.txt'
         )
 
     async def test_delete_file(self):
@@ -82,10 +80,7 @@ class TestsApplication:
     async def test_create_file(self):
         apps = await client.all_apps()
         app = apps[0]
-        await app.create_file(
-            file=square.File('test.txt'),
-            path='test.txt'
-        )
+        await app.create_file(file=square.File('test.txt'), path='test.txt')
 
     async def test_delete_file(self):
         sleep(3)
