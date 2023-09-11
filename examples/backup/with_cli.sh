@@ -1,0 +1,1 @@
+squarecloud <APP-ID> backup

@@ -1,0 +1,1 @@
+squarecloud app <APP-ID> logs

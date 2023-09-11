@@ -1,0 +1,1 @@
+squarecloud app-list
