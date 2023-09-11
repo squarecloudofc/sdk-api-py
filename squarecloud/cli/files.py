@@ -32,20 +32,31 @@ async def file_list(ctx: Context, path: str):
     app_id = ctx.obj['app_id']
     with Console().status('loading'):
         files_info: list[FileInfo] = await client.app_files_list(app_id, path)
-        table = Table(title='Status', header_style='purple')
+    table = Table(title='Status', header_style='purple')
 
-        file_info_list = [
-            attr for attr in dir(files_info[0]) if not attr.startswith('__')
-        ]
+    if not files_info:
+        panel = Panel(
+            rf'the app with id {app_id} has no files',
+            title='No Files',
+            title_align='left',
+            border_style='purple',
+            style='red',
+        )
+        print(panel)
+        return
 
-        for f in file_info_list:
-            table.add_column(f.capitalize())
+    file_info_list = [
+        attr for attr in dir(files_info[0]) if not attr.startswith('__')
+    ]
 
-        for file in files_info:
-            table.add_row(
-                *[str(getattr(file, attr)) for attr in file_info_list],
-                style='green',
-            )
+    for f in file_info_list:
+        table.add_column(f.capitalize())
+
+    for file in files_info:
+        table.add_row(
+            *[str(getattr(file, attr)) for attr in file_info_list],
+            style='green',
+        )
     print(table)
 
 
