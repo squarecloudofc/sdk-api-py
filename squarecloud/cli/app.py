@@ -119,7 +119,7 @@ async def get_app_status(ctx: Context):
 @run_async
 async def app_list(ctx: Context, token: str):
     client = Client(token, debug=False)
-    with Console().status('loading') as status:
+    with Console().status('loading'):
         apps: list[Application] = await client.all_apps()
     if not apps:
         print(
