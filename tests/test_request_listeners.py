@@ -1,7 +1,7 @@
 import pytest
 
 from squarecloud import Endpoint, File
-from squarecloud.data import LogsData, UploadData
+from squarecloud.data import UploadData
 from squarecloud.http import Response
 
 from . import client
