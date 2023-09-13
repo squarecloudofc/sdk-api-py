@@ -124,7 +124,7 @@ async def app_list(ctx: Context, token: str):
     if not apps:
         print(
             Panel(
-                f'You do not have any application',
+                'You do not have any application',
                 title_align='left',
                 style='red',
             ),
