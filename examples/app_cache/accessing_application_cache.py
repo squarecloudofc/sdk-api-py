@@ -1,5 +1,4 @@
 import squarecloud as square
-from squarecloud.app import Application
 
 client = square.Client('API_KEY')
 
