@@ -274,7 +274,7 @@ async def restart_app(ctx: Context):
 )
 @click.pass_context
 @run_async
-async def start_app(ctx: Context):
+async def delete_app(ctx: Context):
     client: Client = ctx.obj['client']
     app_id = ctx.obj['app_id']
     with Console().status('loading'):
