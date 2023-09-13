@@ -55,3 +55,10 @@ docs = "mkdocs serve"
 
 [tool.poetry.scripts]
 squarecloud = "squarecloud.cli.main:safe_entry_point"
+
+[tool.ruff]
+line-length = 79
+exclude = ['env']
+
+[tool.ruff.per-file-ignores]
+'__init__.py' = ['F401']
