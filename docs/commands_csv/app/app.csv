@@ -1,0 +1,18 @@
+NAME,DESCRIPTION
+status,Get the application status
+data,Get the application data
+logs,Get logs of the application
+backup,Backup the application
+start,Start the application
+stop,Stop the application
+restart,Stop the application
+delete,Delete a application
+commit,Commit a file to an application
+file-list,Get information about all files in a directory
+file-read,Read a file from a directory
+file-delete,Delete a file
+file-create,Create a file in the specified directory
+upload,Upload a new application
+statistics,Get statistics information about the host
+app-list,Get a list of all applications
+create-config-file,Create a config file to upload an application

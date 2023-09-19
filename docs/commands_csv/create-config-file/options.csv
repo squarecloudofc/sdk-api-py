@@ -1,0 +1,10 @@
+NAME,DESCRIPTION,TYPE,DEFAULT,REQUIRED
+--display_name,Set the display name of your app,STRING,,False
+--main,Set the display name of your app,STRING,,False
+--memory,Set the memory of the app,INT >= 100,,False
+--version,"Ensure that the version is either ""recommended"" or ""latest""","['recommended', 'latest']",recommended,False
+--avatar,Specify the avatar of the application,STRING,,False
+--description,Specify a description for the app,STRING,,False
+--subdomain,Specify the subdomain of your app,STRING,,False
+--start,Specify the command that should be run when the application starts,STRING,,False
+--auto_restart,Determine if the app should restart automatically after a crash,BOOL,False,False

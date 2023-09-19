@@ -1,0 +1,5 @@
+app,Manage your applications
+upload,Upload a new application
+statistics,Get statistics information about the host
+app-list,Get a list of all applications
+create-config-file,Create a config file to upload an application
