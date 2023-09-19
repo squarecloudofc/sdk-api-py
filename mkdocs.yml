@@ -8,7 +8,6 @@ nav:
   - Home:
       - squarecloud-api: index.md
       - Features: features.md
-      - Contribuindo: development - contributing.md
   - User Guide:
       - API Key: user_guide/getting_api_key.md
       - wrapper:
