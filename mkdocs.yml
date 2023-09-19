@@ -1,0 +1,141 @@
+site_name: squarecloud-api
+repo_name: squarecloud/wrapper-api-py
+repo_url: https://github.com/squarecloudofc/wrapper-api-py
+edit_uri: tree/main/docs
+
+
+nav:
+  - Home:
+      - squarecloud-api: index.md
+      - Features: features.md
+  - User Guide:
+      - API Key: user_guide/getting_api_key.md
+      - wrapper:
+          - Client: user_guide/wrapper/client.md
+          - Application: user_guide/wrapper/application.md
+          - Gerenciando sua aplicação: user_guide/wrapper/managing_application.md
+          - Gerenciando arquivos: user_guide/wrapper/managing_files.md
+          - AppCache: user_guide/wrapper/application_cache.md
+          - Capture Listeners: user_guide/wrapper/capture_listeners.md
+          - Request Listeners: user_guide/wrapper/request_listeners.md
+          - Commit e Upload: user_guide/wrapper/commit_and_upload.md
+      - Interface de linha de Comando (CLI):
+          - Introdução: user_guide/cli/introduction.md
+          - Guardando sua API key: user_guide/cli/storing_your_token.md
+          #          - Criando arquivo de configuração: user_guide/cli/creating_config_file.md
+          #          - Gerenciando sua aplicação: user_guide/cli/managing_applications.md
+          - Commands Reference:
+              - app:
+                  - app: user_guide/cli/commands/app/index.md
+                  - start: user_guide/cli/commands/app/start.md
+                  - stop: user_guide/cli/commands/app/stop.md
+                  - restart: user_guide/cli/commands/app/restart.md
+                  - status: user_guide/cli/commands/app/status.md
+                  - logs: user_guide/cli/commands/app/logs.md
+                  - backup: user_guide/cli/commands/app/backup.md
+                  - commit: user_guide/cli/commands/app/commit.md
+                  - data: user_guide/cli/commands/app/data.md
+                  - file-list: user_guide/cli/commands/app/file-list.md
+                  - file-read: user_guide/cli/commands/app/file-read.md
+                  - file-create: user_guide/cli/commands/app/file-create.md
+                  - file-delete: user_guide/cli/commands/app/file-delete.md
+                  - delete: user_guide/cli/commands/app/delete.md
+              - app-list: user_guide/cli/commands/app_list.md
+              - statistics: user_guide/cli/commands/statistics.md
+              - create-config-file: user_guide/cli/commands/create_config_file.md
+              - upload: user_guide/cli/commands/upload.md
+
+  #          - Obtendo estatísticas da Square Cloud: user_guide/cli/get_host_statistics.md
+  - Reference:
+      - api_reference/Client.md
+      - api_reference/Application.md
+      - api_reference/AppCache.md
+      - api_reference/Errors.md
+      - api_reference/Endpoint.md
+      - api_reference/Response.md
+      - create_config_file: api_reference/create_config_file.md
+      - api_reference/File.md
+      - Data Classes:
+          - api_reference/data_classes/AppData.md
+          - api_reference/data_classes/BackupData.md
+          - api_reference/data_classes/FileInfo.md
+          - api_reference/data_classes/LogsData.md
+          - api_reference/data_classes/StatisticsData.md
+          - api_reference/data_classes/StatusData.md
+          - api_reference/data_classes/UploadData.md
+          - api_reference/data_classes/UserData.md
+
+theme:
+  language: en
+  locale: en
+  font:
+    text: Montserrat SemiBold 600
+  features:
+    - content.code.copy
+    - content.code.select
+#    - navigation.instant
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.footer
+
+  icon:
+    repo: fontawesome/brands/github
+
+  name: material
+  logo: assets/logo-dark.svg
+  favicon: assets/logo-purple.svg
+  palette:
+
+    #     Palette toggle for light mode
+    - scheme: default
+      primary: indigo
+      toggle:
+        primary: green
+        icon: material/weather-night
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: deep purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - attr_list
+  - fenced_code
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.tasklist
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets
+
+
+plugins:
+  - table-reader
+  - search:
+      lang: en
+
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [ squarecloud ]
+          selection:
+            docstring_style: sphinx
+  - termynal:
+      prompt_literal_start:
+        - "$"
+        - ">"
+
+docs_dir: docs

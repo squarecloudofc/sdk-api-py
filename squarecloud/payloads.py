@@ -1,45 +1,51 @@
-from typing import Any, Dict, Optional, Literal, TypedDict
+from typing import Any, Literal, Optional, TypedDict
 
 
 class RawResponseData(TypedDict):
     """raw response data"""
-    data: Dict[str, Any]
-    response: Dict[str, Any]
-    headers: Dict[str, Any]
+
+    data: dict[str, Any]
+    response: dict[str, Any]
+    headers: dict[str, Any]
     status: Literal['success', 'error']
     code: Optional[int]
     message: Optional[str]
     statusCode: Optional[str]
     error: Optional[str]
-    app: Optional[Dict[str, Any]]
+    app: Optional[dict[str, Any]]
 
 
 class UserPayload(RawResponseData):
     """user payload"""
-    user: Dict[str, Any]
+
+    user: dict[str, Any]
     applications: list[dict[str, Any]]
 
 
 class LogsPayload(RawResponseData):
     """logs payload"""
-    logs: Dict[str, Any]
+
+    logs: dict[str, Any]
 
 
 class BackupPayload(RawResponseData):
     """backup payload"""
-    backup: Dict[str, Any]
+
+    backup: dict[str, Any]
 
 
 class StatusPayload(RawResponseData):
     """status payload"""
+
     # pylint: disable=invalid-name
-    app_status: Dict[str, Any]
+    app_status: dict[str, Any]
 
 
 class StopPayload(RawResponseData):
     """stop payload"""
-    stop: Dict[str, Any]
+
+    stop: dict[str, Any]
 
 
 class UploadPayload(RawResponseData):
-    app: Dict[str, Any]
+    app: dict[str, Any]

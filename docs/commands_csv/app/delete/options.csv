@@ -1,0 +1,2 @@
+NAME,DESCRIPTION,TYPE,DEFAULT,REQUIRED
+--yes,Confirm the action without prompting.,BOOL,False,False
