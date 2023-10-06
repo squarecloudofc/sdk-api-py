@@ -1,2 +1,0 @@
-name,description,type,default,required
---token,your api token,STRING,,True
