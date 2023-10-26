@@ -587,4 +587,4 @@ class Client(AbstractClient):
             await self._listener.on_request(
                 endpoint=endpoint, response=response
             )
-        return AppData(**response.response.get('app'))
+        return AppData(**response.response)

@@ -148,7 +148,6 @@ class Application(AbstractApplication):
         '_desc',
         '_ram',
         '_lang',
-        '_type',
         '_cluster',
         '_isWebsite',
         '_avatar',
@@ -237,7 +236,6 @@ class Application(AbstractApplication):
             'static',
             'dynamic',
         ] = lang
-        self._type: Literal['free', 'paid'] = type
         self._cluster: Literal[
             'florida-free-1',
             'fl-haswell-4',

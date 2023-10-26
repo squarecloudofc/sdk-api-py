@@ -79,7 +79,6 @@ class AppData:
     :ivar avatar: The application avatar
     :ivar owner: The application owner ID
     :ivar cluster: The cluster that the app is hosted on
-    :ivar cpu: The amount of CPU that application is using
     :ivar ram: The amount of RAM that application is using
     :ivar language The programming language of the app.:
     :ivar isWebsite: Whether if the app is a website
@@ -91,7 +90,6 @@ class AppData:
     :type cluster: Literal[
         'florida-ds1-1', 'florida-ds1-2', 'florida-ds1-3', 'florida-ds1-free-1'
     ]
-    :type cpu: int;
     :type ram: int;
     :type language: Literal[
         'javascript',
@@ -117,7 +115,6 @@ class AppData:
     cluster: Literal[
         'florida-ds1-1', 'florida-ds1-2', 'florida-ds1-3', 'florida-ds1-free-1'
     ]
-    cpu: int
     ram: int
     language: Literal[
         'javascript',
@@ -143,25 +140,20 @@ class UserData:
     User data class
 
     :ivar id: User ID;
-    :ivar tag: User name
-    :ivar locale: User locale
+    :ivar tag: Username
     :ivar plan: User plan
     :ivar blocklist: Whether to user is blocked
     :ivar email: User email
 
     :type id: int
     :type tag: str
-    :type locale: str
     :type plan: PlanData
-    :type blocklist: bool
     :type email: str | None = None
     """
 
     id: int
     tag: str
-    locale: str
     plan: PlanData
-    blocklist: bool
     email: str | None = None
 
 
@@ -314,4 +306,3 @@ class StatisticsData:
     apps: int
     websites: int
     ping: int
-    time: int
