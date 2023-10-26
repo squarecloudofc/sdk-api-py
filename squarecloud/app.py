@@ -351,16 +351,6 @@ class Application(AbstractApplication):
         return self._lang
 
     @property
-    def type(self) -> Literal['free', 'paid']:
-        """
-        The avatar function is a property that returns the application's type.
-
-        :return: The application's type
-        :rtype: Literal['free', 'paid']
-        """
-        return self._type
-
-    @property
     def cluster(
         self,
     ) -> Literal[
