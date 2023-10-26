@@ -206,7 +206,6 @@ class Application(AbstractApplication):
                         'static',
                         'dynamic',
                     ]: The programming language of the app.
-        :param type: Literal['free', 'paid]: The app type
         :param cluster: Literal[
                 'florida-free-1',
                 'fl-haswell-4',
