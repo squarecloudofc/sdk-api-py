@@ -16,7 +16,7 @@ click = "^8.1.6"
 rich = "^13.5.2"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.3.1"
+pytest = "^7.4.3"
 pytest-cov = "^4.1.0"
 blue = "^0.9.1"
 isort = "^5.12.0"
