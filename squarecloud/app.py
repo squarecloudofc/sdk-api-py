@@ -171,7 +171,6 @@ class Application(AbstractApplication):
             'static',
             'dynamic',
         ],
-        type: Literal['free', 'paid'],
         cluster: Literal[
             'florida-free-1',
             'fl-haswell-4',
