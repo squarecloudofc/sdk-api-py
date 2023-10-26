@@ -64,7 +64,6 @@ async def app_group(ctx: Context, app_id: str, token: str):
             table.add_row(
                 app.tag,
                 app.id,
-                app.type,
                 str(app.ram),
                 app.lang,
                 app.desc,

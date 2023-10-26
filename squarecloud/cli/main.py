@@ -52,7 +52,6 @@ async def get_squarecloud_statistics(token: str):
     table.add_row(
         str(statistics_data.apps),
         str(statistics_data.websites),
-        str(statistics_data.time),
         str(statistics_data.ping),
         str(statistics_data.users),
         style='green',
