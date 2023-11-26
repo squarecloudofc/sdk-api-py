@@ -11,3 +11,4 @@ class TestClient:
         await app.status()
         await app.logs()
         await app.backup()
+        await app.data()
