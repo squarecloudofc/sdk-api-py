@@ -461,7 +461,7 @@ class Application(AbstractApplication):
             endpoint: Endpoint = Endpoint.app_data()
             await self._listener.on_capture(
                 endpoint=endpoint,
-                before=self.cache.data,
+                before=self.cache.app_data,
                 after=app_data,
             )
         if kwargs.get('update_cache', True):
