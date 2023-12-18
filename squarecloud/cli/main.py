@@ -93,14 +93,6 @@ async def get_squarecloud_statistics(token: str):
     required=False,
 )
 @click.option(
-    '--avatar',
-    help='Specify the avatar of the application',
-    type=click.STRING,
-    prompt='Enter avatar (optional)',
-    default='',
-    required=False,
-)
-@click.option(
     '--description',
     help='Specify a description for the app',
     type=click.STRING,
@@ -136,7 +128,6 @@ def create_config(
     main: str,
     memory: int,
     version: Literal['recommended', 'latest'] = 'recommended',
-    avatar: str | None = None,
     description: str | None = None,
     subdomain: str | None = None,
     start: str | None = None,
@@ -149,7 +140,6 @@ def create_config(
         main=main,
         memory=memory,
         version=version,
-        avatar=avatar,
         description=description,
         subdomain=subdomain,
         start=start,

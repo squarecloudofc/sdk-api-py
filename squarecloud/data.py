@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Dict, Literal
+
+from pydantic import BaseModel
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=invalid-name
 
 
-@dataclass
-class PlanData:
+class PlanData(BaseModel):
     """
     Plan data class
 
@@ -23,11 +23,15 @@ class PlanData:
 
     name: str
     memory: Dict[str, Any]
-    duration: Dict[str, Any]
+    duration: Dict[str, Any] | None
 
 
-@dataclass
-class StatusData:
+class Language(BaseModel):
+    name: str
+    version: str
+
+
+class StatusData(BaseModel):
     """
     Application status class
 
@@ -43,13 +47,7 @@ class StatusData:
 
     :type cpu: str
     :type ram: str
-    :type status: Literal[
-        'created',
-        'starting',
-        'restarting',
-        'running',
-        'deleting'
-        ]
+    :type status: str
     :type running: bool
     :type storage: str
     :type network: Dict[str, Any]
@@ -60,23 +58,21 @@ class StatusData:
 
     cpu: str
     ram: str
-    status: Literal['created', 'starting', 'restarting', 'running', 'deleting']
+    status: str
     running: bool
     storage: str
     network: Dict[str, Any]
     requests: int
-    uptime: int
+    uptime: int | None = None
     time: int | None = None
 
 
-@dataclass
-class AppData:
+class AppData(BaseModel):
     """
     Application data class
 
     :ivar id: The application ID
     :ivar name: The application name
-    :ivar avatar: The application avatar
     :ivar owner: The application owner ID
     :ivar cluster: The cluster that the app is hosted on
     :ivar ram: The amount of RAM that application is using
@@ -85,22 +81,10 @@ class AppData:
 
     :type id: str
     :type name: str
-    :type avatar: str
     :type owner: str
-    :type cluster: Literal[
-        'florida-ds1-1', 'florida-ds1-2', 'florida-ds1-3', 'florida-ds1-free-1'
-    ]
+    :type cluster: str
     :type ram: int;
-    :type language: Literal[
-        'javascript',
-        'typescript',
-        'python',
-        'java',
-        'rust',
-        'go',
-        'static',
-        'dynamic',
-    ]
+    :type language: Language
     :type isWebsite: bool
     :type gitIntegration: bool
     :type domain: str | None = None
@@ -110,23 +94,11 @@ class AppData:
 
     id: str
     name: str
-    avatar: str
     owner: str
-    cluster: Literal[
-        'florida-ds1-1', 'florida-ds1-2', 'florida-ds1-3', 'florida-ds1-free-1'
-    ]
+    cluster: str
     ram: int
-    language: Literal[
-        'javascript',
-        'typescript',
-        'python',
-        'java',
-        'rust',
-        'go',
-        'static',
-        'dynamic',
-    ]
-    cluster: Literal['free-', 'florida-1']
+    language: str
+    cluster: str
     isWebsite: bool
     gitIntegration: bool
     domain: str | None = None
@@ -134,8 +106,7 @@ class AppData:
     desc: str | None = None
 
 
-@dataclass
-class UserData:
+class UserData(BaseModel):
     """
     User data class
 
@@ -157,8 +128,7 @@ class UserData:
     email: str | None = None
 
 
-@dataclass
-class LogsData:
+class LogsData(BaseModel):
     """Logs data class
 
     :ivar logs: A string containing logs of your application
@@ -212,8 +182,7 @@ class LogsData:
         return isinstance(other, LogsData) and self.logs == other.logs
 
 
-@dataclass
-class BackupData:
+class BackupData(BaseModel):
     """
     Backup data class
 
@@ -225,15 +194,13 @@ class BackupData:
     downloadURL: str
 
 
-@dataclass
-class UploadData:
+class UploadData(BaseModel):
     """
     Upload data class
 
     :ivar id: ID of the uploaded application
     :ivar tag: Tag of the uploaded application
     :ivar language: Programming language of the uploaded application
-    :ivar avatar: Avatar of the uploaded application
     :ivar ram: Ram allocated for the uploaded application
     :ivar cpu: Cpu of the uploaded application
     :ivar description: Description of the uploaded application
@@ -241,8 +208,7 @@ class UploadData:
 
     :type id: str
     :type tag: str
-    :type language: str
-    :type avatar: str
+    :type language: Language
     :type ram: int
     :type cpu: int
     :type subdomain: str | None = None
@@ -251,16 +217,14 @@ class UploadData:
 
     id: str
     tag: str
-    language: str
-    avatar: str
+    language: Language
     ram: int
     cpu: int
     subdomain: str | None = None
     description: str | None = None
 
 
-@dataclass
-class FileInfo:
+class FileInfo(BaseModel):
     """
     File information
 
@@ -284,8 +248,7 @@ class FileInfo:
     path: str
 
 
-@dataclass
-class StatisticsData:
+class StatisticsData(BaseModel):
     """
     Host statistics
 

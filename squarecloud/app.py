@@ -24,7 +24,8 @@ class AppCache:
     def __init__(self) -> None:
         """
         The `__init__` function is called when the class is instantiated.
-        It sets up the instance of the class, and defines all of its attributes.
+        It sets up the instance of the class, and defines all of its
+        attributes.
 
 
         :return: The instance of the class
@@ -150,7 +151,6 @@ class Application(AbstractApplication):
         '_lang',
         '_cluster',
         '_isWebsite',
-        '_avatar',
     ]
 
     def __init__(
@@ -179,7 +179,6 @@ class Application(AbstractApplication):
             'fl-vps-1',
         ],
         isWebsite: bool,
-        avatar: str,
         desc: str | None = None,
     ) -> None:
         """
@@ -215,7 +214,6 @@ class Application(AbstractApplication):
                 'fl-vps-1',
             ]: The cluster that the app is hosted on
         :param isWebsite: bool: Whether if the app is a website
-        :param avatar: str: The app avatar
         :param desc: str | None: Define the description of the app
 
         :return: None
@@ -244,7 +242,6 @@ class Application(AbstractApplication):
             'fl-vps-1',
         ] = cluster
         self._isWebsite: bool = isWebsite
-        self._avatar: str = avatar
         self._client: 'Client' = client
         self._http: HTTPClient = http
         self._listener: ListenerManager = Listener
@@ -289,7 +286,7 @@ class Application(AbstractApplication):
     @property
     def tag(self) -> str:
         """
-        The avatar function is a property that returns the application tag.
+        The tag function is a property that returns the application tag.
 
         :return: The tag of the application
         :rtype: str
@@ -311,7 +308,7 @@ class Application(AbstractApplication):
     def ram(self) -> int:
 
         """
-        The avatar function is a property that returns
+        The ram function is a property that returns
         the amount of ram allocated to the application
 
         :return: The application ram
@@ -390,17 +387,6 @@ class Application(AbstractApplication):
         """
         return self._isWebsite
 
-    @property
-    def avatar(self) -> str:
-        """
-        The avatar function is a property that returns the avatar of the
-        application.
-
-        :return: The application avatar
-        :rtype: str
-        """
-        return self._avatar
-
     def capture(self, endpoint: Endpoint) -> Callable:
         """
         The capture function is a decorator that can be used to add a function
@@ -441,7 +427,8 @@ class Application(AbstractApplication):
             if self._listener.get_capture_listener(endpoint) is None:
                 return self._listener.add_capture_listener(endpoint, func)
             raise SquareException(
-                f'Already exists an capture_listener for {endpoint} {self._listener.get_capture_listener(endpoint)}'
+                f'Already exists an capture_listener for {endpoint}'
+                f'{self._listener.get_capture_listener(endpoint)}'
             )
 
         return wrapper

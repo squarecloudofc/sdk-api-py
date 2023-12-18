@@ -53,12 +53,10 @@ async def app_group(ctx: Context, app_id: str, token: str):
             table = Table(title=app.tag, header_style='purple')
             table.add_column('Tag', justify='center')
             table.add_column('ID', justify='center')
-            table.add_column('Type', justify='center')
             table.add_column('RAM', justify='center')
             table.add_column('Language', justify='center')
             table.add_column('Description', justify='center')
             table.add_column('Is Website', justify='center')
-            table.add_column('Avatar', justify='center')
             table.add_column('Cluster', justify='center')
 
             table.add_row(
@@ -68,7 +66,6 @@ async def app_group(ctx: Context, app_id: str, token: str):
                 app.lang,
                 app.desc,
                 str(app.is_website),
-                app.avatar,
                 app.cluster,
                 style='green',
             )
@@ -133,7 +130,6 @@ async def app_list(ctx: Context, token: str):
 
     table.add_column('Tag', justify='center')
     table.add_column('ID', justify='center')
-    table.add_column('Type', justify='center')
     table.add_column('RAM', justify='center')
     table.add_column('Language', justify='center')
     table.add_column('Description', justify='center')
@@ -148,7 +144,6 @@ async def app_list(ctx: Context, token: str):
             app.lang,
             app.desc,
             str(app.is_website),
-            app.avatar,
             app.cluster,
             style='green',
         )
@@ -165,7 +160,7 @@ async def app_data(ctx: Context):
         data: AppData = await client.app_data(app_id)
         table = Table(title='Status', header_style='purple')
 
-        status_list = [attr for attr in dir(data) if not attr.startswith('__')]
+        status_list = data.model_dump(exclude_none=True)
         for s in status_list:
             table.add_column(s.capitalize(), justify='center')
         table.add_row(

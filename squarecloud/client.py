@@ -47,7 +47,6 @@ def create_config_file(
     main: str,
     memory: int,
     version: Literal['recommended', 'latest'] = 'recommended',
-    avatar: str | None = None,
     description: str | None = None,
     subdomain: str | None = None,
     start: str | None = None,
@@ -67,7 +66,6 @@ def create_config_file(
     :param memory: int: Set the memory of the app
     :param version: Literal['recommended', 'latest']: Ensure that the version
     is either 'recommended' or 'latest'.
-    :param avatar: str | None: Specify the avatar of the application
     :param description: str | None: Specify a description for the app
     :param subdomain: str | None: Specify the subdomain of your app
     :param start: str | None: Specify the command that should be run when the
@@ -83,7 +81,6 @@ def create_config_file(
         'MAIN': main,
         'MEMORY': memory,
         'VERSION': version,
-        'AVATAR': avatar,
         'DESCRIPTION': description,
         'SUBDOMAIN': subdomain,
         'START': start,
@@ -380,7 +377,7 @@ class Client(AbstractClient):
             await self._listener.on_request(
                 endpoint=endpoint, response=response
             )
-        payload: UserPayload = response.response
+        payload = response.response
         app_data = list(
             filter(
                 lambda application: application['id'] == app_id,
@@ -390,6 +387,8 @@ class Client(AbstractClient):
         if not app_data:
             raise ApplicationNotFound(app_id=app_id)
         app_data = app_data.pop()
+        if payload.get('avatar'):
+            del payload['avatar']
         app: Application = Application(
             client=self, http=self._http, **app_data
         )  # type: ignore
@@ -410,8 +409,11 @@ class Client(AbstractClient):
             await self._listener.on_request(
                 endpoint=endpoint, response=response
             )
-        payload: UserPayload = response.response
+        payload = response.response
         apps_data: list = payload['applications']
+        for data in apps_data:
+            if data.get('avatar'):
+                del data['avatar']
         apps: List[Application] = [
             Application(client=self, http=self._http, **data)
             for data in apps_data
