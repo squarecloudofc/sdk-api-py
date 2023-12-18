@@ -19,8 +19,14 @@ logger.setLevel(logging.CRITICAL)
 class CustomLogFormatter(logging.Formatter):
     """A custom logging formatter"""
 
-    FORMAT_SUCCESS = f'{GREEN}[%(levelname)s] %(status)s %(message)s %(route)s %(request_message)s {END}'
-    FORMAT_ERROR = f'{RED}[%(levelname)s]  %(status)s %(message)s %(route)s, error: %(code)s{END}'
+    FORMAT_SUCCESS = (
+        f'{GREEN}[%(levelname)s] %(status)s %(message)s '
+        f'%(route)s %(request_message)s {END}'
+    )
+    FORMAT_ERROR = (
+        f'{RED}[%(levelname)s]  %(status)s %(message)s '
+        f'%(route)s, error: %(code)s{END}'
+    )
 
     def format(self, record: logging.LogRecord) -> str:
 

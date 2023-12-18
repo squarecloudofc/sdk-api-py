@@ -114,7 +114,8 @@ class Endpoint:
     @classmethod
     def user_info(cls) -> Endpoint:
         """
-        Returns an Endpoint object that represents the /user/{user_id} endpoint.
+        Returns an Endpoint object that represents the /user/{user_id}
+        endpoint.
         """
         return cls('USER_INFO')
 
