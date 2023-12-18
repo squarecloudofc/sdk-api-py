@@ -42,7 +42,7 @@ class TestFileClient:
         apps = await client.all_apps()
         app = apps[0]
         await client.create_app_file(
-            app_id=app.id, file=square.File('test.txt'), path='/test.txt'
+            app_id=app.id, file=square.File('tests/test.txt'), path='/test.txt'
         )
 
     async def test_delete_file(self):
@@ -80,7 +80,9 @@ class TestsApplication:
     async def test_create_file(self):
         apps = await client.all_apps()
         app = apps[0]
-        await app.create_file(file=square.File('test.txt'), path='test.txt')
+        await app.create_file(
+            file=square.File('tests/test.txt'), path='test.txt'
+        )
 
     async def test_delete_file(self):
         sleep(3)
