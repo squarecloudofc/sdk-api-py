@@ -110,7 +110,6 @@ class HTTPClient:
             ) as resp:
                 status_code = resp.status
                 data: RawResponseData = await resp.json()
-                print(data)
                 extra = {
                     'status': data.get('status'),
                     'route': route.url,
@@ -119,31 +118,30 @@ class HTTPClient:
                 }
                 code: str | None = data.get('code')
                 error: Type[RequestError] | None = None
-                match status_code:
-                    case 200:
+                if status_code == 200:
+                    logger.debug(msg='request to route: ', extra=extra)
+                    if code and route.endpoint == Endpoint.upload():
+                        error = get_upload_error(code)
+                    extra.pop('code')
+                    response: Response = Response(data=data, route=route)
+                elif status_code == 404:
+                    if code is None:
                         logger.debug(msg='request to route: ', extra=extra)
-                        if code and route.endpoint == Endpoint.upload():
-                            error = get_upload_error(code)
-                        extra.pop('code')
-                        response: Response = Response(data=data, route=route)
-                    case 404:
-                        if code is None:
-                            logger.debug(msg='request to route: ', extra=extra)
-                            response = Response(data=data, route=route)
-                        else:
-                            logger.error(msg='request to route: ', extra=extra)
-                            error = NotFoundError
-                    case 401:
-                        logger.error(msg='request to: ', extra=extra)
-                        error = AuthenticationFailure
-                    case 400:
-                        logger.error(msg='request to: ', extra=extra)
-                        error = BadRequestError
-                    case 429:
-                        logger.error(msg='request to: ', extra=extra)
-                        error = TooManyRequests
-                    case _:
-                        error = RequestError
+                        response = Response(data=data, route=route)
+                    else:
+                        logger.error(msg='request to route: ', extra=extra)
+                        error = NotFoundError
+                elif status_code == 401:
+                    logger.error(msg='request to: ', extra=extra)
+                    error = AuthenticationFailure
+                elif status_code == 400:
+                    logger.error(msg='request to: ', extra=extra)
+                    error = BadRequestError
+                elif status_code == 429:
+                    logger.error(msg='request to: ', extra=extra)
+                    error = TooManyRequests
+                else:
+                    error = RequestError
                 if error:
                     raise error(
                         route=route.endpoint.name,
