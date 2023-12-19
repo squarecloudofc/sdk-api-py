@@ -1,8 +1,11 @@
 class SquareException(BaseException):
     """abstract class SquareException"""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str = 'An unexpected error occurred'):
         self.message = message
+
+    def __str__(self):
+        return self.message
 
 
 class RequestError(SquareException):
@@ -21,6 +24,7 @@ class AuthenticationFailure(RequestError):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.message = 'Authentication failed: Invalid API token'
 
 
 class NotFoundError(RequestError):
@@ -28,6 +32,7 @@ class NotFoundError(RequestError):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.message = 'Resource not found: 404'
 
 
 class BadRequestError(RequestError):
@@ -35,18 +40,24 @@ class BadRequestError(RequestError):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.message = 'Bad request: 400'
 
 
 class ApplicationNotFound(SquareException):
     """raises when an application is not found"""
 
-    def __init__(self, app_id: str):
+    def __init__(self, app_id: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.app_id = app_id
-        super().__init__(f'No application was found with id: {app_id}')
+        self.message = f'No application was found with id: {app_id}'
 
 
 class InvalidFile(SquareException):
     """raised when a file is invalid"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message = 'Invalid file'
 
 
 class MissingConfigFile(RequestError):
@@ -54,13 +65,15 @@ class MissingConfigFile(RequestError):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.message = 'Configuration file is missing'
 
 
 class MissingDependenciesFile(RequestError):
-    """raised when the configuration file is missing"""
+    """raised when the dependencies file is missing"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.message = 'Dependencies file is missing'
 
 
 class TooManyRequests(RequestError):
@@ -68,6 +81,7 @@ class TooManyRequests(RequestError):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.message = 'Too many requests'
 
 
 class FewMemory(RequestError):
@@ -77,3 +91,14 @@ class FewMemory(RequestError):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.message = 'Insufficient memory available'
+
+
+class BadMemory(RequestError):
+    """
+    raised when the user has no memory to host an application.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message = 'No memory available'

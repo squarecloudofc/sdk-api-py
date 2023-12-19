@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, Literal, Type
 
 import aiohttp
 
@@ -8,8 +8,11 @@ from squarecloud.file import File
 
 from ..errors import (
     AuthenticationFailure,
+    BadMemory,
     BadRequestError,
     FewMemory,
+    MissingConfigFile,
+    MissingDependenciesFile,
     NotFoundError,
     RequestError,
     TooManyRequests,
@@ -54,6 +57,20 @@ class Response:
         return f'{Response.__name__}({self.data})'
 
 
+def get_upload_error(code: str) -> Type[RequestError]:
+    errors = {
+        'FEW_MEMORY': FewMemory,
+        'BAD_MEMORY': BadMemory,
+        'MISSING_CONFIG_FILE': MissingConfigFile,
+        'MISSING_DEPENDENCIES_FILE': MissingDependenciesFile,
+    }
+    error_class = errors.get(code, None)
+    if error_class is None:
+        return RequestError
+    else:
+        return error_class
+
+
 class HTTPClient:
     """A client that handles requests and responses"""
 
@@ -93,63 +110,46 @@ class HTTPClient:
             ) as resp:
                 status_code = resp.status
                 data: RawResponseData = await resp.json()
+                print(data)
                 extra = {
                     'status': data.get('status'),
                     'route': route.url,
                     'code': data.get('code'),
                     'request_message': data.get('message', ''),
                 }
-                code: str = data.get('code')
+                code: str | None = data.get('code')
+                error: Type[RequestError] | None = None
                 match status_code:
                     case 200:
                         logger.debug(msg='request to route: ', extra=extra)
+                        if code and route.endpoint == Endpoint.upload():
+                            error = get_upload_error(code)
                         extra.pop('code')
                         response: Response = Response(data=data, route=route)
                     case 404:
                         if code is None:
                             logger.debug(msg='request to route: ', extra=extra)
-                            return Response(data=data, route=route)
-                        logger.error(msg='request to route: ', extra=extra)
-                        raise NotFoundError(
-                            route=route.endpoint.name,
-                            status_code=status_code,
-                            code=code,
-                        )
+                            response = Response(data=data, route=route)
+                        else:
+                            logger.error(msg='request to route: ', extra=extra)
+                            error = NotFoundError
                     case 401:
                         logger.error(msg='request to: ', extra=extra)
-                        raise AuthenticationFailure(
-                            route=route.endpoint.name,
-                            status_code=status_code,
-                            code=code,
-                        )
+                        error = AuthenticationFailure
                     case 400:
                         logger.error(msg='request to: ', extra=extra)
-                        match data.get('code'):
-                            case 'FEW_MEMORY':
-                                raise FewMemory(
-                                    route=route.endpoint.name,
-                                    status_code=status_code,
-                                    code=code,
-                                )
-                            case _:
-                                raise BadRequestError(
-                                    route=route.endpoint.name,
-                                    status_code=status_code,
-                                    code=code,
-                                )
+                        error = BadRequestError
                     case 429:
                         logger.error(msg='request to: ', extra=extra)
-                        raise TooManyRequests(
-                            route=route.endpoint.name,
-                            status_code=status_code,
-                            code=code,
-                        )
+                        error = TooManyRequests
                     case _:
-                        raise RequestError(
-                            route=route.endpoint.name,
-                            status_code=status_code,
-                            code=code,
-                        )
+                        error = RequestError
+                if error:
+                    raise error(
+                        route=route.endpoint.name,
+                        status_code=status_code,
+                        code=code,
+                    )
                 return response
 
     async def fetch_user_info(self, user_id: int | None = None) -> Response:
