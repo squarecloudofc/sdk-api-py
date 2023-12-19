@@ -4,6 +4,8 @@ import io
 import os
 from typing import Any
 
+from squarecloud import errors
+
 
 class File:
     """
@@ -41,12 +43,19 @@ class File:
                 )
             self.bytes: io.BufferedIOBase = fp
         else:
-            self.bytes = open(fp, 'rb')
+            # Verificar se fp é bytes (dados binários) e criar um io.BytesIO
+            if isinstance(fp, bytes):
+                self.bytes = io.BytesIO(fp)
+            else:
+                self.bytes = open(fp, 'rb')
 
         if filename is None:
             if isinstance(fp, str):
                 _, filename = os.path.split(fp)
             else:
                 filename = getattr(fp, 'name', None)
+
+        if not filename:
+            raise errors.SquareException('You need provide a filename')
 
         self.filename: str | None = filename
