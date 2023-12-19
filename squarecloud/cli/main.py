@@ -11,7 +11,7 @@ from rich.table import Table
 from squarecloud.client import Client, create_config_file
 from squarecloud.data import StatisticsData
 
-from .. import ApplicationNotFound, RequestError, SquareException
+from ..errors import RequestError, SquareException
 from . import cli, run_async
 from .app import app_list, upload_app
 from .files import app_group

@@ -1,3 +1,6 @@
+from .file import File
+
+
 class SquareException(BaseException):
     """abstract class SquareException"""
 
@@ -11,7 +14,9 @@ class SquareException(BaseException):
 class RequestError(SquareException):
     """raised when a request fails"""
 
-    def __init__(self, route: str, status_code: int, code: str):
+    def __init__(
+        self, route: str, status_code: int, code: str, *args, **kwargs
+    ):
         self.route = route
         self.status = status_code
         self.code = code
@@ -102,3 +107,93 @@ class BadMemory(RequestError):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.message = 'No memory available'
+
+
+class InvalidConfig(RequestError):
+    """
+    raised when the config file is corrupt or invalid.
+    """
+
+    def __init__(self, file: File, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message = f'{file.filename} have a invalid config file'
+
+
+class InvalidDisplayName(InvalidConfig):
+    """
+    raised when the display name in the config file is invalid.
+    """
+
+    def __init__(self, file: File, *args, **kwargs):
+        super().__init__(file=file, *args, **kwargs)
+        self.message = 'Invalid display name in config file'
+
+
+class MissingDisplayName(InvalidConfig):
+    """
+    raised when the display name in the config file is missing.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message = 'Display name is missing in the config file'
+
+
+class InvalidMain(InvalidConfig):
+    """
+    raised when the main file in the config file is invalid.
+    """
+
+    def __init__(self, file: File, *args, **kwargs):
+        super().__init__(file=file, *args, **kwargs)
+        self.message = 'Invalid main file in config file'
+
+
+class MissingMainFile(InvalidConfig):
+    """
+    raised when the main file in the config file is missing.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message = 'Main file is missing in the config file'
+
+
+class InvalidMemory(InvalidConfig):
+    """
+    raised when the memory value in the config file is invalid.
+    """
+
+    def __init__(self, file: File, *args, **kwargs):
+        super().__init__(file=file, *args, **kwargs)
+        self.message = 'Invalid memory value in config file'
+
+
+class MissingMemory(InvalidConfig):
+    """
+    raised when the memory value in the config file is missing.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message = 'Memory value is missing in the config file'
+
+
+class InvalidVersion(InvalidConfig):
+    """
+    raised when the version value in the config file is invalid.
+    """
+
+    def __init__(self, file: File, *args, **kwargs):
+        super().__init__(file=file, *args, **kwargs)
+        self.message = 'Invalid version value in config file'
+
+
+class MissingVersion(InvalidConfig):
+    """
+    raised when the version value in the config file is missing.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message = 'Version value is missing in the config file'

@@ -11,8 +11,16 @@ from ..errors import (
     BadMemory,
     BadRequestError,
     FewMemory,
+    InvalidDisplayName,
+    InvalidMain,
+    InvalidMemory,
+    InvalidVersion,
     MissingConfigFile,
     MissingDependenciesFile,
+    MissingDisplayName,
+    MissingMainFile,
+    MissingMemory,
+    MissingVersion,
     NotFoundError,
     RequestError,
     TooManyRequests,
@@ -57,12 +65,20 @@ class Response:
         return f'{Response.__name__}({self.data})'
 
 
-def get_upload_error(code: str) -> Type[RequestError]:
+def _get_upload_error(code: str) -> type[RequestError]:
     errors = {
         'FEW_MEMORY': FewMemory,
         'BAD_MEMORY': BadMemory,
-        'MISSING_CONFIG_FILE': MissingConfigFile,
+        'MISSING_CONFIG': MissingConfigFile,
         'MISSING_DEPENDENCIES_FILE': MissingDependenciesFile,
+        'MISSING_MAIN': MissingMainFile,
+        'INVALID_MAIN': InvalidMain,
+        'INVALID_DISPLAY_NAME': InvalidDisplayName,
+        'MISSING_DISPLAY_NAME': MissingDisplayName,
+        'INVALID_MEMORY': InvalidMemory,
+        'MISSING_MEMORY': MissingMemory,
+        'INVALID_VERSION': InvalidVersion,
+        'MISSING_VERSION': MissingVersion,
     }
     error_class = errors.get(code, None)
     if error_class is None:
@@ -98,9 +114,11 @@ class HTTPClient:
             RawResponseData
         """
         headers = {'Authorization': self.api_key}
+        extra_error_kwargs: dict[str, Any] = {}
 
         if route.endpoint in (Endpoint.commit(), Endpoint.upload()):
             file = kwargs.pop('file')
+            extra_error_kwargs['file'] = file
             form = aiohttp.FormData()
             form.add_field('file', file.bytes, filename=file.filename)
             kwargs['data'] = form
@@ -118,10 +136,16 @@ class HTTPClient:
                 }
                 code: str | None = data.get('code')
                 error: Type[RequestError] | None = None
+
                 if status_code == 200:
                     logger.debug(msg='request to route: ', extra=extra)
-                    if code and route.endpoint == Endpoint.upload():
-                        error = get_upload_error(code)
+                    if code and route.endpoint in (
+                        Endpoint.commit(),
+                        Endpoint.upload(),
+                    ):
+                        error = _get_upload_error(
+                            code,
+                        )
                     extra.pop('code')
                     response: Response = Response(data=data, route=route)
                 elif status_code == 404:
@@ -144,6 +168,7 @@ class HTTPClient:
                     error = RequestError
                 if error:
                     raise error(
+                        **extra_error_kwargs,
                         route=route.endpoint.name,
                         status_code=status_code,
                         code=code,
