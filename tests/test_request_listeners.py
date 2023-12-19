@@ -17,7 +17,7 @@ class TestRequestListeners:
             assert isinstance(response, Response)
 
         upload_data: UploadData = await client.upload_app(
-            File('tests/test_upload/test_upload.zip')
+            File('tests/test_upload/test_normal_upload.zip')
         )
         TestRequestListeners.APP_ID = upload_data.id
 
