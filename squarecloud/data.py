@@ -3,9 +3,8 @@ from __future__ import annotations
 from typing import Any, Dict, Literal
 
 from pydantic import conint
-from typing_extensions import TypedDict
-
 from pydantic.dataclasses import dataclass
+from typing_extensions import TypedDict
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=invalid-name

@@ -1,6 +1,4 @@
 import asyncio
-import io
-import zipfile
 
 import pytest
 

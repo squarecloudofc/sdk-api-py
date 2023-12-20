@@ -1,6 +1,6 @@
 import pytest
-import squarecloud
 
+import squarecloud
 from squarecloud import Endpoint, File
 from squarecloud.data import UploadData
 from squarecloud.http import Response
