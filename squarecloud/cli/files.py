@@ -1,4 +1,5 @@
 import io
+import os
 from io import BytesIO
 
 import click
@@ -156,11 +157,12 @@ async def file_delete(ctx: Context, path: str):
 @click.pass_context
 @run_async
 async def file_create(ctx: Context, file: io.BufferedReader, path: str):
+    name = os.path.basename(file.name)
     client: Client = ctx.obj['client']
     app_id = ctx.obj['app_id']
-    full_path = path + file.name
+    full_path = path + name
     if path != '/':
-        full_path = f'/{path}/{file.name}'
+        full_path = f'/{path}/{name}'
     with Console().status('loading'):
         response: Response = await client.create_app_file(
             app_id,

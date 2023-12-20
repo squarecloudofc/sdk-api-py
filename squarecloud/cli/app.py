@@ -88,9 +88,7 @@ async def get_app_status(ctx: Context):
 
         table = Table(title='Status', header_style='purple')
 
-        status_list = [
-            attr for attr in dir(status) if not attr.startswith('__')
-        ]
+        status_list = status.__slots__
         for s in status_list:
             table.add_column(s.capitalize(), justify='center')
         table.add_row(
@@ -160,7 +158,7 @@ async def app_data(ctx: Context):
         data: AppData = await client.app_data(app_id)
         table = Table(title='Status', header_style='purple')
 
-        status_list = data.model_dump(exclude_none=True)
+        status_list = data.__slots__
         for s in status_list:
             table.add_column(s.capitalize(), justify='center')
         table.add_row(
