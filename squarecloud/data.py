@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, Literal
 
-from pydantic.dataclasses import dataclass
+from pydantic import conint
+from typing_extensions import TypedDict
 
+from pydantic.dataclasses import dataclass
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=invalid-name
@@ -28,8 +30,8 @@ class PlanData:
     duration: Dict[str, Any] | None
 
 
-@dataclass(frozen=True)
-class Language:
+# @dataclass(frozen=True)
+class Language(TypedDict):
     name: str
     version: str
 
@@ -55,9 +57,9 @@ class StatusData:
     :type running: bool
     :type storage: str
     :type network: Dict[str, Any]
-    :type requests: int
-    :type uptime: int
-    :type time: int | None = None
+    :type requests: conint(ge=0)
+    :type uptime: conint(ge=0)
+    :type time: conint(ge=0) | None = None
     """
 
     cpu: str
@@ -66,12 +68,12 @@ class StatusData:
     running: bool
     storage: str
     network: Dict[str, Any]
-    requests: int
-    uptime: int | None = None
-    time: int | None = None
+    requests: conint(ge=0)
+    uptime: conint(ge=0) | None = None
+    time: conint(ge=0) | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class AppData:
     """
     Application data class
@@ -88,7 +90,7 @@ class AppData:
     :type name: str
     :type owner: str
     :type cluster: str
-    :type ram: int;
+    :type ram: conint(ge=0);
     :type language: Language
     :type isWebsite: bool
     :type gitIntegration: bool
@@ -101,7 +103,7 @@ class AppData:
     name: str
     owner: str
     cluster: str
-    ram: int
+    ram: conint(ge=0)
     language: str
     cluster: str
     isWebsite: bool
@@ -122,13 +124,13 @@ class UserData:
     :ivar blocklist: Whether to user is blocked
     :ivar email: User email
 
-    :type id: int
+    :type id: conint(ge=0)
     :type tag: str
     :type plan: PlanData
     :type email: str | None = None
     """
 
-    id: int
+    id: conint(ge=0)
     tag: str
     plan: PlanData
     email: str | None = None
@@ -218,8 +220,8 @@ class UploadData:
     :type id: str
     :type tag: str
     :type language: Language
-    :type ram: int
-    :type cpu: int
+    :type ram: conint(ge=0)
+    :type cpu: conint(ge=0)
     :type subdomain: str | None = None
     :type description: str | None = None
     """
@@ -227,8 +229,8 @@ class UploadData:
     id: str
     tag: str
     language: Language
-    ram: int
-    cpu: int
+    ram: conint(ge=0)
+    cpu: conint(ge=0)
     subdomain: str | None = None
     description: str | None = None
 
@@ -246,15 +248,15 @@ class FileInfo:
 
     :type type: Literal['file', 'directory']
     :type name: str
-    :type size: int
-    :type lastModified: int | float
+    :type size: conint(ge=0)
+    :type lastModified: conint(ge=0) | float
     :type path: str
     """
 
     type: Literal['file', 'directory']
     name: str
-    size: int
-    lastModified: int | float
+    size: conint(ge=0)
+    lastModified: conint(ge=0) | float
     path: str
 
 
@@ -269,14 +271,14 @@ class StatisticsData:
     :ivar ping: Service ping
     :ivar time: Time
 
-    :type users: int
-    :type apps: int
-    :type websites: int
-    :type ping: int
-    :type time: int
+    :type users: conint(ge=0)
+    :type apps: conint(ge=0)
+    :type websites: conint(ge=0)
+    :type ping: conint(ge=0)
+    :type time: conint(ge=0)
     """
 
-    users: int
-    apps: int
-    websites: int
-    ping: int
+    users: conint(ge=0)
+    apps: conint(ge=0)
+    websites: conint(ge=0)
+    ping: conint(ge=0)

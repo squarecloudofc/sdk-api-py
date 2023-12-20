@@ -1,6 +1,8 @@
 from abc import ABC
 from io import BytesIO
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import TYPE_CHECKING, Callable
+
+from pydantic import PositiveInt
 
 from .data import AppData, BackupData, FileInfo, LogsData, StatusData
 from .errors import SquareException
@@ -159,27 +161,12 @@ class Application(AbstractApplication):
         http: HTTPClient,
         id: str,
         tag: str,
-        ram: int,
-        lang: Literal[
-            'javascript',
-            'typescript',
-            'python',
-            'java',
-            'rust',
-            'go',
-            'static',
-            'dynamic',
-        ],
-        cluster: Literal[
-            'florida-free-1',
-            'fl-haswell-4',
-            'fl-haswell-3',
-            'fl-haswell-2',
-            'fl-haswell-1',
-            'fl-vps-1',
-        ],
+        ram: PositiveInt,
+        lang: str,
+        cluster: str,
         isWebsite: bool,
         desc: str | None = None,
+        **kwargs,
     ) -> None:
         """
         The `__init__` function is called when the class is instantiated.
@@ -194,25 +181,9 @@ class Application(AbstractApplication):
         :param http: HTTPClient: Make http requests to the api.
         :param id: str: The id of the app.
         :param tag: str: The tag of the app.
-        :param ram: int: The amount of ram that is allocated.
-        :param lang: Literal[
-                        'javascript',
-                        'typescript',
-                        'python',
-                        'java',
-                        'rust',
-                        'go',
-                        'static',
-                        'dynamic',
-                    ]: The programming language of the app.
-        :param cluster: Literal[
-                'florida-free-1',
-                'fl-haswell-4',
-                'fl-haswell-3',
-                'fl-haswell-2',
-                'fl-haswell-1',
-                'fl-vps-1',
-            ]: The cluster that the app is hosted on
+        :param ram: PositiveInt: The amount of ram that is allocated.
+        :param lang: str: The programming language of the app.
+        :param cluster: str: The cluster that the app is hosted on
         :param isWebsite: bool: Whether if the app is a website
         :param desc: str | None: Define the description of the app
 
@@ -222,25 +193,9 @@ class Application(AbstractApplication):
         self._id: str = id
         self._tag: str = tag
         self._desc: str | None = desc
-        self._ram: int = ram
-        self._lang: Literal[
-            'javascript',
-            'typescript',
-            'python',
-            'java',
-            'rust',
-            'go',
-            'static',
-            'dynamic',
-        ] = lang
-        self._cluster: Literal[
-            'florida-free-1',
-            'fl-haswell-4',
-            'fl-haswell-3',
-            'fl-haswell-2',
-            'fl-haswell-1',
-            'fl-vps-1',
-        ] = cluster
+        self._ram: PositiveInt = ram
+        self._lang: str = lang
+        self._cluster: str = cluster
         self._isWebsite: bool = isWebsite
         self._client: 'Client' = client
         self._http: HTTPClient = http
@@ -312,52 +267,27 @@ class Application(AbstractApplication):
         the amount of ram allocated to the application
 
         :return: The application ram
-        :rtype: int
+        :rtype: PositiveInt
         """
         return self._ram
 
     @property
     def lang(
         self,
-    ) -> Literal[
-        'javascript',
-        'typescript',
-        'python',
-        'java',
-        'rust',
-        'go',
-        'static',
-        'dynamic',
-    ]:
+    ) -> str:
         """
         The lang function is a property that returns the application's
         programing language.
 
         :return: The application's programing language
-        :rtype: Literal[
-            'javascript',
-            'typescript',
-            'python',
-            'java',
-            'rust',
-            'go',
-            'static',
-            'dynamic',
-        ]
+        :rtype: str
         """
         return self._lang
 
     @property
     def cluster(
         self,
-    ) -> Literal[
-        'florida-free-1',
-        'fl-haswell-4',
-        'fl-haswell-3',
-        'fl-haswell-2',
-        'fl-haswell-1',
-        'fl-vps-1',
-    ]:
+    ) -> str:
         """
         The cluster function is a property that returns the
         cluster that the application is
@@ -365,14 +295,7 @@ class Application(AbstractApplication):
 
 
         :return: The cluster that the application is running
-        :rtype: Literal[
-            'florida-free-1',
-            'fl-haswell-4',
-            'fl-haswell-3',
-            'fl-haswell-2',
-            'fl-haswell-1',
-            'fl-vps-1',
-        ]
+        :rtype: str
         """
         return self._cluster
 
