@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from typing import Any, Dict, Literal
 
-from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
+
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=invalid-name
 
 
-class PlanData(BaseModel):
+@dataclass(frozen=True)
+class PlanData:
     """
     Plan data class
 
@@ -26,12 +28,14 @@ class PlanData(BaseModel):
     duration: Dict[str, Any] | None
 
 
-class Language(BaseModel):
+@dataclass(frozen=True)
+class Language:
     name: str
     version: str
 
 
-class StatusData(BaseModel):
+@dataclass(frozen=True)
+class StatusData:
     """
     Application status class
 
@@ -67,7 +71,8 @@ class StatusData(BaseModel):
     time: int | None = None
 
 
-class AppData(BaseModel):
+@dataclass(frozen=True)
+class AppData:
     """
     Application data class
 
@@ -106,7 +111,8 @@ class AppData(BaseModel):
     desc: str | None = None
 
 
-class UserData(BaseModel):
+@dataclass(frozen=True)
+class UserData:
     """
     User data class
 
@@ -128,7 +134,8 @@ class UserData(BaseModel):
     email: str | None = None
 
 
-class LogsData(BaseModel):
+@dataclass(frozen=True)
+class LogsData:
     """Logs data class
 
     :ivar logs: A string containing logs of your application
@@ -182,7 +189,8 @@ class LogsData(BaseModel):
         return isinstance(other, LogsData) and self.logs == other.logs
 
 
-class BackupData(BaseModel):
+@dataclass(frozen=True)
+class BackupData:
     """
     Backup data class
 
@@ -194,7 +202,8 @@ class BackupData(BaseModel):
     downloadURL: str
 
 
-class UploadData(BaseModel):
+@dataclass(frozen=True)
+class UploadData:
     """
     Upload data class
 
@@ -224,7 +233,8 @@ class UploadData(BaseModel):
     description: str | None = None
 
 
-class FileInfo(BaseModel):
+@dataclass(frozen=True)
+class FileInfo:
     """
     File information
 
@@ -248,7 +258,8 @@ class FileInfo(BaseModel):
     path: str
 
 
-class StatisticsData(BaseModel):
+@dataclass(frozen=True)
+class StatisticsData:
     """
     Host statistics
 
