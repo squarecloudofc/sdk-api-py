@@ -1,10 +1,11 @@
 import pytest
+import squarecloud
 
 from squarecloud import Endpoint, File
 from squarecloud.data import UploadData
 from squarecloud.http import Response
 
-from . import client
+from . import client, create_zip
 
 
 @pytest.mark.asyncio
@@ -16,8 +17,14 @@ class TestRequestListeners:
         async def test(response: Response):
             assert isinstance(response, Response)
 
+        squarecloud.create_config_file(
+            r'tests\test_upload',
+            display_name='normal_test',
+            main='main.py',
+            memory=100,
+        )
         upload_data: UploadData = await client.upload_app(
-            File('tests/test_upload/test_normal_upload.zip')
+            File(create_zip(), filename='file.zip')
         )
         TestRequestListeners.APP_ID = upload_data.id
 
