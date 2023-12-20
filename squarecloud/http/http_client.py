@@ -26,14 +26,13 @@ from ..errors import (
     TooManyRequests,
 )
 from ..logs import logger
-from ..payloads import RawResponseData
 from .endpoints import Endpoint, Router
 
 
 class Response:
     """Represents a request response"""
 
-    def __init__(self, data: RawResponseData, route: Router) -> None:
+    def __init__(self, data: dict[str, Any], route: Router) -> None:
         """
         The __init__ function is called when the class is instantiated.
         It sets up the instance of the class, and defines all of its
@@ -127,7 +126,7 @@ class HTTPClient:
                 url=route.url, method=route.method, **kwargs
             ) as resp:
                 status_code = resp.status
-                data: RawResponseData = await resp.json()
+                data: dict[str, Any] = await resp.json()
                 extra = {
                     'status': data.get('status'),
                     'route': route.url,

@@ -8,7 +8,7 @@ from .data import AppData, BackupData, FileInfo, LogsData, StatusData
 from .errors import SquareException
 from .file import File
 from .http import Endpoint, HTTPClient, Response
-from .listener import Listener, ListenerManager
+from .listeners import CaptureListenerManager
 
 # avoid circular imports
 if TYPE_CHECKING:
@@ -199,7 +199,7 @@ class Application(AbstractApplication):
         self._isWebsite: bool = isWebsite
         self._client: 'Client' = client
         self._http: HTTPClient = http
-        self._listener: ListenerManager = Listener
+        self._listener: CaptureListenerManager = CaptureListenerManager()
         self.cache: AppCache = AppCache()
 
     def __repr__(self) -> str:

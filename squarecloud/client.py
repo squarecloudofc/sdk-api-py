@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from io import BytesIO
-from typing import Any, Callable, List, Literal
+from typing import Any, Callable, List, Literal, TextIO
 
 from .app import Application
 from .data import (
@@ -21,15 +21,8 @@ from .errors import ApplicationNotFound, InvalidFile, SquareException
 from .file import File
 from .http import HTTPClient, Response
 from .http.endpoints import Endpoint
-from .listener import Listener, ListenerManager
+from .listeners import RequestListenerManager
 from .logs import logger
-from .payloads import (
-    BackupPayload,
-    LogsPayload,
-    StatusPayload,
-    UploadPayload,
-    UserPayload,
-)
 
 
 class AbstractClient(ABC):
@@ -52,7 +45,7 @@ def create_config_file(
     start: str | None = None,
     auto_restart: bool = False,
     **kwargs,
-) -> str:
+) -> TextIO | str:
     """
     The create_config_file function creates a squarecloud.app file in the
     specified path, with the given parameters.
@@ -124,7 +117,7 @@ class Client(AbstractClient):
         self.debug = debug
         self._api_key = api_key
         self._http = HTTPClient(api_key=api_key)
-        self._listener: ListenerManager = Listener
+        self._listener: RequestListenerManager = RequestListenerManager()
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
@@ -180,7 +173,7 @@ class Client(AbstractClient):
         :return: A userdata object
         """
         response: Response = await self._http.fetch_user_info()
-        payload: UserPayload = response.response
+        payload: dict[str, Any] = response.response
         user_data: UserData = UserData(**payload['user'])
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -202,7 +195,7 @@ class Client(AbstractClient):
         :return: A UserData object
         """
         response: Response = await self._http.fetch_user_info(user_id=user_id)
-        payload: UserPayload = response.response
+        payload: dict[str, Any] = response.response
         user_data: UserData = UserData(**payload['user'])
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -224,7 +217,7 @@ class Client(AbstractClient):
         response: Response | None = await self._http.fetch_logs(app_id)
         if response.code is None:
             return LogsData()
-        payload: LogsPayload = response.response
+        payload: dict[str, Any] = response.response
         logs_data: LogsData = LogsData(**payload)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -243,7 +236,7 @@ class Client(AbstractClient):
         :return: A StatusData object
         """
         response: Response = await self._http.fetch_app_status(app_id)
-        payload: StatusPayload = response.response
+        payload: dict[str, Any] = response.response
         status: StatusData = StatusData(**payload)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -315,7 +308,7 @@ class Client(AbstractClient):
         :return: A BackupData object
         """
         response: Response = await self._http.backup(app_id)
-        payload: BackupPayload = response.response
+        payload: dict[str, Any] = response.response
         backup: BackupData = BackupData(**payload)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -445,7 +438,7 @@ class Client(AbstractClient):
             await self._listener.on_request(
                 endpoint=endpoint, response=response
             )
-        payload: UploadPayload = response.response
+        payload: dict[str, Any] = response.response
         app: UploadData = UploadData(**payload)
         endpoint: Endpoint = response.route.endpoint
         await self._listener.on_request(endpoint=endpoint, response=response)
