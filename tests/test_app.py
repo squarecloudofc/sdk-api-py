@@ -1,6 +1,6 @@
 import pytest
 
-from . import client, GITHUB_ACCESS_TOKEN
+from . import GITHUB_ACCESS_TOKEN, client
 
 
 @pytest.mark.asyncio
