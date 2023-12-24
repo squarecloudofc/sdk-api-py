@@ -45,7 +45,6 @@ class BadRequestError(RequestError):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.message = 'Bad request: 400'
 
 
 class ApplicationNotFound(SquareException):
@@ -197,3 +196,8 @@ class MissingVersion(InvalidConfig):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.message = 'Version value is missing in the config file'
+
+
+class InvalidAccessToken(RequestError):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)

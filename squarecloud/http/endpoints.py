@@ -55,6 +55,14 @@ class Endpoint:
             'METHOD': 'DELETE',
             'PATH': '/apps/{app_id}/files/delete?path={path}',
         },
+        'LAST_DEPLOYS': {
+            'METHOD': 'GET',
+            'PATH': '/apps/{app_id}/deploy/list',
+        },
+        'GITHUB_INTEGRATION': {
+            'METHOD': 'POST',
+            'PATH': '/apps/{app_id}/deploy/git-webhook',
+        },
     }
 
     def __init__(self, name: str) -> None:
@@ -71,7 +79,7 @@ class Endpoint:
         :return: None
         """
 
-        endpoint: Dict[str, Dict[str, Any]] = self.ENDPOINTS_V2[name]
+        endpoint: Dict[str, Any] = self.ENDPOINTS_V2[name]
         self.name: str = name
         self.method: str = endpoint['METHOD']
         self.path: str = endpoint['PATH']
@@ -230,6 +238,19 @@ class Endpoint:
         /service/statistics endpoint.
         """
         return cls('STATISTICS')
+
+    @classmethod
+    def last_deploys(cls):
+        """
+        The last_deploys function returns a list of the last deploys that have
+        been made.
+        """
+
+        return cls('LAST_DEPLOYS')
+
+    @classmethod
+    def github_integration(cls):
+        return cls('GITHUB_INTEGRATION')
 
 
 # pylint: disable=too-few-public-methods

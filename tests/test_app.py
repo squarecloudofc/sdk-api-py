@@ -1,6 +1,6 @@
 import pytest
 
-from . import client
+from . import client, GITHUB_ACCESS_TOKEN
 
 
 @pytest.mark.asyncio
@@ -13,3 +13,5 @@ class TestClient:
         await app.logs()
         await app.backup()
         await app.data()
+        await app.github_integration(GITHUB_ACCESS_TOKEN)
+        await app.last_deploys()

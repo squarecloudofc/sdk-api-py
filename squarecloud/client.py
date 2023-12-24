@@ -10,6 +10,7 @@ from .app import Application
 from .data import (
     AppData,
     BackupData,
+    DeployData,
     FileInfo,
     LogsData,
     StatisticsData,
@@ -583,3 +584,38 @@ class Client(AbstractClient):
                 endpoint=endpoint, response=response
             )
         return AppData(**response.response)
+
+    async def last_deploys(
+        self, app_id: str, **kwargs
+    ) -> list[list[DeployData]]:
+        """
+        The last_deploys function returns a list of DeployData objects.
+
+        :param self: Represent the instance of a class
+        :param app_id: str: Specify the app id
+        :param kwargs: Pass a variable number of keyword arguments to the
+        function
+        :return: A list of DeployData objects
+        """
+        response: Response = await self._http.get_last_deploys(app_id)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
+        data = response.response
+        return [[DeployData(**deploy) for deploy in _] for _ in data]
+
+    async def github_integration(
+        self, app_id: str, access_token: str, **kwargs
+    ) -> str:
+        response: Response = await self._http.create_github_integration(
+            app_id=app_id, github_access_token=access_token
+        )
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
+        data = response.response
+        return data.get('webhook')

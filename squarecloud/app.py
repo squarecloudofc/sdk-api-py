@@ -1,10 +1,19 @@
+from __future__ import annotations
+
 from abc import ABC
 from io import BytesIO
 from typing import TYPE_CHECKING, Callable
 
 from pydantic import PositiveInt
 
-from .data import AppData, BackupData, FileInfo, LogsData, StatusData
+from .data import (
+    AppData,
+    BackupData,
+    DeployData,
+    FileInfo,
+    LogsData,
+    StatusData,
+)
 from .errors import SquareException
 from .file import File
 from .http import Endpoint, HTTPClient, Response
@@ -609,3 +618,32 @@ class Application(AbstractApplication):
                 endpoint=endpoint, response=response
             )
         return response
+
+    async def last_deploys(self, **kwargs) -> list[list[DeployData]]:
+        """
+        The last_deploys function returns a list of the last deploys for this
+        application.
+
+        :param self: Represent the instance of the class
+        :param: Pass in keyword arguments as a dictionary
+        :return: A list of DeployData objects
+        """
+        response: list[list[DeployData]] = await self.client.last_deploys(
+            self.id, avoid_listener=True,
+        )
+        return response
+
+    async def github_integration(self, access_token: str, **kwargs) -> str:
+        """
+        The create_github_integration function returns a webhook to integrate
+        with a GitHub repository.
+
+        :param self: Access the properties of the class
+        :param access_token: str: Authenticate the user with GitHub
+        :param kwargs: Pass in additional arguments to the function
+        :return: A string containing the webhook url
+        """
+        webhook: str = await self.client.github_integration(
+            self.id, access_token, avoid_listener=True,
+        )
+        return webhook

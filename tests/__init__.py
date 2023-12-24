@@ -9,6 +9,8 @@ import squarecloud
 load_dotenv()
 client = squarecloud.Client(os.getenv('KEY'))
 
+GITHUB_ACCESS_TOKEN: str = os.getenv('GITHUB_ACCESS_TOKEN')
+
 
 def create_zip(include_squarecloud_app: bool = True):
     buffer = io.BytesIO()

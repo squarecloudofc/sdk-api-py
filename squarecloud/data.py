@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, Literal
 
 from pydantic import conint
@@ -120,7 +121,6 @@ class UserData:
     :ivar id: User ID;
     :ivar tag: Username
     :ivar plan: User plan
-    :ivar blocklist: Whether to user is blocked
     :ivar email: User email
 
     :type id: conint(ge=0)
@@ -268,16 +268,21 @@ class StatisticsData:
     :ivar apps: Amount of apps hosted
     :ivar websites: Amount of websites hosted
     :ivar ping: Service ping
-    :ivar time: Time
 
     :type users: conint(ge=0)
     :type apps: conint(ge=0)
     :type websites: conint(ge=0)
     :type ping: conint(ge=0)
-    :type time: conint(ge=0)
     """
 
     users: conint(ge=0)
     apps: conint(ge=0)
     websites: conint(ge=0)
     ping: conint(ge=0)
+
+
+@dataclass(frozen=True)
+class DeployData:
+    id: str
+    state: str
+    date: datetime

@@ -11,6 +11,7 @@ from ..errors import (
     BadMemory,
     BadRequestError,
     FewMemory,
+    InvalidAccessToken,
     InvalidDisplayName,
     InvalidMain,
     InvalidMemory,
@@ -64,7 +65,7 @@ class Response:
         return f'{Response.__name__}({self.data})'
 
 
-def _get_upload_error(code: str) -> type[RequestError]:
+def _get_upload_error(code: str) -> type[RequestError] | None:
     errors = {
         'FEW_MEMORY': FewMemory,
         'BAD_MEMORY': BadMemory,
@@ -78,10 +79,11 @@ def _get_upload_error(code: str) -> type[RequestError]:
         'MISSING_MEMORY': MissingMemory,
         'INVALID_VERSION': InvalidVersion,
         'MISSING_VERSION': MissingVersion,
+        'INVALID_ACCESS_TOKEN': InvalidAccessToken,
     }
     error_class = errors.get(code, None)
     if error_class is None:
-        return RequestError
+        return
     else:
         return error_class
 
@@ -138,13 +140,6 @@ class HTTPClient:
 
                 if status_code == 200:
                     logger.debug(msg='request to route: ', extra=extra)
-                    if code and route.endpoint in (
-                        Endpoint.commit(),
-                        Endpoint.upload(),
-                    ):
-                        error = _get_upload_error(
-                            code,
-                        )
                     extra.pop('code')
                     response: Response = Response(data=data, route=route)
                 elif status_code == 404:
@@ -165,6 +160,9 @@ class HTTPClient:
                     error = TooManyRequests
                 else:
                     error = RequestError
+
+                if _ := _get_upload_error(code):
+                    error = _
                 if error:
                     raise error(
                         **extra_error_kwargs,
@@ -375,7 +373,7 @@ class HTTPClient:
         The get_statistics function returns the statistics of the current
         market.
 
-        :param self: Access the attributes and methods of a class
+        :param self: Represent the instance of a class
         :return: A Response object
         """
         route: Router = Router(Endpoint.statistics())
@@ -392,6 +390,37 @@ class HTTPClient:
         get data
         :return: A Response object
         """
-        route: Router = Router(Endpoint('APP_DATA'), app_id=app_id)
+        route: Router = Router(Endpoint.app_data(), app_id=app_id)
         response: Response = await self.request(route)
+        return response
+
+    async def get_last_deploys(self, app_id: str) -> Response:
+        """
+        The get_last_deploys function returns the last deploys of an
+        application.
+
+        :param self: Represent the instance of a class
+        :param app_id: str: Specify the application id
+        :return: A Response object
+        """
+        route: Router = Router(Endpoint.last_deploys(), app_id=app_id)
+        response: Response = await self.request(route)
+        return response
+
+    async def create_github_integration(
+        self, app_id: str, github_access_token: str
+    ) -> Response:
+        """
+        The create_github_integration function returns a webhook to integrate
+        with a GitHub repository.
+
+        :param self: Represent the instance of a class
+        :param app_id: str: Identify the app that you want to create a GitHub
+        integration for
+        :param github_access_token: str: Authenticate the user
+        :return: A response object
+        """
+        route: Router = Router(Endpoint.github_integration(), app_id=app_id)
+        body = {'access_token': github_access_token}
+        response: Response = await self.request(route, json=body)
         return response
