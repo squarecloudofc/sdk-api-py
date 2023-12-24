@@ -175,12 +175,11 @@ class Application(AbstractApplication):
         cluster: str,
         isWebsite: bool,
         desc: str | None = None,
-        **kwargs,
     ) -> None:
         """
         The `__init__` function is called when the class is instantiated.
         It sets up all the attributes that are passed in as arguments,
-        and does any other initialization your class needs before it's ready
+        and does any other initialization your class needs before It's ready
         for use.
 
 
@@ -210,6 +209,7 @@ class Application(AbstractApplication):
         self._http: HTTPClient = http
         self._listener: CaptureListenerManager = CaptureListenerManager()
         self.cache: AppCache = AppCache()
+        self.always_avoid_listeners: bool = False
 
     def __repr__(self) -> str:
         """
@@ -270,7 +270,6 @@ class Application(AbstractApplication):
 
     @property
     def ram(self) -> int:
-
         """
         The ram function is a property that returns
         the amount of ram allocated to the application
@@ -324,7 +323,7 @@ class Application(AbstractApplication):
         The capture function is a decorator that can be used to add a function
         to be called when a request is made to the specified endpoint.
 
-        :param self: Refer to the class instance
+        :param self: Refer to the class instance.
         :param endpoint: Endpoint: Specify which endpoint the function will be
         called on
         :return: A decorator
@@ -365,221 +364,199 @@ class Application(AbstractApplication):
 
         return wrapper
 
-    async def data(self, **kwargs) -> AppData:
+    async def data(
+        self, avoid_listener: bool = None, update_cache: bool = True
+    ) -> AppData:
         """
         The data function is used to retrieve the data of an app.
 
+        :param update_cache: if True, update the application cache
+        :param avoid_listener: whether the capture listener will be called
         :param self: Refer to the class instance
-        :param kwargs: Pass a variable number of keyword arguments to the
-        function
         :return: A AppData object
         :rtype: AppData
         """
         app_data: AppData = await self.client.app_data(self.id)
-        if not kwargs.get('avoid_listener'):
+        avoid_listener = avoid_listener or self.always_avoid_listeners
+        if not avoid_listener:
             endpoint: Endpoint = Endpoint.app_data()
             await self._listener.on_capture(
                 endpoint=endpoint,
                 before=self.cache.app_data,
                 after=app_data,
             )
-        if kwargs.get('update_cache', True):
+        if update_cache:
             self.cache.update(app_data)
         return app_data
 
-    async def logs(self, **kwargs) -> LogsData:
+    async def logs(
+        self, avoid_listener: bool = None, update_cache: bool = True
+    ) -> LogsData:
         """
         The logs function is used to get the application's logs.
 
         :param self: Refer to the class instance
-        :param kwargs: Pass a variable number of keyword arguments to a
-        function
+        :param update_cache: if True, update the application cache
+        :param avoid_listener: whether the capture listener will be called
         :return: A LogsData object
         :rtype: LogsData
         """
         logs: LogsData = await self.client.get_logs(self.id)
-        if not kwargs.get('avoid_listener'):
+        avoid_listener = avoid_listener or self.always_avoid_listeners
+        if not avoid_listener:
             endpoint: Endpoint = Endpoint.logs()
             await self._listener.on_capture(
                 endpoint=endpoint, before=self.cache.logs, after=logs
             )
-        if kwargs.get('update_cache', True):
+        if update_cache:
             self.cache.update(logs)
         return logs
 
-    async def status(self, **kwargs) -> StatusData:
+    async def status(
+        self, avoid_listener: bool = None, update_cache: bool = True
+    ) -> StatusData:
         """
         The status function returns the status of an application.
 
         :param self: Refer to the class instance
-        :param kwargs: Pass a variable number of keyword arguments to a
-        function
+        :param update_cache: if True, update the application cache
+        :param avoid_listener: whether the capture listener will be called
         :return: A StatusData object
         :rtype: StatusData
         """
         status: StatusData = await self.client.app_status(self.id)
-        if not kwargs.get('avoid_listener'):
+        avoid_listener = avoid_listener or self.always_avoid_listeners
+        if not avoid_listener:
             endpoint: Endpoint = Endpoint.app_status()
             await self._listener.on_capture(
                 endpoint=endpoint, before=self.cache.status, after=status
             )
-        if kwargs.get('update_cache', True):
+        if update_cache:
             self.cache.update(status)
         return status
 
-    async def backup(self, **kwargs) -> BackupData:
+    async def backup(
+        self, avoid_listener: bool = None, update_cache: bool = True
+    ) -> BackupData:
         """
         The backup function is used to create a backup of the application.
 
         :param self: Refer to the class instance
-        :param kwargs: Pass a variable number of keyword arguments to a
-        function
+        :param update_cache: if True, update the application cache
+        :param avoid_listener: whether the capture listener will be called
         :return: A BackupData object
         :rtype: BackupData
         """
         backup: BackupData = await self.client.backup(self.id)
-        if not kwargs.get('avoid_listener'):
+        avoid_listener = avoid_listener or self.always_avoid_listeners
+        if not avoid_listener:
             endpoint: Endpoint = Endpoint.backup()
             await self._listener.on_capture(
                 endpoint=endpoint, before=self.cache.backup, after=backup
             )
-        if kwargs.get('update_cache', True):
+        if update_cache:
             self.cache.update(backup)
         return backup
 
-    async def start(self, **kwargs) -> Response:
+    async def start(self) -> Response:
         """
         The start function starts the application.
 
         :param self: Refer to the class instance
-        :param kwargs: Pass a variable number of keyword arguments to the
-        function
         :return: A Response object
         :rtype: Response
         """
-        response: Response = await self.client.start_app(self.id)
-        if not kwargs.get('avoid_listener'):
-            endpoint: Endpoint = Endpoint.start()
-            await self._listener.on_capture(
-                endpoint=endpoint, response=response
-            )
+        response: Response = await self.client.start_app(
+            self.id, avoid_listener=True
+        )
         return response
 
-    async def stop(self, **kwargs) -> Response:
+    async def stop(self) -> Response:
         """
         The stop function stops the application.
 
         :param self: Refer to the class instance
-        :param kwargs: Pass a variable number of keyword arguments to the
-        function
         :return: A Response object
         :rtype: Response
         """
-        response: Response = await self.client.stop_app(self.id)
-        if not kwargs.get('avoid_listener'):
-            endpoint: Endpoint = Endpoint.stop()
-            await self._listener.on_capture(
-                endpoint=endpoint, response=response
-            )
+        response: Response = await self.client.stop_app(
+            self.id, avoid_listener=True
+        )
         return response
 
-    async def restart(self, **kwargs) -> Response:
+    async def restart(self) -> Response:
         """
         The restart function restarts the application.
 
         :param self: Refer to the class instance
-        :param kwargs: Pass a variable number of keyword arguments to the
-        function
         :return: The Response object
         :rtype: Response
         """
-        response: Response = await self.client.restart_app(self.id)
-        if not kwargs.get('avoid_listener'):
-            endpoint: Endpoint = Endpoint.restart()
-            await self._listener.on_capture(
-                endpoint=endpoint, response=response
-            )
+        response: Response = await self.client.restart_app(
+            self.id, avoid_listener=True
+        )
         return response
 
-    async def delete(self, **kwargs) -> Response:
+    async def delete(self) -> Response:
         """
         The delete function deletes the application.
 
         :param self: Refer to the class instance
-        :param kwargs: Pass in keyword arguments as a dictionary
         :return: A Response object
         :rtype: Response
         """
-        response: Response = await self.client.delete_app(self.id)
-        if not kwargs.get('avoid_listener'):
-            endpoint: Endpoint = Endpoint.delete_app()
-            await self._listener.on_capture(
-                endpoint=endpoint, response=response
-            )
+        response: Response = await self.client.delete_app(
+            self.id, avoid_listener=True
+        )
         return response
 
-    async def commit(self, file: File, **kwargs) -> Response:
+    async def commit(self, file: File) -> Response:
         """
         The commit function is used to commit the application.
 
 
         :param self: Refer to the class instance
         :param file: File: The squarecloud.File to be committed
-        :param kwargs: Pass a variable number of keyword arguments to the
-         function
         :return: A Response object
         :rtype: Response
         """
-        response: Response = await self.client.commit(self.id, file=file)
-        if not kwargs.get('avoid_listener'):
-            endpoint: Endpoint = Endpoint.commit()
-            await self._listener.on_capture(
-                endpoint=endpoint, response=response
-            )
+        response: Response = await self.client.commit(
+            self.id, file=file, avoid_listener=True
+        )
         return response
 
-    async def files_list(self, path: str, **kwargs) -> list[FileInfo]:
+    async def files_list(self, path: str) -> list[FileInfo]:
         """
         The files_list function returns a list of files and folders in the
         specified directory.
 
         :param self: Refer to the class instance
         :param path: str: Specify the path of the file to be listed
-        :param kwargs: Pass a variable number of keyword arguments to the
-        function
         :return: A list of FileInfo objects.
         :rtype: list[FileInfo]
         """
         response: list[FileInfo] = await self.client.app_files_list(
-            self.id, path
+            self.id,
+            path,
+            avoid_listener=True,
         )
-
-        if not kwargs.get('avoid_listener'):
-            endpoint: Endpoint = Endpoint.files_list()
-            await self._listener.on_capture(
-                endpoint=endpoint, response=response
-            )
         return response
 
-    async def read_file(self, path: str, **kwargs) -> BytesIO:
+    async def read_file(self, path: str) -> BytesIO:
         """
         The read_file function reads the contents of a file from an app.
 
         :param self: Refer to the class instance
         :param path: str: Specify the path of the file to be read
-        :param kwargs: Pass in keyword arguments to the function
         :return: A BytesIO object
         :rtype: BytesIO
         """
-        response: BytesIO = await self.client.read_app_file(self.id, path)
-        if not kwargs.get('avoid_listener'):
-            endpoint: Endpoint = Endpoint.files_read()
-            await self._listener.on_capture(
-                endpoint=endpoint, response=response
-            )
+        response: BytesIO = await self.client.read_app_file(
+            self.id, path, avoid_listener=True
+        )
         return response
 
-    async def create_file(self, file: File, path: str, **kwargs) -> Response:
+    async def create_file(self, file: File, path: str) -> Response:
 
         """
         The create_file function creates a file in the specified path.
@@ -587,39 +564,32 @@ class Application(AbstractApplication):
         :param self: Refer to the class instance
         :param file: File: Specify the file that is to be uploaded
         :param path: str: Specify the path of the file to be created
-        :param kwargs: Pass additional keyword arguments to the function
         :return: A Response object
         :rtype: Response
         """
         response: Response = await self.client.create_app_file(
-            self.id, file, path
+            self.id,
+            file,
+            path,
+            avoid_listener=True,
         )
-        if not kwargs.get('avoid_listener'):
-            endpoint: Endpoint = Endpoint.files_read()
-            await self._listener.on_capture(
-                endpoint=endpoint, response=response
-            )
         return response
 
-    async def delete_file(self, path: str, **kwargs) -> Response:
+    async def delete_file(self, path: str) -> Response:
         """
         The delete_file function deletes a file from the app.
 
         :param self: Refer to the class instance
         :param path: str: Specify the path of the file to be deleted
-        :param kwargs: Pass in a dictionary of additional arguments
         :return: A Response object
         :rtype: Response
         """
-        response: Response = await self.client.delete_app_file(self.id, path)
-        if not kwargs.get('avoid_listener'):
-            endpoint: Endpoint = Endpoint.files_delete()
-            await self._listener.on_capture(
-                endpoint=endpoint, response=response
-            )
+        response: Response = await self.client.delete_app_file(
+            self.id, path, avoid_listener=True
+        )
         return response
 
-    async def last_deploys(self, **kwargs) -> list[list[DeployData]]:
+    async def last_deploys(self) -> list[list[DeployData]]:
         """
         The last_deploys function returns a list of the last deploys for this
         application.
@@ -629,21 +599,23 @@ class Application(AbstractApplication):
         :return: A list of DeployData objects
         """
         response: list[list[DeployData]] = await self.client.last_deploys(
-            self.id, avoid_listener=True,
+            self.id,
+            avoid_listener=True,
         )
         return response
 
-    async def github_integration(self, access_token: str, **kwargs) -> str:
+    async def github_integration(self, access_token: str) -> str:
         """
         The create_github_integration function returns a webhook to integrate
         with a GitHub repository.
 
         :param self: Access the properties of the class
         :param access_token: str: Authenticate the user with GitHub
-        :param kwargs: Pass in additional arguments to the function
         :return: A string containing the webhook url
         """
         webhook: str = await self.client.github_integration(
-            self.id, access_token, avoid_listener=True,
+            self.id,
+            access_token,
+            avoid_listener=True,
         )
         return webhook
