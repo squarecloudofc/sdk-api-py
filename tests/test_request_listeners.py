@@ -5,7 +5,7 @@ from squarecloud import Endpoint, File
 from squarecloud.data import UploadData
 from squarecloud.http import Response
 
-from . import client, create_zip
+from . import GITHUB_ACCESS_TOKEN, client, create_zip
 
 
 @pytest.mark.asyncio
@@ -136,6 +136,23 @@ class TestRequestListeners:
             assert isinstance(response, Response)
 
         await client.me()
+
+    async def test_last_deploys(self):
+        @client.on_request(Endpoint.last_deploys())
+        async def test(response: Response):
+            assert isinstance(response, Response)
+
+        await client.last_deploys(TestRequestListeners.APP_ID)
+
+    async def test_github_integration(self):
+        @client.on_request(Endpoint.github_integration())
+        async def test(response: Response):
+            assert isinstance(response, Response)
+
+        await client.github_integration(
+            TestRequestListeners.APP_ID,
+            GITHUB_ACCESS_TOKEN,
+        )
 
     async def test_delete_app(self):
         @client.on_request(Endpoint.delete_app())
