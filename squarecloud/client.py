@@ -381,8 +381,8 @@ class Client(AbstractClient):
         if not app_data:
             raise ApplicationNotFound(app_id=app_id)
         app_data = app_data.pop()
-        if payload.get('avatar'):
-            del payload['avatar']
+        if app_data.get('avatar'):
+            del app_data['avatar']
         app: Application = Application(
             client=self, http=self._http, **app_data
         )  # type: ignore
