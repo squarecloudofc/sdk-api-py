@@ -3,7 +3,7 @@ from functools import wraps
 
 import click
 
-__version__ = '3.0.2'
+__version__ = '3.1.5'
 
 
 def run_async(func):

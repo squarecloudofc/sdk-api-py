@@ -18,9 +18,6 @@ from .files import app_group
 
 load_dotenv()
 
-__version__ = '3.1.0'
-
-
 @cli.command(
     name='statistics',
     help='Get statistics information about the host',
