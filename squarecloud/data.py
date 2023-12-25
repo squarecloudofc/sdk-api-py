@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Dict, Literal
+
+from pydantic import conint
+from pydantic.dataclasses import dataclass
+from typing_extensions import TypedDict
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=invalid-name
 
 
-@dataclass
+@dataclass(frozen=True)
 class PlanData:
     """
     Plan data class
@@ -23,10 +27,16 @@ class PlanData:
 
     name: str
     memory: Dict[str, Any]
-    duration: Dict[str, Any]
+    duration: Dict[str, Any] | None
 
 
-@dataclass
+# @dataclass(frozen=True)
+class Language(TypedDict):
+    name: str
+    version: str
+
+
+@dataclass(frozen=True)
 class StatusData:
     """
     Application status class
@@ -43,40 +53,33 @@ class StatusData:
 
     :type cpu: str
     :type ram: str
-    :type status: Literal[
-        'created',
-        'starting',
-        'restarting',
-        'running',
-        'deleting'
-        ]
+    :type status: str
     :type running: bool
     :type storage: str
     :type network: Dict[str, Any]
-    :type requests: int
-    :type uptime: int
-    :type time: int | None = None
+    :type requests: conint(ge=0)
+    :type uptime: conint(ge=0)
+    :type time: conint(ge=0) | None = None
     """
 
     cpu: str
     ram: str
-    status: Literal['created', 'starting', 'restarting', 'running', 'deleting']
+    status: str
     running: bool
     storage: str
     network: Dict[str, Any]
-    requests: int
-    uptime: int
-    time: int | None = None
+    requests: conint(ge=0)
+    uptime: conint(ge=0) | None = None
+    time: conint(ge=0) | None = None
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class AppData:
     """
     Application data class
 
     :ivar id: The application ID
     :ivar name: The application name
-    :ivar avatar: The application avatar
     :ivar owner: The application owner ID
     :ivar cluster: The cluster that the app is hosted on
     :ivar ram: The amount of RAM that application is using
@@ -85,22 +88,10 @@ class AppData:
 
     :type id: str
     :type name: str
-    :type avatar: str
     :type owner: str
-    :type cluster: Literal[
-        'florida-ds1-1', 'florida-ds1-2', 'florida-ds1-3', 'florida-ds1-free-1'
-    ]
-    :type ram: int;
-    :type language: Literal[
-        'javascript',
-        'typescript',
-        'python',
-        'java',
-        'rust',
-        'go',
-        'static',
-        'dynamic',
-    ]
+    :type cluster: str
+    :type ram: conint(ge=0);
+    :type language: Language
     :type isWebsite: bool
     :type gitIntegration: bool
     :type domain: str | None = None
@@ -110,23 +101,11 @@ class AppData:
 
     id: str
     name: str
-    avatar: str
     owner: str
-    cluster: Literal[
-        'florida-ds1-1', 'florida-ds1-2', 'florida-ds1-3', 'florida-ds1-free-1'
-    ]
-    ram: int
-    language: Literal[
-        'javascript',
-        'typescript',
-        'python',
-        'java',
-        'rust',
-        'go',
-        'static',
-        'dynamic',
-    ]
-    cluster: Literal['free-', 'florida-1']
+    cluster: str
+    ram: conint(ge=0)
+    language: str
+    cluster: str
     isWebsite: bool
     gitIntegration: bool
     domain: str | None = None
@@ -134,7 +113,7 @@ class AppData:
     desc: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class UserData:
     """
     User data class
@@ -142,22 +121,21 @@ class UserData:
     :ivar id: User ID;
     :ivar tag: Username
     :ivar plan: User plan
-    :ivar blocklist: Whether to user is blocked
     :ivar email: User email
 
-    :type id: int
+    :type id: conint(ge=0)
     :type tag: str
     :type plan: PlanData
     :type email: str | None = None
     """
 
-    id: int
+    id: conint(ge=0)
     tag: str
     plan: PlanData
     email: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class LogsData:
     """Logs data class
 
@@ -212,7 +190,7 @@ class LogsData:
         return isinstance(other, LogsData) and self.logs == other.logs
 
 
-@dataclass
+@dataclass(frozen=True)
 class BackupData:
     """
     Backup data class
@@ -225,7 +203,7 @@ class BackupData:
     downloadURL: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class UploadData:
     """
     Upload data class
@@ -233,7 +211,6 @@ class UploadData:
     :ivar id: ID of the uploaded application
     :ivar tag: Tag of the uploaded application
     :ivar language: Programming language of the uploaded application
-    :ivar avatar: Avatar of the uploaded application
     :ivar ram: Ram allocated for the uploaded application
     :ivar cpu: Cpu of the uploaded application
     :ivar description: Description of the uploaded application
@@ -241,25 +218,23 @@ class UploadData:
 
     :type id: str
     :type tag: str
-    :type language: str
-    :type avatar: str
-    :type ram: int
-    :type cpu: int
+    :type language: Language
+    :type ram: conint(ge=0)
+    :type cpu: conint(ge=0)
     :type subdomain: str | None = None
     :type description: str | None = None
     """
 
     id: str
     tag: str
-    language: str
-    avatar: str
-    ram: int
-    cpu: int
+    language: Language
+    ram: conint(ge=0)
+    cpu: conint(ge=0)
     subdomain: str | None = None
     description: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class FileInfo:
     """
     File information
@@ -272,19 +247,19 @@ class FileInfo:
 
     :type type: Literal['file', 'directory']
     :type name: str
-    :type size: int
-    :type lastModified: int | float
+    :type size: conint(ge=0)
+    :type lastModified: conint(ge=0) | float
     :type path: str
     """
 
     type: Literal['file', 'directory']
     name: str
-    size: int
-    lastModified: int | float
+    size: conint(ge=0)
+    lastModified: conint(ge=0) | float
     path: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class StatisticsData:
     """
     Host statistics
@@ -293,16 +268,21 @@ class StatisticsData:
     :ivar apps: Amount of apps hosted
     :ivar websites: Amount of websites hosted
     :ivar ping: Service ping
-    :ivar time: Time
 
-    :type users: int
-    :type apps: int
-    :type websites: int
-    :type ping: int
-    :type time: int
+    :type users: conint(ge=0)
+    :type apps: conint(ge=0)
+    :type websites: conint(ge=0)
+    :type ping: conint(ge=0)
     """
 
-    users: int
-    apps: int
-    websites: int
-    ping: int
+    users: conint(ge=0)
+    apps: conint(ge=0)
+    websites: conint(ge=0)
+    ping: conint(ge=0)
+
+
+@dataclass(frozen=True)
+class DeployData:
+    id: str
+    state: str
+    date: datetime

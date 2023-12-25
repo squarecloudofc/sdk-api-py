@@ -4,12 +4,13 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from io import BytesIO
-from typing import Any, Callable, List, Literal
+from typing import Any, Callable, List, Literal, TextIO
 
 from .app import Application
 from .data import (
     AppData,
     BackupData,
+    DeployData,
     FileInfo,
     LogsData,
     StatisticsData,
@@ -21,15 +22,8 @@ from .errors import ApplicationNotFound, InvalidFile, SquareException
 from .file import File
 from .http import HTTPClient, Response
 from .http.endpoints import Endpoint
-from .listener import Listener, ListenerManager
+from .listeners import RequestListenerManager
 from .logs import logger
-from .payloads import (
-    BackupPayload,
-    LogsPayload,
-    StatusPayload,
-    UploadPayload,
-    UserPayload,
-)
 
 
 class AbstractClient(ABC):
@@ -47,13 +41,12 @@ def create_config_file(
     main: str,
     memory: int,
     version: Literal['recommended', 'latest'] = 'recommended',
-    avatar: str | None = None,
     description: str | None = None,
     subdomain: str | None = None,
     start: str | None = None,
     auto_restart: bool = False,
     **kwargs,
-) -> str:
+) -> TextIO | str:
     """
     The create_config_file function creates a squarecloud.app file in the
     specified path, with the given parameters.
@@ -67,7 +60,6 @@ def create_config_file(
     :param memory: int: Set the memory of the app
     :param version: Literal['recommended', 'latest']: Ensure that the version
     is either 'recommended' or 'latest'.
-    :param avatar: str | None: Specify the avatar of the application
     :param description: str | None: Specify a description for the app
     :param subdomain: str | None: Specify the subdomain of your app
     :param start: str | None: Specify the command that should be run when the
@@ -83,7 +75,6 @@ def create_config_file(
         'MAIN': main,
         'MEMORY': memory,
         'VERSION': version,
-        'AVATAR': avatar,
         'DESCRIPTION': description,
         'SUBDOMAIN': subdomain,
         'START': start,
@@ -127,7 +118,7 @@ class Client(AbstractClient):
         self.debug = debug
         self._api_key = api_key
         self._http = HTTPClient(api_key=api_key)
-        self._listener: ListenerManager = Listener
+        self._listener: RequestListenerManager = RequestListenerManager()
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
@@ -183,7 +174,7 @@ class Client(AbstractClient):
         :return: A userdata object
         """
         response: Response = await self._http.fetch_user_info()
-        payload: UserPayload = response.response
+        payload: dict[str, Any] = response.response
         user_data: UserData = UserData(**payload['user'])
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -205,7 +196,7 @@ class Client(AbstractClient):
         :return: A UserData object
         """
         response: Response = await self._http.fetch_user_info(user_id=user_id)
-        payload: UserPayload = response.response
+        payload: dict[str, Any] = response.response
         user_data: UserData = UserData(**payload['user'])
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -227,7 +218,7 @@ class Client(AbstractClient):
         response: Response | None = await self._http.fetch_logs(app_id)
         if response.code is None:
             return LogsData()
-        payload: LogsPayload = response.response
+        payload: dict[str, Any] = response.response
         logs_data: LogsData = LogsData(**payload)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -246,7 +237,7 @@ class Client(AbstractClient):
         :return: A StatusData object
         """
         response: Response = await self._http.fetch_app_status(app_id)
-        payload: StatusPayload = response.response
+        payload: dict[str, Any] = response.response
         status: StatusData = StatusData(**payload)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -318,7 +309,7 @@ class Client(AbstractClient):
         :return: A BackupData object
         """
         response: Response = await self._http.backup(app_id)
-        payload: BackupPayload = response.response
+        payload: dict[str, Any] = response.response
         backup: BackupData = BackupData(**payload)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
@@ -380,7 +371,7 @@ class Client(AbstractClient):
             await self._listener.on_request(
                 endpoint=endpoint, response=response
             )
-        payload: UserPayload = response.response
+        payload = response.response
         app_data = list(
             filter(
                 lambda application: application['id'] == app_id,
@@ -390,6 +381,8 @@ class Client(AbstractClient):
         if not app_data:
             raise ApplicationNotFound(app_id=app_id)
         app_data = app_data.pop()
+        if app_data.get('avatar'):
+            del app_data['avatar']
         app: Application = Application(
             client=self, http=self._http, **app_data
         )  # type: ignore
@@ -410,8 +403,11 @@ class Client(AbstractClient):
             await self._listener.on_request(
                 endpoint=endpoint, response=response
             )
-        payload: UserPayload = response.response
+        payload = response.response
         apps_data: list = payload['applications']
+        for data in apps_data:
+            if data.get('avatar'):
+                del data['avatar']
         apps: List[Application] = [
             Application(client=self, http=self._http, **data)
             for data in apps_data
@@ -443,7 +439,7 @@ class Client(AbstractClient):
             await self._listener.on_request(
                 endpoint=endpoint, response=response
             )
-        payload: UploadPayload = response.response
+        payload: dict[str, Any] = response.response
         app: UploadData = UploadData(**payload)
         endpoint: Endpoint = response.route.endpoint
         await self._listener.on_request(endpoint=endpoint, response=response)
@@ -588,3 +584,38 @@ class Client(AbstractClient):
                 endpoint=endpoint, response=response
             )
         return AppData(**response.response)
+
+    async def last_deploys(
+        self, app_id: str, **kwargs
+    ) -> list[list[DeployData]]:
+        """
+        The last_deploys function returns a list of DeployData objects.
+
+        :param self: Represent the instance of a class
+        :param app_id: str: Specify the app id
+        :param kwargs: Pass a variable number of keyword arguments to the
+        function
+        :return: A list of DeployData objects
+        """
+        response: Response = await self._http.get_last_deploys(app_id)
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
+        data = response.response
+        return [[DeployData(**deploy) for deploy in _] for _ in data]
+
+    async def github_integration(
+        self, app_id: str, access_token: str, **kwargs
+    ) -> str:
+        response: Response = await self._http.create_github_integration(
+            app_id=app_id, github_access_token=access_token
+        )
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
+        data = response.response
+        return data.get('webhook')

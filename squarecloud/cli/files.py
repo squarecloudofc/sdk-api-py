@@ -1,4 +1,5 @@
 import io
+import os
 from io import BytesIO
 
 import click
@@ -111,31 +112,30 @@ async def file_delete(ctx: Context, path: str):
     with Console().status('loading'):
         response: Response = await client.delete_app_file(app_id, path)
 
-    match response.status:
-        case 'success':
-            panel = Panel(
-                f"Successfully deleted file in: '{path}'",
-                title='Success',
-                title_align='left',
-                border_style='purple',
-                style='green',
-            )
-        case 'error':
-            panel = Panel(
-                f"'{path}' don't exists",
-                title='File Not Found',
-                title_align='left',
-                border_style='purple',
-                style='red',
-            )
-        case _:
-            panel = Panel(
-                f'Error on deleting file\n{response}',
-                title='Error',
-                title_align='left',
-                border_style='red',
-                style='red',
-            )
+    if response.status == 'success':
+        panel = Panel(
+            f"Successfully deleted file in: '{path}'",
+            title='Success',
+            title_align='left',
+            border_style='purple',
+            style='green',
+        )
+    elif response.status == 'error':
+        panel = Panel(
+            f"'{path}' don't exists",
+            title='File Not Found',
+            title_align='left',
+            border_style='purple',
+            style='red',
+        )
+    else:
+        panel = Panel(
+            f'Error on deleting file\n{response}',
+            title='Error',
+            title_align='left',
+            border_style='red',
+            style='red',
+        )
 
     print(panel)
 
@@ -157,11 +157,12 @@ async def file_delete(ctx: Context, path: str):
 @click.pass_context
 @run_async
 async def file_create(ctx: Context, file: io.BufferedReader, path: str):
+    name = os.path.basename(file.name)
     client: Client = ctx.obj['client']
     app_id = ctx.obj['app_id']
-    full_path = path + file.name
+    full_path = path + name
     if path != '/':
-        full_path = f'/{path}/{file.name}'
+        full_path = f'/{path}/{name}'
     with Console().status('loading'):
         response: Response = await client.create_app_file(
             app_id,
@@ -169,29 +170,28 @@ async def file_create(ctx: Context, file: io.BufferedReader, path: str):
             full_path,
         )
 
-    match response.status:
-        case 'success':
-            panel = Panel(
-                f"Successfully created file in: '{full_path}'",
-                title='Success',
-                title_align='left',
-                border_style='purple',
-                style='green',
-            )
-        case 'error':
-            panel = Panel(
-                f"'/{path}' don't exists",
-                title='Directory Not Found',
-                title_align='left',
-                border_style='purple',
-                style='red',
-            )
-        case _:
-            panel = Panel(
-                f"Error on creating file in '/{path}'\n{response}",
-                title='Error',
-                title_align='left',
-                border_style='red',
-                style='red',
-            )
+    if response.status == 'success':
+        panel = Panel(
+            f"Successfully created file in: '{full_path}'",
+            title='Success',
+            title_align='left',
+            border_style='purple',
+            style='green',
+        )
+    elif response.status == 'error':
+        panel = Panel(
+            f"'/{path}' don't exists",
+            title='Directory Not Found',
+            title_align='left',
+            border_style='purple',
+            style='red',
+        )
+    else:
+        panel = Panel(
+            f"Error on creating file in '/{path}'\n{response}",
+            title='Error',
+            title_align='left',
+            border_style='red',
+            style='red',
+        )
     print(panel)

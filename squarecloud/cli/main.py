@@ -11,15 +11,12 @@ from rich.table import Table
 from squarecloud.client import Client, create_config_file
 from squarecloud.data import StatisticsData
 
-from .. import ApplicationNotFound, RequestError, SquareException
+from ..errors import RequestError, SquareException
 from . import cli, run_async
 from .app import app_list, upload_app
 from .files import app_group
 
 load_dotenv()
-
-__version__ = '3.1.0'
-
 
 @cli.command(
     name='statistics',
@@ -93,14 +90,6 @@ async def get_squarecloud_statistics(token: str):
     required=False,
 )
 @click.option(
-    '--avatar',
-    help='Specify the avatar of the application',
-    type=click.STRING,
-    prompt='Enter avatar (optional)',
-    default='',
-    required=False,
-)
-@click.option(
     '--description',
     help='Specify a description for the app',
     type=click.STRING,
@@ -136,7 +125,6 @@ def create_config(
     main: str,
     memory: int,
     version: Literal['recommended', 'latest'] = 'recommended',
-    avatar: str | None = None,
     description: str | None = None,
     subdomain: str | None = None,
     start: str | None = None,
@@ -149,7 +137,6 @@ def create_config(
         main=main,
         memory=memory,
         version=version,
-        avatar=avatar,
         description=description,
         subdomain=subdomain,
         start=start,

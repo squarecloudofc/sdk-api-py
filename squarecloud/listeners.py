@@ -5,8 +5,8 @@ from .http import Response
 from .http.endpoints import Endpoint
 
 
-class ListenerManager:
-    """ListenerManager"""
+class CaptureListenerManager:
+    """CaptureListenerManager"""
 
     def __init__(self):
         """
@@ -19,7 +19,6 @@ class ListenerManager:
         :return: A dictionary of the capture listeners and request listeners
         """
         self.capture_listeners: dict[str, Callable] = {}
-        self.request_listeners: dict[str, Callable] = {}
 
     def get_capture_listener(self, endpoint: Endpoint) -> Callable:
         """
@@ -72,6 +71,39 @@ class ListenerManager:
         """
         self.capture_listeners = None
 
+    async def on_capture(self, endpoint: Endpoint, **kwargs) -> Any:
+        """
+        The on_capture function is called when a capture event occurs.
+
+        :param self: Refer to the class instance
+        :param endpoint: Endpoint: Get the endpoint that is being called
+        :param kwargs: Pass a dictionary of arguments to the function
+        :return: The result of the call function
+        """
+        call: Callable = self.get_capture_listener(endpoint)
+        if not call:
+            return
+        is_coro: bool = asyncio.iscoroutinefunction(call)
+        if is_coro:
+            return await call(**kwargs)
+        return call(**kwargs)
+
+
+class RequestListenerManager:
+    """CaptureListenerManager"""
+
+    def __init__(self):
+        """
+        The __init__ function is called when the class is instantiated.
+        It sets up the instance variables that will be used by other methods
+        in the class.
+
+
+        :param self: Refer to the class instance
+        :return: A dictionary of the capture listeners and request listeners
+        """
+        self.request_listeners: dict[str, Callable] = {}
+
     def get_request_listener(self, endpoint: Endpoint) -> Callable:
         """
         The get_request_listener function is a helper function that returns
@@ -120,24 +152,7 @@ class ListenerManager:
         :param self: Refer to the class instance
         :return: None
         """
-        self.capture_listeners = None
-
-    async def on_capture(self, endpoint: Endpoint, **kwargs) -> Any:
-        """
-        The on_capture function is called when a capture event occurs.
-
-        :param self: Refer to the class instance
-        :param endpoint: Endpoint: Get the endpoint that is being called
-        :param kwargs: Pass a dictionary of arguments to the function
-        :return: The result of the call function
-        """
-        call: Callable = self.get_capture_listener(endpoint)
-        if not call:
-            return
-        is_coro: bool = asyncio.iscoroutinefunction(call)
-        if is_coro:
-            return await call(**kwargs)
-        return call(**kwargs)
+        # self.capture_listeners = None
 
     async def on_request(self, endpoint: Endpoint, response: Response) -> Any:
         """
@@ -156,6 +171,3 @@ class ListenerManager:
         if asyncio.iscoroutinefunction(call):
             return await call(response=response)
         return call(response=response)
-
-
-Listener = ListenerManager()

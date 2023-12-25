@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, Literal, Type
 
 import aiohttp
 
@@ -8,21 +8,32 @@ from squarecloud.file import File
 
 from ..errors import (
     AuthenticationFailure,
+    BadMemory,
     BadRequestError,
     FewMemory,
+    InvalidAccessToken,
+    InvalidDisplayName,
+    InvalidMain,
+    InvalidMemory,
+    InvalidVersion,
+    MissingConfigFile,
+    MissingDependenciesFile,
+    MissingDisplayName,
+    MissingMainFile,
+    MissingMemory,
+    MissingVersion,
     NotFoundError,
     RequestError,
     TooManyRequests,
 )
 from ..logs import logger
-from ..payloads import RawResponseData
 from .endpoints import Endpoint, Router
 
 
 class Response:
     """Represents a request response"""
 
-    def __init__(self, data: RawResponseData, route: Router) -> None:
+    def __init__(self, data: dict[str, Any], route: Router) -> None:
         """
         The __init__ function is called when the class is instantiated.
         It sets up the instance of the class, and defines all of its
@@ -54,6 +65,29 @@ class Response:
         return f'{Response.__name__}({self.data})'
 
 
+def _get_upload_error(code: str) -> type[RequestError] | None:
+    errors = {
+        'FEW_MEMORY': FewMemory,
+        'BAD_MEMORY': BadMemory,
+        'MISSING_CONFIG': MissingConfigFile,
+        'MISSING_DEPENDENCIES_FILE': MissingDependenciesFile,
+        'MISSING_MAIN': MissingMainFile,
+        'INVALID_MAIN': InvalidMain,
+        'INVALID_DISPLAY_NAME': InvalidDisplayName,
+        'MISSING_DISPLAY_NAME': MissingDisplayName,
+        'INVALID_MEMORY': InvalidMemory,
+        'MISSING_MEMORY': MissingMemory,
+        'INVALID_VERSION': InvalidVersion,
+        'MISSING_VERSION': MissingVersion,
+        'INVALID_ACCESS_TOKEN': InvalidAccessToken,
+    }
+    error_class = errors.get(code, None)
+    if error_class is None:
+        return
+    else:
+        return error_class
+
+
 class HTTPClient:
     """A client that handles requests and responses"""
 
@@ -81,9 +115,11 @@ class HTTPClient:
             RawResponseData
         """
         headers = {'Authorization': self.api_key}
+        extra_error_kwargs: dict[str, Any] = {}
 
         if route.endpoint in (Endpoint.commit(), Endpoint.upload()):
             file = kwargs.pop('file')
+            extra_error_kwargs['file'] = file
             form = aiohttp.FormData()
             form.add_field('file', file.bytes, filename=file.filename)
             kwargs['data'] = form
@@ -92,64 +128,48 @@ class HTTPClient:
                 url=route.url, method=route.method, **kwargs
             ) as resp:
                 status_code = resp.status
-                data: RawResponseData = await resp.json()
+                data: dict[str, Any] = await resp.json()
                 extra = {
                     'status': data.get('status'),
                     'route': route.url,
                     'code': data.get('code'),
                     'request_message': data.get('message', ''),
                 }
-                code: str = data.get('code')
-                match status_code:
-                    case 200:
+                code: str | None = data.get('code')
+                error: Type[RequestError] | None = None
+
+                if status_code == 200:
+                    logger.debug(msg='request to route: ', extra=extra)
+                    extra.pop('code')
+                    response: Response = Response(data=data, route=route)
+                elif status_code == 404:
+                    if code is None:
                         logger.debug(msg='request to route: ', extra=extra)
-                        extra.pop('code')
-                        response: Response = Response(data=data, route=route)
-                    case 404:
-                        if code is None:
-                            logger.debug(msg='request to route: ', extra=extra)
-                            return Response(data=data, route=route)
+                        response = Response(data=data, route=route)
+                    else:
                         logger.error(msg='request to route: ', extra=extra)
-                        raise NotFoundError(
-                            route=route.endpoint.name,
-                            status_code=status_code,
-                            code=code,
-                        )
-                    case 401:
-                        logger.error(msg='request to: ', extra=extra)
-                        raise AuthenticationFailure(
-                            route=route.endpoint.name,
-                            status_code=status_code,
-                            code=code,
-                        )
-                    case 400:
-                        logger.error(msg='request to: ', extra=extra)
-                        match data.get('code'):
-                            case 'FEW_MEMORY':
-                                raise FewMemory(
-                                    route=route.endpoint.name,
-                                    status_code=status_code,
-                                    code=code,
-                                )
-                            case _:
-                                raise BadRequestError(
-                                    route=route.endpoint.name,
-                                    status_code=status_code,
-                                    code=code,
-                                )
-                    case 429:
-                        logger.error(msg='request to: ', extra=extra)
-                        raise TooManyRequests(
-                            route=route.endpoint.name,
-                            status_code=status_code,
-                            code=code,
-                        )
-                    case _:
-                        raise RequestError(
-                            route=route.endpoint.name,
-                            status_code=status_code,
-                            code=code,
-                        )
+                        error = NotFoundError
+                elif status_code == 401:
+                    logger.error(msg='request to: ', extra=extra)
+                    error = AuthenticationFailure
+                elif status_code == 400:
+                    logger.error(msg='request to: ', extra=extra)
+                    error = BadRequestError
+                elif status_code == 429:
+                    logger.error(msg='request to: ', extra=extra)
+                    error = TooManyRequests
+                else:
+                    error = RequestError
+
+                if _ := _get_upload_error(code):
+                    error = _
+                if error:
+                    raise error(
+                        **extra_error_kwargs,
+                        route=route.endpoint.name,
+                        status_code=status_code,
+                        code=code,
+                    )
                 return response
 
     async def fetch_user_info(self, user_id: int | None = None) -> Response:
@@ -353,7 +373,7 @@ class HTTPClient:
         The get_statistics function returns the statistics of the current
         market.
 
-        :param self: Access the attributes and methods of a class
+        :param self: Represent the instance of a class
         :return: A Response object
         """
         route: Router = Router(Endpoint.statistics())
@@ -370,6 +390,37 @@ class HTTPClient:
         get data
         :return: A Response object
         """
-        route: Router = Router(Endpoint('APP_DATA'), app_id=app_id)
+        route: Router = Router(Endpoint.app_data(), app_id=app_id)
         response: Response = await self.request(route)
+        return response
+
+    async def get_last_deploys(self, app_id: str) -> Response:
+        """
+        The get_last_deploys function returns the last deploys of an
+        application.
+
+        :param self: Represent the instance of a class
+        :param app_id: str: Specify the application id
+        :return: A Response object
+        """
+        route: Router = Router(Endpoint.last_deploys(), app_id=app_id)
+        response: Response = await self.request(route)
+        return response
+
+    async def create_github_integration(
+        self, app_id: str, github_access_token: str
+    ) -> Response:
+        """
+        The create_github_integration function returns a webhook to integrate
+        with a GitHub repository.
+
+        :param self: Represent the instance of a class
+        :param app_id: str: Identify the app that you want to create a GitHub
+        integration for
+        :param github_access_token: str: Authenticate the user
+        :return: A response object
+        """
+        route: Router = Router(Endpoint.github_integration(), app_id=app_id)
+        body = {'access_token': github_access_token}
+        response: Response = await self.request(route, json=body)
         return response

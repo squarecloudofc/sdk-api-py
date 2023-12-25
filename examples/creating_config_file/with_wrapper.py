@@ -34,7 +34,6 @@ version: Literal['recommended', 'latest']
 
 [OPTIONAL] parameters
 ---------------------
-avatar: str | None = None
 description: str | None = None
 subdomain: str | None = None
 start: str | None = None
