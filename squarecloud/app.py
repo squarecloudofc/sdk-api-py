@@ -10,6 +10,7 @@ from .data import (
     AppData,
     BackupData,
     DeployData,
+    DomainAnalytics,
     FileInfo,
     LogsData,
     StatusData,
@@ -619,3 +620,15 @@ class Application(AbstractApplication):
             avoid_listener=True,
         )
         return webhook
+
+    async def domain_analytics(self) -> DomainAnalytics:
+        analytics: DomainAnalytics = await self.client.domain_analytics(
+            self.id, avoid_listener=True
+        )
+        return analytics
+
+    async def set_custom_domain(self, custom_domain: str):
+        response: Response = await self.client.set_custom_domain(
+            self.id, custom_domain, avoid_listener=True
+        )
+        return response

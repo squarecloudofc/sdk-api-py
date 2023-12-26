@@ -14,6 +14,8 @@ from squarecloud.cli import cli, run_async
 from squarecloud.data import (
     AppData,
     BackupData,
+    DeployData,
+    DomainAnalytics,
     LogsData,
     StatusData,
     UploadData,
@@ -88,7 +90,7 @@ async def get_app_status(ctx: Context):
 
         table = Table(title='Status', header_style='purple')
 
-        status_list = status.__slots__
+        status_list = status.to_dict()
         for s in status_list:
             table.add_column(s.capitalize(), justify='center')
         table.add_row(
@@ -158,7 +160,7 @@ async def app_data(ctx: Context):
         data: AppData = await client.app_data(app_id)
         table = Table(title='Status', header_style='purple')
 
-        status_list = data.__slots__
+        status_list = data.to_dict()
         for s in status_list:
             table.add_column(s.capitalize(), justify='center')
         table.add_row(
@@ -329,3 +331,98 @@ async def commit(ctx: Context, file: BufferedReader):
             style='green',
         )
     )
+
+
+@app_group.command(name='last-deploys')
+@click.pass_context
+@run_async
+async def last_deploys(ctx: Context):
+    with Console().status('loading'):
+        client: Client = ctx.obj['client']
+        app_id = ctx.obj['app_id']
+        deploys: list[list[DeployData]] = await client.last_deploys(app_id)
+    if not deploys:
+        print(
+            Panel(
+                'You do not have any recent deploys for this application',
+                title='No deploys',
+                title_align='left',
+                style='red',
+            ),
+        )
+        return
+    for deploy in deploys:
+        table = Table(header_style='purple')
+
+        attr_list = deploy[0].__dict__
+        for s in attr_list:
+            table.add_column(s.capitalize(), justify='center')
+
+        for d in deploy:
+            table.add_row(
+                *[str(getattr(d, attr)) for attr in attr_list],
+                style='green',
+            )
+
+        print(table)
+
+
+@app_group.command(name='github-integration')
+@click.argument('access_token', type=click.STRING)
+@click.pass_context
+@run_async
+async def github_integration(ctx: Context, access_token: str):
+    with Console().status('loading'):
+        client: Client = ctx.obj['client']
+        app_id = ctx.obj['app_id']
+        webhook_url: str = await client.github_integration(
+            app_id, access_token
+        )
+    print(
+        Panel(
+            webhook_url,
+            title='Webhook url',
+            border_style='purple',
+            style='green',
+        )
+    )
+
+
+@app_group.command(name='custom-domain')
+@click.argument('domain', type=click.STRING)
+@click.pass_context
+@run_async
+async def custom_domain(ctx: Context, domain: str):
+    with Console().status('loading'):
+        client: Client = ctx.obj['client']
+        app_id = ctx.obj['app_id']
+        await client.set_custom_domain(app_id, domain)
+    print(
+        Panel(
+            f'Domain defined to "{domain}"',
+            title='Success',
+            border_style='purple',
+            style='green',
+        )
+    )
+
+
+@app_group.command(name='domain-analytics')
+@click.pass_context
+@run_async
+async def domain_analytics(ctx: Context):
+    with Console().status('loading'):
+        client: Client = ctx.obj['client']
+        app_id = ctx.obj['app_id']
+        analytics: DomainAnalytics = await client.domain_analytics(app_id)
+        table = Table(title='Status', header_style='purple')
+
+        attr_list = analytics.to_dict()
+        for s in attr_list:
+            table.add_column(s.capitalize(), justify='center')
+        table.add_row(
+            *[str(getattr(analytics, attr)) for attr in attr_list],
+            style='green',
+        )
+
+    print(table)

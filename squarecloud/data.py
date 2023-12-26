@@ -29,6 +29,9 @@ class PlanData:
     memory: Dict[str, Any]
     duration: Dict[str, Any] | None
 
+    def to_dict(self):
+        return self.__dict__
+
 
 # @dataclass(frozen=True)
 class Language(TypedDict):
@@ -72,8 +75,11 @@ class StatusData:
     uptime: conint(ge=0) | None = None
     time: conint(ge=0) | None = None
 
+    def to_dict(self):
+        return self.__dict__
 
-@dataclass(frozen=True, slots=True)
+
+@dataclass(frozen=True)
 class AppData:
     """
     Application data class
@@ -112,6 +118,9 @@ class AppData:
     custom: str | None = None
     desc: str | None = None
 
+    def to_dict(self):
+        return self.__dict__
+
 
 @dataclass(frozen=True)
 class UserData:
@@ -133,6 +142,9 @@ class UserData:
     tag: str
     plan: PlanData
     email: str | None = None
+
+    def to_dict(self):
+        return self.__dict__
 
 
 @dataclass(frozen=True)
@@ -189,6 +201,9 @@ class LogsData:
         """
         return isinstance(other, LogsData) and self.logs == other.logs
 
+    def to_dict(self):
+        return self.__dict__
+
 
 @dataclass(frozen=True)
 class BackupData:
@@ -201,6 +216,9 @@ class BackupData:
     """
 
     downloadURL: str
+
+    def to_dict(self):
+        return self.__dict__
 
 
 @dataclass(frozen=True)
@@ -233,6 +251,9 @@ class UploadData:
     subdomain: str | None = None
     description: str | None = None
 
+    def to_dict(self):
+        return self.__dict__
+
 
 @dataclass(frozen=True)
 class FileInfo:
@@ -258,6 +279,9 @@ class FileInfo:
     lastModified: conint(ge=0) | float
     path: str
 
+    def to_dict(self):
+        return self.__dict__
+
 
 @dataclass(frozen=True)
 class StatisticsData:
@@ -280,9 +304,33 @@ class StatisticsData:
     websites: conint(ge=0)
     ping: conint(ge=0)
 
+    def to_dict(self):
+        return self.__dict__
+
 
 @dataclass(frozen=True)
 class DeployData:
     id: str
     state: str
     date: datetime
+
+    def to_dict(self):
+        return self.__dict__
+
+
+@dataclass(frozen=True)
+class DomainAnalytics:
+    hostname: str
+    total: list[Any]
+    countries: list[Any]
+    methods: list[Any]
+    referers: list[Any]
+    browsers: list[Any]
+    deviceTypes: list[Any]
+    operatingSystems: list[Any]
+    agents: list[Any]
+    hosts: list[Any]
+    paths: list[Any]
+
+    def to_dict(self):
+        return self.__dict__

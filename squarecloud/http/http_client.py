@@ -13,6 +13,7 @@ from ..errors import (
     FewMemory,
     InvalidAccessToken,
     InvalidDisplayName,
+    InvalidDomain,
     InvalidMain,
     InvalidMemory,
     InvalidVersion,
@@ -65,7 +66,17 @@ class Response:
         return f'{Response.__name__}({self.data})'
 
 
-def _get_upload_error(code: str) -> type[RequestError] | None:
+def _get_error(code: str) -> type[RequestError] | None:
+    """
+    The _get_error function is a helper function that takes in an error code
+    and returns the corresponding error class.
+    This allows us to easily map errors to their respective classes,
+    which makes it easier for us to raise them when we need to.
+
+    :param code: str: Determine which error to raise
+    :return: An error class
+    :doc-author: Trelent
+    """
     errors = {
         'FEW_MEMORY': FewMemory,
         'BAD_MEMORY': BadMemory,
@@ -80,6 +91,7 @@ def _get_upload_error(code: str) -> type[RequestError] | None:
         'INVALID_VERSION': InvalidVersion,
         'MISSING_VERSION': MissingVersion,
         'INVALID_ACCESS_TOKEN': InvalidAccessToken,
+        'REGEX_VALIDATION': InvalidDomain,
     }
     error_class = errors.get(code, None)
     if error_class is None:
@@ -116,6 +128,9 @@ class HTTPClient:
         """
         headers = {'Authorization': self.api_key}
         extra_error_kwargs: dict[str, Any] = {}
+
+        if kwargs.get('custom_domain'):
+            extra_error_kwargs['domain'] = kwargs.pop('custom_domain')
 
         if route.endpoint in (Endpoint.commit(), Endpoint.upload()):
             file = kwargs.pop('file')
@@ -161,7 +176,7 @@ class HTTPClient:
                 else:
                     error = RequestError
 
-                if _ := _get_upload_error(code):
+                if _ := _get_error(code):
                     error = _
                 if error:
                     raise error(
@@ -423,4 +438,39 @@ class HTTPClient:
         route: Router = Router(Endpoint.github_integration(), app_id=app_id)
         body = {'access_token': github_access_token}
         response: Response = await self.request(route, json=body)
+        return response
+
+    async def update_custom_domain(
+        self, app_id: str, custom_domain: str
+    ) -> Response:
+        """
+        The update_custom_domain function updates the custom domain of an app.
+
+        :param self: Represent the instance of a class
+        :param app_id: str: Specify the app_id of the application to update
+        :param custom_domain: str: Set the custom domain for the app
+        :return: A response object
+        """
+        route: Router = Router(
+            Endpoint.custom_domain(),
+            app_id=app_id,
+            custom_domain=custom_domain,
+        )
+        response: Response = await self.request(
+            route, custom_domain=custom_domain
+        )
+        return response
+
+    async def domain_analytics(self, app_id: str) -> Response:
+        """
+        The domain_analytics function returns a list of all domains analytics
+        for the specified app.
+
+        :param self: Represent the instance of a class
+        :param app_id: str: Specify the app_id for which you want to retrieve
+        analytics
+        :return: A response object
+        """
+        route: Router = Router(Endpoint.domain_analytics(), app_id=app_id)
+        response: Response = await self.request(route)
         return response

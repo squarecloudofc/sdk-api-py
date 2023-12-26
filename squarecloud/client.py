@@ -11,6 +11,7 @@ from .data import (
     AppData,
     BackupData,
     DeployData,
+    DomainAnalytics,
     FileInfo,
     LogsData,
     StatisticsData,
@@ -92,17 +93,9 @@ def create_config_file(
 
 
 class Client(AbstractClient):
-    """A client for interacting with the SquareCloud API.
-
-    :ivar api_key: the api key for the client
-    :ivar debug: weather the debug messages is enabled
-
-    :type api_key: str
-    :type debug: bool
-    """
+    """A client for interacting with the SquareCloud API."""
 
     def __init__(self, api_key: str, debug: bool = True) -> None:
-
         """
         The __init__ function is called when the class is instantiated.
         It sets up the instance of the class, and defines all of its
@@ -619,3 +612,28 @@ class Client(AbstractClient):
             )
         data = response.response
         return data.get('webhook')
+
+    async def set_custom_domain(
+        self, app_id: str, custom_domain: str, **kwargs
+    ) -> Response:
+        response: Response = await self._http.update_custom_domain(
+            app_id=app_id, custom_domain=custom_domain
+        )
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
+        return response
+
+    async def domain_analytics(self, app_id: str, **kwargs) -> DomainAnalytics:
+        response: Response = await self._http.domain_analytics(
+            app_id=app_id,
+        )
+        if not kwargs.get('avoid_listener'):
+            endpoint: Endpoint = response.route.endpoint
+            await self._listener.on_request(
+                endpoint=endpoint, response=response
+            )
+        analytics: DomainAnalytics = DomainAnalytics(**response.response)
+        return analytics

@@ -15,7 +15,7 @@ class RequestError(SquareException):
     """raised when a request fails"""
 
     def __init__(
-        self, route: str, status_code: int, code: str, *args, **kwargs
+            self, route: str, status_code: int, code: str, *args, **kwargs
     ):
         self.route = route
         self.status = status_code
@@ -29,7 +29,9 @@ class AuthenticationFailure(RequestError):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.message = 'Authentication failed: Invalid API token'
+        self.message = (
+            'Authentication failed: ' 'Invalid API token or access denied'
+        )
 
 
 class NotFoundError(RequestError):
@@ -199,5 +201,20 @@ class MissingVersion(InvalidConfig):
 
 
 class InvalidAccessToken(RequestError):
-    def __init__(self, *args, **kwargs):
+    """
+    raised when the GitHub access token provided by the user is invalid.
+    """
+
+
+def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+
+
+class InvalidDomain(RequestError):
+    """
+    raised when an invalid domain is provided
+    """
+
+    def __init__(self, domain: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.message = f'{domain} is a invalid custom domain'

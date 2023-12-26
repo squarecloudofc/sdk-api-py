@@ -63,6 +63,14 @@ class Endpoint:
             'METHOD': 'POST',
             'PATH': '/apps/{app_id}/deploy/git-webhook',
         },
+        'CUSTOM_DOMAIN': {
+            'METHOD': 'POST',
+            'PATH': '/apps/{app_id}/network/custom/{custom_domain}',
+        },
+        'DOMAIN_ANALYTICS': {
+            'METHOD': 'GET',
+            'PATH': '/apps/{app_id}/network/analytics',
+        },
     }
 
     def __init__(self, name: str) -> None:
@@ -242,15 +250,35 @@ class Endpoint:
     @classmethod
     def last_deploys(cls):
         """
-        The last_deploys function returns a list of the last deploys that have
-        been made.
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/deploy/list endpoint.
         """
 
         return cls('LAST_DEPLOYS')
 
     @classmethod
     def github_integration(cls):
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/deploy/git-webhook endpoint.
+        """
         return cls('GITHUB_INTEGRATION')
+
+    @classmethod
+    def domain_analytics(cls):
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/network/analytics endpoint.
+        """
+        return cls('DOMAIN_ANALYTICS')
+
+    @classmethod
+    def custom_domain(cls):
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/network/custom/{custom_domain} endpoint.
+        """
+        return cls('CUSTOM_DOMAIN')
 
 
 # pylint: disable=too-few-public-methods
