@@ -154,6 +154,22 @@ class TestRequestListeners:
             GITHUB_ACCESS_TOKEN,
         )
 
+    async def test_domain_analytics(self):
+        @client.on_request(Endpoint.domain_analytics())
+        async def test(response: Response):
+            assert isinstance(response, Response)
+
+        await client.domain_analytics('6c8e9b785cce4f99984f9ca1c5470d51')
+
+    async def test_set_custom_domain(self):
+        @client.on_request(Endpoint.custom_domain())
+        async def test(response: Response):
+            assert isinstance(response, Response)
+
+        await client.set_custom_domain(
+            '6c8e9b785cce4f99984f9ca1c5470d51', 'test.com.br'
+        )
+
     async def test_delete_app(self):
         @client.on_request(Endpoint.delete_app())
         async def test(response: Response):
