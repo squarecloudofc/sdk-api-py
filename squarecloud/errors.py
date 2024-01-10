@@ -15,7 +15,7 @@ class RequestError(SquareException):
     """raised when a request fails"""
 
     def __init__(
-            self, route: str, status_code: int, code: str, *args, **kwargs
+        self, route: str, status_code: int, code: str, *args, **kwargs
     ):
         self.route = route
         self.status = status_code
