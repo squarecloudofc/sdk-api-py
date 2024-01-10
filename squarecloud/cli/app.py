@@ -333,7 +333,9 @@ async def commit(ctx: Context, file: BufferedReader):
     )
 
 
-@app_group.command(name='last-deploys')
+@app_group.command(
+    name='last-deploys', help='See the latest deployments of your application'
+)
 @click.pass_context
 @run_async
 async def last_deploys(ctx: Context):
@@ -367,7 +369,10 @@ async def last_deploys(ctx: Context):
         print(table)
 
 
-@app_group.command(name='github-integration')
+@app_group.command(
+    name='github-integration',
+    help='Get a webhook url to integrate your application with github',
+)
 @click.argument('access_token', type=click.STRING)
 @click.pass_context
 @run_async
@@ -388,7 +393,7 @@ async def github_integration(ctx: Context, access_token: str):
     )
 
 
-@app_group.command(name='custom-domain')
+@app_group.command(name='custom-domain', help='Set a custom domain')
 @click.argument('domain', type=click.STRING)
 @click.pass_context
 @run_async
@@ -407,7 +412,9 @@ async def custom_domain(ctx: Context, domain: str):
     )
 
 
-@app_group.command(name='domain-analytics')
+@app_group.command(
+    name='domain-analytics', help='See analytics for your application domain'
+)
 @click.pass_context
 @run_async
 async def domain_analytics(ctx: Context):
