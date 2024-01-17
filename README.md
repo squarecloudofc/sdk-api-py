@@ -27,8 +27,9 @@ to `dashboard` > `my account` > `Regenerate API/CLI KEY` and copy the key.
 
 ## Basic usage
 ```python
-import squarecloud as square
 import asyncio
+
+import squarecloud as square
 
 client = square.Client('API_KEY', debug=True)
 

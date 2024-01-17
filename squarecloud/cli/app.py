@@ -36,7 +36,7 @@ from squarecloud.data import (
     '--token',
     '-t',
     help='your api token',
-    envvar='SQUARECLOUD-TOKEN',
+    envvar='SQUARECLOUD_KEY',
     required=True,
     type=click.STRING,
     prompt='API KEY',
@@ -105,7 +105,7 @@ async def get_app_status(ctx: Context):
     '--token',
     '-t',
     help='your api token',
-    envvar='SQUARECLOUD-TOKEN',
+    envvar='SQUARECLOUD_KEY',
     required=True,
     type=click.STRING,
     prompt='API KEY',
@@ -134,7 +134,6 @@ async def app_list(ctx: Context, token: str):
     table.add_column('Language', justify='center')
     table.add_column('Description', justify='center')
     table.add_column('Is Website', justify='center')
-    table.add_column('Avatar', justify='center')
     table.add_column('Cluster', justify='center')
     for app in apps:
         table.add_row(
@@ -292,7 +291,7 @@ async def delete_app(ctx: Context):
     '--token',
     '-t',
     help='your api token',
-    envvar='SQUARECLOUD-TOKEN',
+    envvar='SQUARECLOUD_KEY',
     required=True,
     type=click.STRING,
     prompt='API KEY',
@@ -373,7 +372,16 @@ async def last_deploys(ctx: Context):
     name='github-integration',
     help='Get a webhook url to integrate your application with github',
 )
-@click.argument('access_token', type=click.STRING)
+@click.option(
+    '--access-token',
+    '-t',
+    help='your github access token',
+    envvar='GITHUB_ACCESS_TOKEN',
+    required=True,
+    type=click.STRING,
+    prompt='GITHUB ACCESS TOKEN',
+    hide_input=True,
+)
 @click.pass_context
 @run_async
 async def github_integration(ctx: Context, access_token: str):
