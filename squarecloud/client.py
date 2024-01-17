@@ -374,8 +374,6 @@ class Client(AbstractClient):
         if not app_data:
             raise ApplicationNotFound(app_id=app_id)
         app_data = app_data.pop()
-        if app_data.get('avatar'):
-            del app_data['avatar']
         app: Application = Application(
             client=self, http=self._http, **app_data
         )  # type: ignore
@@ -398,9 +396,6 @@ class Client(AbstractClient):
             )
         payload = response.response
         apps_data: list = payload['applications']
-        for data in apps_data:
-            if data.get('avatar'):
-                del data['avatar']
         apps: List[Application] = [
             Application(client=self, http=self._http, **data)
             for data in apps_data
