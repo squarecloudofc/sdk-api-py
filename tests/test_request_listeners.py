@@ -18,7 +18,7 @@ class TestRequestListeners:
             assert isinstance(response, Response)
 
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='normal_test',
             main='main.py',
             memory=100,
@@ -159,7 +159,7 @@ class TestRequestListeners:
         async def test(response: Response):
             assert isinstance(response, Response)
 
-        await client.domain_analytics('6c8e9b785cce4f99984f9ca1c5470d51')
+        await client.domain_analytics(TestRequestListeners.APP_ID)
 
     async def test_set_custom_domain(self):
         @client.on_request(Endpoint.custom_domain())

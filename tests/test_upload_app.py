@@ -13,7 +13,7 @@ from . import client, create_zip
 class TestRequestListeners:
     async def test_normal_upload(self):
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='normal_test',
             main='main.py',
             memory=100,
@@ -26,7 +26,7 @@ class TestRequestListeners:
 
     async def test_invalid_main_upload(self):
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='invalid_main',
             main='index.js',
             memory=100,
@@ -40,7 +40,7 @@ class TestRequestListeners:
 
     async def test_missing_main_upload(self):
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='missing_main',
             main='',
             memory=100,
@@ -54,7 +54,7 @@ class TestRequestListeners:
 
     async def test_few_memory_upload(self):
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='few_memory_test',
             main='main.py',
             memory=3999,
@@ -68,7 +68,7 @@ class TestRequestListeners:
 
     async def test_invalid_display_name_upload(self):
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='test_' * 200,
             main='main.py',
             memory=100,
@@ -82,7 +82,7 @@ class TestRequestListeners:
 
     async def test_missing_display_name_upload(self):
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='',
             main='main.py',
             memory=100,
@@ -96,7 +96,7 @@ class TestRequestListeners:
 
     async def test_bad_memory_upload(self):
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='memory_test',
             main='main.py',
             memory=1,
@@ -110,7 +110,7 @@ class TestRequestListeners:
 
     async def test_missing_memory_upload(self):
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='memory_test',
             main='main.py',
             memory='',  # type: ignore
@@ -124,7 +124,7 @@ class TestRequestListeners:
 
     async def test_invalid_version_upload(self):
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='version_test',
             main='main.py',
             memory=100,
@@ -139,7 +139,7 @@ class TestRequestListeners:
 
     async def test_missing_version_upload(self):
         squarecloud.create_config_file(
-            r'tests\test_upload',
+            r'tests/test_upload',
             display_name='version_test',
             main='main.py',
             memory=100,
