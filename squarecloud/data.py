@@ -107,7 +107,6 @@ class AppData:
 
     id: str
     name: str
-    owner: str
     cluster: str
     ram: conint(ge=0)
     language: str
