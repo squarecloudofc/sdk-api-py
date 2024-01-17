@@ -18,15 +18,15 @@ from .files import app_group
 
 load_dotenv()
 
+
 @cli.command(
-    name='statistics',
-    help='Get statistics information about the host',
+    name='statistics', help='Get statistics information about the host'
 )
 @click.option(
     '--token',
     '-t',
     help='your api token',
-    envvar='SQUARECLOUD-TOKEN',
+    envvar='SQUARECLOUD_KEY',
     required=True,
     type=click.STRING,
     prompt='API KEY',
@@ -36,7 +36,7 @@ load_dotenv()
 async def get_squarecloud_statistics(token: str):
     client = Client(api_key=token, debug=False)
 
-    with Console().status('loading') as status:
+    with Console().status('loading'):
         statistics_data: StatisticsData = await client.statistics()
     table = Table(title='Statistics', header_style='purple')
 
