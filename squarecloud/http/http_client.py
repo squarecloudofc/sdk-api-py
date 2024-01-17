@@ -126,7 +126,10 @@ class HTTPClient:
         Returns:
             RawResponseData
         """
-        headers = {'Authorization': self.api_key}
+        headers = {
+            'Authorization': self.api_key,
+            'User-Agent': 'squarecloud-api/3.2.1',
+        }
         extra_error_kwargs: dict[str, Any] = {}
 
         if kwargs.get('custom_domain'):
