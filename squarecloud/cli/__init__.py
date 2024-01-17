@@ -3,7 +3,7 @@ from functools import wraps
 
 import click
 
-__version__ = '3.2.1'
+from squarecloud import __version__
 
 
 def run_async(func):
