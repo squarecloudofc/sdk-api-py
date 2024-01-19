@@ -1,7 +1,7 @@
 from .file import File
 
 
-class SquareException(BaseException):
+class SquareException(Exception):
     """abstract class SquareException"""
 
     def __init__(self, message: str = 'An unexpected error occurred'):
