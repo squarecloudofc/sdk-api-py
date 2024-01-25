@@ -458,7 +458,7 @@ class Client(AbstractClient):
         if not response.response:  # type ignore
             return
         return [
-            FileInfo(**data, path=path + f'{data.get("name")}')
+            FileInfo(**data, path=path + f'/{data.get("name")}')
             for data in response.response
         ]
 
