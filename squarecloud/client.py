@@ -27,15 +27,6 @@ from .listeners import RequestListenerManager
 from .logs import logger
 
 
-class AbstractClient(ABC):
-    """Abstract client class"""
-
-    @property
-    @abstractmethod
-    def api_key(self):
-        """get the api token"""
-
-
 def create_config_file(
     path: str,
     display_name: str,
@@ -92,7 +83,7 @@ def create_config_file(
     return content
 
 
-class Client(AbstractClient):
+class Client:
     """A client for interacting with the SquareCloud API."""
 
     def __init__(self, api_key: str, debug: bool = True) -> None:
