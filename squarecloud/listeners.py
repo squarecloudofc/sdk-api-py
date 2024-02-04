@@ -143,7 +143,7 @@ class RequestListenerManager:
         :return: The listener that was removed
         """
         if self.get_request_listener(endpoint):
-            return self.capture_listeners.pop(endpoint.name)
+            return self.request_listeners.pop(endpoint.name)
 
     def clear_request_listeners(self) -> None:
         """
@@ -152,7 +152,7 @@ class RequestListenerManager:
         :param self: Refer to the class instance
         :return: None
         """
-        # self.capture_listeners = None
+        self.request_listeners = None
 
     async def on_request(self, endpoint: Endpoint, response: Response) -> Any:
         """
