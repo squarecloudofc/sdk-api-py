@@ -144,12 +144,9 @@ class AbstractApplication(ABC):
     """Abstract application class"""
 
 
-class Application(AbstractApplication):
+class Application:
     """Represents an application"""
 
-    # pylint: disable=too-many-instance-attributes
-    # nine arguments is available in this case
-    # pylint: disable=invalid-name
     __slots__ = [
         '_client',
         '_http',
@@ -163,6 +160,7 @@ class Application(AbstractApplication):
         '_lang',
         '_cluster',
         '_isWebsite',
+        'always_avoid_listeners',
     ]
 
     def __init__(
