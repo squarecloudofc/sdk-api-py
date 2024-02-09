@@ -30,7 +30,7 @@ class PlanData:
     duration: Dict[str, Any] | None
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
 
 
 # @dataclass(frozen=True)
@@ -76,7 +76,7 @@ class StatusData:
     time: conint(ge=0) | None = None
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
 
 
 @dataclass(frozen=True)
@@ -118,7 +118,7 @@ class AppData:
     desc: str | None = None
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
 
 
 @dataclass(frozen=True)
@@ -143,7 +143,7 @@ class UserData:
     email: str | None = None
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
 
 
 @dataclass(frozen=True)
@@ -201,7 +201,7 @@ class LogsData:
         return isinstance(other, LogsData) and self.logs == other.logs
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
 
 
 @dataclass(frozen=True)
@@ -217,7 +217,7 @@ class BackupData:
     downloadURL: str
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
 
 
 @dataclass(frozen=True)
@@ -251,7 +251,7 @@ class UploadData:
     description: str | None = None
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
 
 
 @dataclass(frozen=True)
@@ -279,7 +279,7 @@ class FileInfo:
     path: str
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
 
 
 @dataclass(frozen=True)
@@ -304,7 +304,7 @@ class StatisticsData:
     ping: conint(ge=0)
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
 
 
 @dataclass(frozen=True)
@@ -314,7 +314,7 @@ class DeployData:
     date: datetime
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
 
 
 @dataclass(frozen=True)
@@ -332,4 +332,4 @@ class DomainAnalytics:
     paths: list[Any]
 
     def to_dict(self):
-        return self.__dict__
+        return self.__dict__.copy()
