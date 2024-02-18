@@ -11,7 +11,7 @@ packages = [{ include = "squarecloud" }]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-aiohttp = "3.8.3"
+aiohttp = "3.9.3"
 click = "^8.1.6"
 rich = "^13.5.2"
 pydantic = "^2.5.2"
