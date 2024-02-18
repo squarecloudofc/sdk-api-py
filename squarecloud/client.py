@@ -200,8 +200,6 @@ class Client:
         :return: A LogsData object, which is a named tuple
         """
         response: Response | None = await self._http.fetch_logs(app_id)
-        if response.code is None:
-            return LogsData()
         payload: dict[str, Any] = response.response
         logs_data: LogsData = LogsData(**payload)
         if not kwargs.get('avoid_listener'):
