@@ -2,16 +2,14 @@ from time import sleep
 
 import pytest
 
+from squarecloud.app import Application
 from squarecloud.data import BackupData, LogsData, StatusData
 
-from . import client
 
-
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
+@pytest.mark.app_data
 class Tests:
-    async def test_status(self):
-        apps = await client.all_apps()
-        app = apps[0]
+    async def test_status(self, app: Application):
         cache = app.cache
 
         assert cache.status is None
@@ -26,9 +24,7 @@ class Tests:
         assert cache.status is None
         sleep(10)
 
-    async def test_backup(self):
-        apps = await client.all_apps()
-        app = apps[0]
+    async def test_backup(self, app: Application):
         cache = app.cache
 
         assert cache.backup is None
@@ -42,9 +38,7 @@ class Tests:
         cache.clear()
         assert cache.backup is None
 
-    async def test_logs(self):
-        apps = await client.all_apps()
-        app = apps[0]
+    async def test_logs(self, app: Application):
         cache = app.cache
 
         assert cache.logs is None

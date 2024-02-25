@@ -4,20 +4,12 @@ from squarecloud import Endpoint
 from squarecloud.app import Application
 from squarecloud.data import BackupData, LogsData, StatusData
 
-from . import client
 
-apps: list[Application] = []
-
-
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
+@pytest.mark.listeners
+@pytest.mark.capture_listener
 class TestRequestListeners:
-    async def test_startup(self):
-        global apps
-        apps = await client.all_apps()
-
-    async def test_capture_status(self):
-        app = apps[0]
-
+    async def test_capture_status(self, app: Application):
         @app.capture(Endpoint.app_status())
         async def capture_status(before, after):
             assert before is None
@@ -25,9 +17,7 @@ class TestRequestListeners:
 
         await app.status()
 
-    async def test_capture_backup(self):
-        app = apps[0]
-
+    async def test_capture_backup(self, app: Application):
         @app.capture(Endpoint.backup())
         async def capture_backup(before, after):
             assert before is None
@@ -35,9 +25,7 @@ class TestRequestListeners:
 
         await app.backup()
 
-    async def test_capture_logs(self):
-        app = apps[0]
-
+    async def test_capture_logs(self, app: Application):
         @app.capture(Endpoint.logs())
         async def capture_status(before, after):
             assert before is None

@@ -4,28 +4,29 @@ import zipfile
 
 from dotenv import load_dotenv
 
-import squarecloud
+from squarecloud.utils import ConfigFile
 
 load_dotenv()
-client = squarecloud.Client(os.getenv('KEY'))
+# client = squarecloud.Client(os.getenv('KEY'))
 
 GITHUB_ACCESS_TOKEN: str = os.getenv('GITHUB_ACCESS_TOKEN')
 
 
-def create_zip(include_squarecloud_app: bool = True):
+def create_zip(config: ConfigFile | str):
     buffer = io.BytesIO()
+    if isinstance(config, ConfigFile):
+        config = config.content()
 
     with zipfile.ZipFile(buffer, 'w') as zip_file:
-        zip_file.write(
-            r'tests/test_upload/requirements.txt', 'requirements.txt'
+        zip_file.writestr(
+           'requirements.txt', 'discord.py'
         )
 
-        zip_file.write(r'tests/test_upload/main.py', 'main.py')
+        zip_file.writestr('main.py', "print('ok')")
 
-        if include_squarecloud_app:
-            zip_file.write(
-                r'tests/test_upload/squarecloud.app', 'squarecloud.app'
-            )
+        zip_file.writestr(
+            'squarecloud.app', config
+        )
 
     buffer.seek(0)
 
