@@ -1,64 +1,73 @@
 [tool.poetry]
-name = "squarecloud-api"
-version = "3.3.2"
-description = "SquareCloud API wrapper"
-authors = ["Robert Nogueira <robertlucasnogueira@gmail.com>"]
-repository = "https://github.com/squarecloudofc/wrapper-api-py"
-documentation = "https://docs.squarecloud.app/sdks/py"
-license = "MIT License"
-readme = "README.md"
-packages = [{ include = "squarecloud" }]
+name = 'squarecloud-api'
+version = '3.3.2'
+description = 'SquareCloud API wrapper'
+authors = ['Robert Nogueira <robertlucasnogueira@gmail.com>']
+repository = 'https://github.com/squarecloudofc/wrapper-api-py'
+documentation = 'https://docs.squarecloud.app/sdks/py'
+license = 'MIT License'
+readme = 'README.md'
+packages = [{ include = 'squarecloud' }]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-aiohttp = "3.9.3"
-click = "^8.1.6"
-rich = "^13.5.2"
-pydantic = "^2.5.2"
-python-dotenv = "^1.0.0"
+python = '^3.9'
+aiohttp = '3.9.3'
+click = '^8.1.6'
+rich = '^13.5.2'
+pydantic = '^2.5.2'
+python-dotenv = '^1.0.0'
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.3"
-pytest-cov = "^4.1.0"
-blue = "^0.9.1"
-isort = "^5.12.0"
-taskipy = "^1.12.0"
-pytest-asyncio = "^0.21.1"
-pre-commit = "^3.3.3"
-ruff = "^0.0.289"
-memory-profiler = "^0.61.0"
-requests = "^2.31.0"
+pytest = '^7.4.3'
+pytest-cov = '^4.1.0'
+blue = '^0.9.1'
+isort = '^5.12.0'
+taskipy = '^1.12.0'
+pytest-asyncio = '^0.21.1'
+pre-commit = '^3.3.3'
+ruff = '^0.0.289'
+memory-profiler = '^0.61.0'
+requests = '^2.31.0'
+pytest-rerunfailures = "^13.0"
 
 
 [[tool.poetry.source]]
-name = "pypi-test"
-url = "https://test.pypi.org/simple/"
-priority = "primary"
+name = 'pypi-test'
+url = 'https://test.pypi.org/simple/'
+priority = 'primary'
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ['poetry-core']
+build-backend = 'poetry.core.masonry.api'
 
 [tool.pytest.ini_options]
-python_path = "tests"
-addopts = "--doctest-modules"
+asyncio_mode = 'auto'
+markers = [
+    'app',
+    'app_data',
+    'listeners',
+    'capture_listener',
+    'request_listener',
+    'files',
+    'upload',
+]
 
 [tool.isort]
-profile = "black"
+profile = 'black'
 line_length = 79
 
 [tool.taskipy.tasks]
-lint = "isort . && blue . && ruff ."
-pre_test = "task lint"
-test = "pytest -s -x --cov=tests -vv tests"
-post_test = "coverage html"
-cli = "poetry run squarecloud"
-publish-test = "poetry publish -r pypi-test --build"
-install-test = "pip install -i https://test.pypi.org/pypi/ --extra-index-url https://pypi.org/simple --upgrade squarecloud-api"
-docs = "mkdocs serve"
+lint = 'isort . && blue . && ruff .'
+pre_test = 'task lint'
+test = 'pytest --reruns 5 --only-rerun TooManyRequests --reruns-delay 20 -x --cov=tests -vv tests'
+post_test = 'coverage html'
+cli = 'poetry run squarecloud'
+publish-test = 'poetry publish -r pypi-test --build'
+install-test = 'pip install -i https://test.pypi.org/pypi/ --extra-index-url https://pypi.org/simple --upgrade squarecloud-api'
+docs = 'mkdocs serve'
 
 [tool.poetry.scripts]
-squarecloud = "squarecloud.cli.main:safe_entry_point"
+squarecloud = 'squarecloud.cli.main:safe_entry_point'
 
 [tool.ruff]
 line-length = 79
