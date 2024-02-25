@@ -3,9 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, Literal
 
-from pydantic import conint
+from pydantic import confloat, conint
 from pydantic.dataclasses import dataclass
-from typing_extensions import TypedDict
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=invalid-name
@@ -33,8 +32,8 @@ class PlanData:
         return self.__dict__.copy()
 
 
-# @dataclass(frozen=True)
-class Language(TypedDict):
+@dataclass(frozen=True)
+class Language:
     name: str
     version: str
 
@@ -86,7 +85,6 @@ class AppData:
 
     :ivar id: The application ID
     :ivar name: The application name
-    :ivar owner: The application owner ID
     :ivar cluster: The cluster that the app is hosted on
     :ivar ram: The amount of RAM that application is using
     :ivar language The programming language of the app.:
@@ -94,9 +92,8 @@ class AppData:
 
     :type id: str
     :type name: str
-    :type owner: str
     :type cluster: str
-    :type ram: conint(ge=0);
+    :type ram: confloat(ge=0);
     :type language: Language
     :type isWebsite: bool
     :type gitIntegration: bool
@@ -108,7 +105,7 @@ class AppData:
     id: str
     name: str
     cluster: str
-    ram: conint(ge=0)
+    ram: confloat(ge=0)
     language: str
     cluster: str
     isWebsite: bool
@@ -236,8 +233,8 @@ class UploadData:
     :type id: str
     :type tag: str
     :type language: Language
-    :type ram: conint(ge=0)
-    :type cpu: conint(ge=0)
+    :type ram: confloat(ge=0)
+    :type cpu: confloat(ge=0)
     :type subdomain: str | None = None
     :type description: str | None = None
     """
@@ -245,8 +242,8 @@ class UploadData:
     id: str
     tag: str
     language: Language
-    ram: conint(ge=0)
-    cpu: conint(ge=0)
+    ram: confloat(ge=0)
+    cpu: confloat(ge=0)
     subdomain: str | None = None
     description: str | None = None
 
@@ -267,14 +264,14 @@ class FileInfo:
 
     :type type: Literal['file', 'directory']
     :type name: str
-    :type size: conint(ge=0)
+    :type size: confloat(ge=0)
     :type lastModified: conint(ge=0) | float
     :type path: str
     """
 
     type: Literal['file', 'directory']
     name: str
-    size: conint(ge=0)
+    size: confloat(ge=0)
     lastModified: conint(ge=0) | float
     path: str
 
@@ -295,13 +292,13 @@ class StatisticsData:
     :type users: conint(ge=0)
     :type apps: conint(ge=0)
     :type websites: conint(ge=0)
-    :type ping: conint(ge=0)
+    :type ping: confloat(ge=0)
     """
 
     users: conint(ge=0)
     apps: conint(ge=0)
     websites: conint(ge=0)
-    ping: conint(ge=0)
+    ping: confloat(ge=0)
 
     def to_dict(self):
         return self.__dict__.copy()
