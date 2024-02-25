@@ -1,8 +1,8 @@
-import squarecloud as square
+from squarecloud.utils import ConfigFile
+
 
 # BOT EXAMPLE
-square.create_config_file(
-    path='directory/to/save/',  # the path where the file should be saved
+ConfigFile(
     display_name='an cool name',
     description='an cool description',
     main='main.py',
@@ -11,17 +11,30 @@ square.create_config_file(
 )
 
 # WEBSITE EXAMPLE
-square.create_config_file(
-    path='directory/to/save',
+ConfigFile(
     display_name='cool website',
     description='this is really cool',
     main='index.js',
-    subdomain='coolwebsite.squareweb.app',
+    subdomain='cool-subdomain',
     start='start this cool website',  # if not static it is configurable
     memory=512,
     version='recommended',
     auto_restart=False,
 )
+
+
+config = ConfigFile(*...)
+
+# Saving file
+config.save('directory/to/save/')  # the path where the file should be saved, default='/'
+
+# Serializing and Deserialization
+config.to_dict()  # dict[str, Any]
+config.content()  # str
+
+ConfigFile.from_str(...)
+ConfigFile.from_dict(...)
+
 
 """
 [REQUIRED] parameters
@@ -29,7 +42,7 @@ square.create_config_file(
 path: str
 display_name: str
 main: str
-memory: int
+memory: int >= 100
 version: Literal['recommended', 'latest']
 
 [OPTIONAL] parameters
