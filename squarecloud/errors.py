@@ -1,6 +1,3 @@
-from .file import File
-
-
 class SquareException(Exception):
     """abstract class SquareException"""
 
@@ -115,9 +112,9 @@ class InvalidConfig(RequestError):
     raised when the config file is corrupt or invalid.
     """
 
-    def __init__(self, file: File, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.message = f'{file.filename} have a invalid config file'
+        self.message = 'invalid config file'
 
 
 class InvalidDisplayName(InvalidConfig):
@@ -125,8 +122,8 @@ class InvalidDisplayName(InvalidConfig):
     raised when the display name in the config file is invalid.
     """
 
-    def __init__(self, file: File, *args, **kwargs):
-        super().__init__(file=file, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.message = 'Invalid display name in config file'
 
 
@@ -145,8 +142,8 @@ class InvalidMain(InvalidConfig):
     raised when the main file in the config file is invalid.
     """
 
-    def __init__(self, file: File, *args, **kwargs):
-        super().__init__(file=file, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.message = 'Invalid main file in config file'
 
 
@@ -165,8 +162,8 @@ class InvalidMemory(InvalidConfig):
     raised when the memory value in the config file is invalid.
     """
 
-    def __init__(self, file: File, *args, **kwargs):
-        super().__init__(file=file, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.message = 'Invalid memory value in config file'
 
 
@@ -185,8 +182,8 @@ class InvalidVersion(InvalidConfig):
     raised when the version value in the config file is invalid.
     """
 
-    def __init__(self, file: File, *args, **kwargs):
-        super().__init__(file=file, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.message = 'Invalid version value in config file'
 
 
@@ -205,9 +202,8 @@ class InvalidAccessToken(RequestError):
     raised when the GitHub access token provided by the user is invalid.
     """
 
-
-def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class InvalidDomain(RequestError):

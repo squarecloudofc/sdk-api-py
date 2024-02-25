@@ -5,6 +5,8 @@ import logging
 from io import BytesIO
 from typing import Any, Callable, List, Literal, TextIO
 
+from typing_extensions import deprecated
+
 from .app import Application
 from .data import (
     AppData,
@@ -26,6 +28,10 @@ from .listeners import RequestListenerManager
 from .logs import logger
 
 
+@deprecated(
+    'create_config_file is deprecated, '
+    'use squarecloud.utils.ConfigFile instead.'
+)
 def create_config_file(
     path: str,
     display_name: str,
@@ -198,9 +204,12 @@ class Client:
         for the function to work
         :return: A LogsData object, which is a named tuple
         """
-        response: Response | None = await self._http.fetch_logs(app_id)
-        payload: dict[str, Any] = response.response
-        logs_data: LogsData = LogsData(**payload)
+        response: Response = await self._http.fetch_logs(app_id)
+        payload: dict[str, Any] | None = response.response
+        if not payload:
+            logs_data: LogsData = LogsData()
+        else:
+            logs_data: LogsData = LogsData(**payload)
         if not kwargs.get('avoid_listener'):
             endpoint: Endpoint = response.route.endpoint
             await self._listener.on_request(
@@ -404,7 +413,6 @@ class Client:
         if not isinstance(file, File):
             raise InvalidFile(f'you need provide an {File.__name__} object')
 
-        # Se for io.BytesIO o file.filename é nulo.
         if (file.filename is not None) and (
             file.filename.split('.')[-1] != 'zip'
         ):

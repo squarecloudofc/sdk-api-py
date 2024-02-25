@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal
 
 import click
@@ -8,10 +9,11 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from squarecloud.client import Client, create_config_file
+from squarecloud.client import Client
 from squarecloud.data import StatisticsData
 
 from ..errors import RequestError, SquareException
+from ..utils import ConfigFile
 from . import cli, run_async
 from .app import app_list, upload_app
 from .files import app_group
@@ -131,8 +133,7 @@ def create_config(
     auto_restart: bool | None = None,
 ):
 
-    content = create_config_file(
-        path='/',
+    config_file = ConfigFile(
         display_name=display_name,
         main=main,
         memory=memory,
@@ -141,11 +142,10 @@ def create_config(
         subdomain=subdomain,
         start=start,
         auto_restart=auto_restart,
-        save=False,
     )
     if output_file:
-        with open(output_file, 'w') as f:
-            f.write(content)
+        if not Path(output_file).exists():
+            raise Exception(f'File or directory {output_file} not exists')
         print(
             Panel(
                 f'\u2728  file saved successfully at {output_file}',
@@ -157,7 +157,7 @@ def create_config(
     else:
         print(
             Panel(
-                content,
+                config_file.content(),
                 title='squarecloud.app',
                 border_style='purple',
                 style='green',
@@ -172,8 +172,7 @@ def create_config(
         path = prompt(
             'where do you want to save the file', default='squarecloud.app'
         )
-        with open(path, 'w') as f:
-            f.write(content)
+        config_file.save(path)
         print(
             Panel(
                 f'\u2728  file saved successfully at {path}',

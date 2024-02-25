@@ -137,7 +137,6 @@ class HTTPClient:
 
         if route.endpoint in (Endpoint.commit(), Endpoint.upload()):
             file = kwargs.pop('file')
-            extra_error_kwargs['file'] = file
             form = aiohttp.FormData()
             form.add_field('file', file.bytes, filename=file.filename)
             kwargs['data'] = form
