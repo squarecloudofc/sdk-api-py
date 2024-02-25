@@ -1,6 +1,5 @@
 from squarecloud.utils import ConfigFile
 
-
 # BOT EXAMPLE
 ConfigFile(
     display_name='an cool name',
@@ -26,7 +25,9 @@ ConfigFile(
 config = ConfigFile(*...)
 
 # Saving file
-config.save('directory/to/save/')  # the path where the file should be saved, default='/'
+config.save(
+    'directory/to/save/'
+)  # the path where the file should be saved, default='/'
 
 # Serializing and Deserialization
 config.to_dict()  # dict[str, Any]

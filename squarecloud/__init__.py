@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from . import errors
-from . import utils
+from . import errors, utils
 from .client import Client, create_config_file
 from .data import (
     AppData,
