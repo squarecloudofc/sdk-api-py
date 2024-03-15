@@ -22,10 +22,10 @@ def event_loop():
 @pytest.fixture(scope='session')
 def client() -> Client:
     load_dotenv()
-    return Client(os.getenv('KEY'))
+    return Client(os.getenv('KEY'), False)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 async def app(client: Client) -> Application:
     config = ConfigFile(
         display_name='normal_test',
