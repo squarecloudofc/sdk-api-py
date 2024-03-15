@@ -1,10 +1,4 @@
-# pylint: disable=missing-module-docstring
-
 from __future__ import annotations
-
-from typing import Any, Dict
-
-# pylint: disable=missing-function-docstring
 
 
 class Endpoint:
@@ -86,8 +80,8 @@ class Endpoint:
         :param name: str: Set the name of the endpoint
         :return: None
         """
-
-        endpoint: Dict[str, Any] = self.ENDPOINTS_V2[name]
+        if not (endpoint := self.ENDPOINTS_V2.get(name)):
+            raise ValueError(f"Invalid endpoint: '{name}'")
         self.name: str = name
         self.method: str = endpoint['METHOD']
         self.path: str = endpoint['PATH']

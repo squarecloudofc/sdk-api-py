@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from abc import ABC
+from functools import wraps
 from io import BytesIO
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from pydantic import PositiveInt
+
+from squarecloud import errors
 
 from .data import (
     AppData,
@@ -15,7 +17,6 @@ from .data import (
     LogsData,
     StatusData,
 )
-from .errors import SquareException
 from .file import File
 from .http import Endpoint, HTTPClient, Response
 from .listeners import CaptureListenerManager
@@ -135,16 +136,12 @@ class AppCache:
                         AppData,
                     ]
                 ]
-                raise SquareException(
+                raise errors.SquareException(
                     f'you must provide stats of the following types:\n{types}'
                 )
 
 
-class AbstractApplication(ABC):
-    """Abstract application class"""
-
-
-class Application:
+class Application(CaptureListenerManager):
     """Represents an application"""
 
     __slots__ = [
@@ -209,6 +206,7 @@ class Application:
         self._listener: CaptureListenerManager = CaptureListenerManager()
         self.cache: AppCache = AppCache()
         self.always_avoid_listeners: bool = False
+        super().__init__()
 
     def __repr__(self) -> str:
         """
@@ -317,6 +315,38 @@ class Application:
         """
         return self._isWebsite
 
+    @staticmethod
+    def _notify_listener(endpoint: Endpoint):
+        def wrapper(func: Callable):
+            @wraps(func)
+            async def decorator(self, *args, **kwargs):
+                result = await func(self, *args, **kwargs)
+                avoid_listener = kwargs.pop('avoid_listener', False)
+                if not (avoid_listener or self.always_avoid_listeners):
+                    await self.notify(
+                        endpoint=endpoint,
+                        before=self.cache.app_data,
+                        after=result,
+                        extra=kwargs.get('extra'),
+                    )
+                return result
+
+            return decorator
+
+        return wrapper
+
+    @staticmethod
+    def _update_cache(func: Callable):
+        @wraps(func)
+        async def wrapper(self, *args, **kwargs):
+            update_cache = kwargs.pop('update_cache', True)
+            result = await func(self, *args, **kwargs)
+            if update_cache:
+                self.cache.update(result)
+            return result
+
+        return wrapper
+
     def capture(self, endpoint: Endpoint) -> Callable:
         """
         The capture function is a decorator that can be used to add a function
@@ -328,14 +358,10 @@ class Application:
         :return: A decorator
         :rtype: Callable
         """
-        allowed_endpoints: tuple[Endpoint, Endpoint, Endpoint, Endpoint] = (
-            Endpoint.logs(),
-            Endpoint.app_status(),
-            Endpoint.backup(),
-            Endpoint.app_data(),
-        )
 
-        def wrapper(func) -> None:
+        def wrapper(
+            func: Callable[[Endpoint, Endpoint], Any]
+        ) -> Callable[[Endpoint, Endpoint], Any]:
             """
             The wrapper function is a decorator that takes in the endpoint as
             an argument.
@@ -349,112 +375,61 @@ class Application:
             :return: The wrapper function itself
             :rtype: None
             """
-            if endpoint not in allowed_endpoints:
-                raise SquareException(
-                    f'the endpoint to capture must be {allowed_endpoints}'
-                )
-
-            if self._listener.get_capture_listener(endpoint) is None:
-                return self._listener.add_capture_listener(endpoint, func)
-            raise SquareException(
-                f'Already exists an capture_listener for {endpoint}'
-                f'{self._listener.get_capture_listener(endpoint)}'
-            )
+            self.include_listener(endpoint, func)
+            return func
 
         return wrapper
 
-    async def data(
-        self, avoid_listener: bool = None, update_cache: bool = True
-    ) -> AppData:
+    @_update_cache
+    @_notify_listener(Endpoint.app_data())
+    async def data(self, *_args, **__kwargs) -> AppData:
         """
         The data function is used to retrieve the data of an app.
 
-        :param update_cache: if True, update the application cache
-        :param avoid_listener: whether the capture listener will be called
         :param self: Refer to the class instance
         :return: A AppData object
         :rtype: AppData
         """
         app_data: AppData = await self.client.app_data(self.id)
-        avoid_listener = avoid_listener or self.always_avoid_listeners
-        if not avoid_listener:
-            endpoint: Endpoint = Endpoint.app_data()
-            await self._listener.on_capture(
-                endpoint=endpoint,
-                before=self.cache.app_data,
-                after=app_data,
-            )
-        if update_cache:
-            self.cache.update(app_data)
         return app_data
 
-    async def logs(
-        self, avoid_listener: bool = None, update_cache: bool = True
-    ) -> LogsData:
+    @_update_cache
+    @_notify_listener(Endpoint.logs())
+    async def logs(self, *_args, **__kwargs) -> LogsData:
         """
         The logs function is used to get the application's logs.
 
         :param self: Refer to the class instance
-        :param update_cache: if True, update the application cache
-        :param avoid_listener: whether the capture listener will be called
         :return: A LogsData object
         :rtype: LogsData
         """
         logs: LogsData = await self.client.get_logs(self.id)
-        avoid_listener = avoid_listener or self.always_avoid_listeners
-        if not avoid_listener:
-            endpoint: Endpoint = Endpoint.logs()
-            await self._listener.on_capture(
-                endpoint=endpoint, before=self.cache.logs, after=logs
-            )
-        if update_cache:
-            self.cache.update(logs)
         return logs
 
-    async def status(
-        self, avoid_listener: bool = None, update_cache: bool = True
-    ) -> StatusData:
+    @_update_cache
+    @_notify_listener(Endpoint.app_status())
+    async def status(self, *_args, **__kwargs) -> StatusData:
         """
         The status function returns the status of an application.
 
         :param self: Refer to the class instance
-        :param update_cache: if True, update the application cache
-        :param avoid_listener: whether the capture listener will be called
         :return: A StatusData object
         :rtype: StatusData
         """
         status: StatusData = await self.client.app_status(self.id)
-        avoid_listener = avoid_listener or self.always_avoid_listeners
-        if not avoid_listener:
-            endpoint: Endpoint = Endpoint.app_status()
-            await self._listener.on_capture(
-                endpoint=endpoint, before=self.cache.status, after=status
-            )
-        if update_cache:
-            self.cache.update(status)
         return status
 
-    async def backup(
-        self, avoid_listener: bool = None, update_cache: bool = True
-    ) -> BackupData:
+    @_update_cache
+    @_notify_listener(Endpoint.backup())
+    async def backup(self, *_args, **__kwargs) -> BackupData:
         """
         The backup function is used to create a backup of the application.
 
         :param self: Refer to the class instance
-        :param update_cache: if True, update the application cache
-        :param avoid_listener: whether the capture listener will be called
         :return: A BackupData object
         :rtype: BackupData
         """
         backup: BackupData = await self.client.backup(self.id)
-        avoid_listener = avoid_listener or self.always_avoid_listeners
-        if not avoid_listener:
-            endpoint: Endpoint = Endpoint.backup()
-            await self._listener.on_capture(
-                endpoint=endpoint, before=self.cache.backup, after=backup
-            )
-        if update_cache:
-            self.cache.update(backup)
         return backup
 
     async def start(self) -> Response:

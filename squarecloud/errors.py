@@ -1,3 +1,6 @@
+from typing import Callable
+
+
 class SquareException(Exception):
     """abstract class SquareException"""
 
@@ -214,3 +217,9 @@ class InvalidDomain(RequestError):
     def __init__(self, domain: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.message = f'{domain} is a invalid custom domain'
+
+
+class InvalidListener(SquareException):
+    def __init__(self, listener: Callable, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.listener = listener
