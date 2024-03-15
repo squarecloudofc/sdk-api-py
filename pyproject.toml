@@ -59,7 +59,7 @@ line_length = 79
 [tool.taskipy.tasks]
 lint = 'isort . && blue . && ruff .'
 pre_test = 'task lint'
-test = 'pytest --reruns 5 --only-rerun TooManyRequests --reruns-delay 20 -x --cov=tests -vv tests'
+test = 'pytest -s --reruns 5 --only-rerun TooManyRequests --reruns-delay 20 -x --cov=tests -vv tests'
 post_test = 'coverage html'
 cli = 'poetry run squarecloud'
 publish-test = 'poetry publish -r pypi-test --build'
