@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from squarecloud.utils import ConfigFile
 
 load_dotenv()
-# client = squarecloud.Client(os.getenv('KEY'))
 
 GITHUB_ACCESS_TOKEN: str = os.getenv('GITHUB_ACCESS_TOKEN')
 
