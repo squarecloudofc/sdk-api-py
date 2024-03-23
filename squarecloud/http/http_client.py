@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal, Type
 
 import aiohttp
@@ -27,7 +28,7 @@ from ..errors import (
     RequestError,
     TooManyRequests,
 )
-from ..logs import logger
+from ..logging import logger
 from .endpoints import Endpoint, Router
 
 
@@ -146,40 +147,43 @@ class HTTPClient:
             ) as resp:
                 status_code = resp.status
                 data: dict[str, Any] = await resp.json()
-                extra = {
-                    'status': data.get('status'),
-                    'route': route.url,
-                    'code': data.get('code'),
-                    'request_message': data.get('message', ''),
-                }
+
                 code: str | None = data.get('code')
                 error: Type[RequestError] | None = None
+                log_msg = '{status} request to route: {route}'
+                log_msg = log_msg.format(
+                    status=data.get('status'),
+                    route=route.url,
+                )
+                if code:
+                    log_msg += f' with code: {code}'
+                log_level: int
 
-                if status_code == 200:
-                    logger.debug(msg='request to route: ', extra=extra)
-                    extra.pop('code')
-                    response: Response = Response(data=data, route=route)
-                elif status_code == 404:
-                    if code is None:
-                        logger.debug(msg='request to route: ', extra=extra)
-                        response = Response(data=data, route=route)
-                    else:
-                        logger.error(msg='request to route: ', extra=extra)
-                        error = NotFoundError
-                elif status_code == 401:
-                    logger.error(msg='request to: ', extra=extra)
-                    error = AuthenticationFailure
-                elif status_code == 400:
-                    logger.error(msg='request to: ', extra=extra)
-                    error = BadRequestError
-                elif status_code == 429:
-                    logger.error(msg='request to: ', extra=extra)
-                    error = TooManyRequests
-                else:
-                    error = RequestError
+                match status_code:
+                    case 200:
+                        log_level = logging.DEBUG
+                    case 404:
+                        if code is None:
+                            log_level = logging.DEBUG
+                        else:
+                            log_level = logging.ERROR
+                            error = NotFoundError
+                    case 400:
+                        log_level = logging.ERROR
+                        error = BadRequestError
+                    case 401:
+                        log_level = logging.ERROR
+                        error = AuthenticationFailure
+                    case 429:
+                        log_level = logging.ERROR
+                        error = TooManyRequests
+                    case _:
+                        error = RequestError
 
                 if _ := _get_error(code):
+                    log_level = logging.ERROR
                     error = _
+                logger.log(log_level, log_msg, extra={'type': 'http'})
                 if error:
                     raise error(
                         **extra_error_kwargs,
@@ -187,7 +191,7 @@ class HTTPClient:
                         status_code=status_code,
                         code=code,
                     )
-                return response
+                return Response(data=data, route=route)
 
     async def fetch_user_info(self, user_id: int | None = None) -> Response:
         """
