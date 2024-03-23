@@ -3,13 +3,25 @@ import pytest
 from squarecloud import Endpoint, errors
 from squarecloud.app import Application
 from squarecloud.data import AppData, BackupData, LogsData, StatusData
-from squarecloud.listeners import CaptureListener
+from squarecloud.listeners import Listener
+
+
+def _clear_listener_on_rerun(endpoint: Endpoint):
+    def decorator(func):
+        def wrapper(self, app: Application):
+            if app.get_listener(endpoint):
+                app.remove_listener(endpoint)
+            return func(self, app)
+        return wrapper
+    return decorator
 
 
 @pytest.mark.asyncio(scope='class')
 @pytest.mark.listeners
 @pytest.mark.capture_listener
 class TestGeneralUse:
+
+    @_clear_listener_on_rerun(Endpoint.app_status())
     async def test_capture_status(self, app: Application):
         @app.capture(Endpoint.app_status())
         async def capture_status(before, after):
@@ -17,6 +29,7 @@ class TestGeneralUse:
             assert isinstance(after, StatusData)
         await app.status()
 
+    @_clear_listener_on_rerun(Endpoint.backup())
     async def test_capture_backup(self, app: Application):
         @app.capture(Endpoint.backup())
         async def capture_backup(before, after):
@@ -25,6 +38,7 @@ class TestGeneralUse:
 
         await app.backup()
 
+    @_clear_listener_on_rerun(Endpoint.logs())
     async def test_capture_logs(self, app: Application):
         @app.capture(Endpoint.logs())
         async def capture_status(before, after):
@@ -32,6 +46,7 @@ class TestGeneralUse:
             assert isinstance(after, LogsData)
         await app.logs()
 
+    @_clear_listener_on_rerun(Endpoint.app_data())
     async def test_app_data(self, app: Application):
 
         @app.capture(Endpoint('APP_DATA'))
@@ -40,6 +55,7 @@ class TestGeneralUse:
             assert isinstance(after, AppData)
         await app.data()
 
+    @_clear_listener_on_rerun(Endpoint.app_status())
     async def test_extra(self, app: Application):
         metadata: dict[str, int] = {'metadata': 69}
         app.remove_listener(Endpoint.app_status())
@@ -52,6 +68,7 @@ class TestGeneralUse:
         await app.status(extra=metadata)
         app.remove_listener(Endpoint.app_status())
 
+    @_clear_listener_on_rerun(Endpoint.app_status())
     async def test_extra_is_none(self, app: Application):
         @app.capture(Endpoint.app_status())
         async def capture_status(extra):
@@ -61,7 +78,7 @@ class TestGeneralUse:
         app.remove_listener(Endpoint.app_status())
 
     async def test_manage_listeners(self, app: Application):
-        listener: CaptureListener
+        listener: Listener
 
         def callback_one(): pass
 

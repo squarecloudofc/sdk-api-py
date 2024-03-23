@@ -18,7 +18,7 @@ class TestFileClient:
             assert isinstance(file, FileInfo)
 
             assert isinstance(file.name, str)
-            assert isinstance(file.size, int)
+            assert isinstance(file.size, float)
             assert isinstance(file.lastModified, int | float)
 
             assert file.type in ('file', 'directory')
@@ -48,7 +48,7 @@ class TestsApplication:
             assert isinstance(file, FileInfo)
 
             assert isinstance(file.name, str)
-            assert isinstance(file.size, int)
+            assert isinstance(file.size, float)
             assert isinstance(file.lastModified, int | float)
 
             assert file.type in ('file', 'directory')

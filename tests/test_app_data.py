@@ -11,6 +11,7 @@ from squarecloud.data import BackupData, LogsData, StatusData
 class Tests:
     async def test_status(self, app: Application):
         cache = app.cache
+        cache.clear()
 
         assert cache.status is None
 
