@@ -6,7 +6,8 @@ ConfigFile(
     description='an cool description',
     main='main.py',
     memory=100,
-    version='recommended',
+    version='recommended',  # default 'recommended'
+    auto_restart=False,  # default True
 )
 
 # WEBSITE EXAMPLE
@@ -17,8 +18,8 @@ ConfigFile(
     subdomain='cool-subdomain',
     start='start this cool website',  # if not static it is configurable
     memory=512,
-    version='recommended',
-    auto_restart=False,
+    version='recommended',  # default 'recommended'
+    auto_restart=False,  # default True
 )
 
 
