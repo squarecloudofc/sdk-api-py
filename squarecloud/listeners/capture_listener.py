@@ -5,8 +5,9 @@ from typing import Any, Callable, Union
 import pydantic
 from pydantic import BaseModel
 
-from squarecloud import data, errors
-from squarecloud.http import Endpoint
+from .. import data, errors
+from ..http import Endpoint
+from . import Listener
 
 ListenerDataTypes = Union[
     data.AppData,
@@ -14,23 +15,6 @@ ListenerDataTypes = Union[
     data.LogsData,
     data.BackupData,
 ]
-
-
-class CaptureListener:
-    __slots__ = ('endpoint', 'callback', 'callback_args')
-
-    def __init__(
-        self,
-        endpoint: Endpoint,
-        callback: Callable,
-        callback_args: types.MappingProxyType[str, inspect.Parameter],
-    ):
-        self.endpoint = endpoint
-        self.callback = callback
-        self.callback_args = callback_args
-
-
-Listener = CaptureListener
 
 
 class CaptureListenerManager:

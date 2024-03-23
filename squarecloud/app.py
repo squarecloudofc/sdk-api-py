@@ -19,7 +19,7 @@ from .data import (
 )
 from .file import File
 from .http import Endpoint, HTTPClient, Response
-from .listeners import CaptureListenerManager
+from .listeners.capture_listener import CaptureListenerManager
 
 # avoid circular imports
 if TYPE_CHECKING:

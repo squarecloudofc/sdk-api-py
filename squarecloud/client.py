@@ -24,8 +24,8 @@ from .errors import ApplicationNotFound, InvalidFile, SquareException
 from .file import File
 from .http import HTTPClient, Response
 from .http.endpoints import Endpoint
-from .listeners import RequestListenerManager
-from .logs import logger
+from .listeners.request_listener import RequestListenerManager
+from .logging import logger
 
 
 @deprecated(
