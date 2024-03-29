@@ -2,7 +2,10 @@ import asyncio
 import os
 
 import pytest
+import rich
 from dotenv import load_dotenv
+from rich.console import Console
+from rich.status import Status
 
 from squarecloud import Client, File, FileInfo, UploadData
 from squarecloud.app import Application
@@ -32,9 +35,10 @@ async def app(client: Client) -> Application:
         main='main.py',
         memory=100,
     )
-    upload_data: UploadData = await client.upload_app(
-        File(create_zip(config), filename='file.zip')
-    )
+    with Status('uploading test application...', spinner='point'):
+        upload_data: UploadData = await client.upload_app(
+            File(create_zip(config), filename='file.zip')
+        )
     yield await client.app(upload_data.id)
     await client.delete_app(upload_data.id)
 
