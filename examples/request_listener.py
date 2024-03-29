@@ -9,12 +9,12 @@ async def on_logs_request(response):
     print(1, response)
 
 
-@client.on_request(endpoint=Endpoint.user_me())
-async def on_info_me_request(response):
+@client.on_request(endpoint=Endpoint.user())
+async def on_user_info_request(response):
     print(2, response)
 
 
 async def example():
     await client.get_logs(app_id='application_id')  # 1, Response(success)
-    await client.me()  # 2, UserData(...)
-    await client.me(avoid_listener=True)  # the listener is not called
+    await client.user()  # 2, UserData(...)
+    await client.user(avoid_listener=True)  # the listener is not called
