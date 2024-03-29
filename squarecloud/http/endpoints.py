@@ -20,9 +20,8 @@ class Endpoint:
     # }
 
     ENDPOINTS_V2 = {
-        'USER_ME': {'METHOD': 'GET', 'PATH': '/user'},
+        'USER': {'METHOD': 'GET', 'PATH': '/user'},
         'APP_DATA': {'METHOD': 'GET', 'PATH': '/apps/{app_id}'},
-        'USER_INFO': {'METHOD': 'GET', 'PATH': '/user/{user_id}'},
         'APP_STATUS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/status'},
         'LOGS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/logs'},
         'START': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/start'},
@@ -110,9 +109,9 @@ class Endpoint:
         return f"{Endpoint.__name__}('{self.name}')"
 
     @classmethod
-    def user_me(cls) -> Endpoint:
+    def user(cls) -> Endpoint:
         """Returns an Endpoint object that represents the /user/me endpoint."""
-        return cls('USER_ME')
+        return cls('USER')
 
     @classmethod
     def app_data(cls) -> Endpoint:
@@ -120,14 +119,6 @@ class Endpoint:
         Returns an Endpoint object that represents the /apps/{app_id} endpoint.
         """
         return cls('APP_DATA')
-
-    @classmethod
-    def user_info(cls) -> Endpoint:
-        """
-        Returns an Endpoint object that represents the /user/{user_id}
-        endpoint.
-        """
-        return cls('USER_INFO')
 
     @classmethod
     def app_status(cls) -> Endpoint:

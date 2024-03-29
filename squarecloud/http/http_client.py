@@ -197,18 +197,14 @@ class HTTPClient:
                     )
                 return response
 
-    async def fetch_user_info(self, user_id: int | None = None) -> Response:
+    async def fetch_user_info(self) -> Response:
         """
-        Make a request to USER_INFO route
+        Make a request to USER route
 
         Returns:
             Response
         """
-        if user_id:
-            route: Router = Router(Endpoint.user_info(), user_id=user_id)
-            response: Response = await self.request(route)
-            return response
-        route = Router(Endpoint.user_me())
+        route = Router(Endpoint.user())
         response: Response = await self.request(route)
         return response
 

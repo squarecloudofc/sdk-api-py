@@ -173,8 +173,8 @@ class Client(RequestListenerManager):
 
         return wrapper
 
-    @_notify_listener(Endpoint.user_me())
-    async def me(self, **_kwargs) -> UserData:
+    @_notify_listener(Endpoint.user())
+    async def user(self, **_kwargs) -> UserData:
         """
         This function is used to get your information.
 
@@ -183,23 +183,6 @@ class Client(RequestListenerManager):
         :return: A userdata object
         """
         response: Response = await self._http.fetch_user_info()
-        payload: dict[str, Any] = response.response
-        return UserData(**payload['user'])
-
-    @_notify_listener(Endpoint.user_info())
-    async def user_info(
-        self, user_id: int | None = None, **_kwargs
-    ) -> UserData:
-        """
-        The user_info function is used to get information about a user.
-
-        :param self: Refer to the class instance
-        :param user_id: int | None: Specify the user id of the user you want
-        to get information about
-        :param _kwargs: Pass in keyword arguments to a function
-        :return: A UserData object
-        """
-        response: Response = await self._http.fetch_user_info(user_id=user_id)
         payload: dict[str, Any] = response.response
         return UserData(**payload['user'])
 
@@ -316,7 +299,7 @@ class Client(RequestListenerManager):
         """
         return await self._http.commit(app_id, file)
 
-    @_notify_listener(Endpoint.user_me())
+    @_notify_listener(Endpoint.user())
     async def app(self, app_id: str, **_kwargs) -> Application:
         """
         The app function is used to get an application.
@@ -340,7 +323,7 @@ class Client(RequestListenerManager):
         app_data = app_data.pop()
         return Application(client=self, http=self._http, **app_data)
 
-    @_notify_listener(Endpoint.user_me())
+    @_notify_listener(Endpoint.user())
     async def all_apps(self, **_kwargs) -> list[Application]:
         """
         The all_apps function returns a list of all applications that the user

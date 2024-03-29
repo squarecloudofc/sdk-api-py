@@ -213,9 +213,8 @@ class TestRequestListeners:
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
-    @pytest.mark.skip
-    async def test_request_user_info(self, client: Client, app: Application):
-        endpoint: Endpoint = Endpoint.user_info()
+    async def test_request_user(self, client: Client, app: Application):
+        endpoint: Endpoint = Endpoint.user()
         expected_result: UserData | None
         expected_response: Response | None = None
 
@@ -224,21 +223,7 @@ class TestRequestListeners:
             nonlocal expected_response
             expected_response = response
 
-        expected_result = await client.user_info(573657767496253451)
-        assert isinstance(expected_result, UserData)
-        assert isinstance(expected_response, Response)
-
-    async def test_request_me(self, client: Client, app: Application):
-        endpoint: Endpoint = Endpoint.user_me()
-        expected_result: UserData | None
-        expected_response: Response | None = None
-
-        @client.on_request(endpoint)
-        async def test_listener(response: Response):
-            nonlocal expected_response
-            expected_response = response
-
-        expected_result = await client.me()
+        expected_result = await client.user()
         assert isinstance(expected_result, UserData)
         assert isinstance(expected_response, Response)
 
