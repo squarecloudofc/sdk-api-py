@@ -69,7 +69,7 @@ class RequestListenerManager:
         """
         self.request_listeners = None
 
-    async def on_request(self, endpoint: Endpoint, response: Response) -> Any:
+    async def notify(self, endpoint: Endpoint, response: Response) -> Any:
         """
         The on_request function is called when a request has been made to the
         endpoint.

@@ -117,6 +117,7 @@ class HTTPClient:
         """
         self.api_key = api_key
         self.__session = aiohttp.ClientSession
+        self._last_response: Response | None = None
 
     async def request(self, route: Router, **kwargs) -> Response | bytes:
         """
@@ -147,6 +148,8 @@ class HTTPClient:
             ) as resp:
                 status_code = resp.status
                 data: dict[str, Any] = await resp.json()
+                response = Response(data=data, route=route)
+                self._last_response = response
 
                 code: str | None = data.get('code')
                 error: Type[RequestError] | None = None
@@ -155,6 +158,7 @@ class HTTPClient:
                     status=data.get('status'),
                     route=route.url,
                 )
+
                 if code:
                     log_msg += f' with code: {code}'
                 log_level: int
@@ -191,7 +195,7 @@ class HTTPClient:
                         status_code=status_code,
                         code=code,
                     )
-                return Response(data=data, route=route)
+                return response
 
     async def fetch_user_info(self, user_id: int | None = None) -> Response:
         """
@@ -480,3 +484,7 @@ class HTTPClient:
         route: Router = Router(Endpoint.domain_analytics(), app_id=app_id)
         response: Response = await self.request(route)
         return response
+
+    @property
+    def last_response(self):
+        return self._last_response
