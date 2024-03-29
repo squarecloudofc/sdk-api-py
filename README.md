@@ -5,13 +5,13 @@
 [@allma]: https://github.com/Robert-Nogueira
 
 
-<div style="text-align: center;">
+<div align="center">
   <img alt="Square Cloud Banner" src="https://cdn.squarecloud.app/png/github-readme.png">
 </div>
 
-<h1 style="text-align: center;">squarecloud-api</h1>
+<h1 align="center">squarecloud-api</h1>
 
-<p style="text-align: center;">A Python SDK for consuming the <a href="https://squarecloud.app" target="_blank">Square Cloud</a> API.</p>
+<p align="center">A Python SDK for consuming the <a href="https://squarecloud.app" target="_blank">Square Cloud</a> API.</p>
 
 ## Installation
 
