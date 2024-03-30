@@ -115,7 +115,7 @@ class Client(RequestListenerManager):
     @property
     def api_key(self) -> str:
         """
-        The api_key function returns the api key for the client.
+        Returns the api key for the client.
 
         :return: The api key
         :rtype: str
@@ -127,9 +127,8 @@ class Client(RequestListenerManager):
         The on_request function is a decorator that allows you to register a
         function as an endpoint listener.
 
-        :param self: Refer to the class instance
         :param endpoint: Endpoint: Specify the endpoint that will be used to
-        capture the request
+            capture the request
         :return: A wrapper function
         """
 
@@ -145,7 +144,9 @@ class Client(RequestListenerManager):
 
             :param func: Callable: Specify the type of the parameter
             :return: The function itself, if the endpoint is not already
-            registered
+                    registered
+            :raises SquarecloudException: Raised if the endpoint is already
+                    registered
             """
             if not self.get_request_listener(endpoint):
                 return self.add_request_listener(endpoint, func)
@@ -157,6 +158,13 @@ class Client(RequestListenerManager):
 
     @staticmethod
     def _notify_listener(endpoint: Endpoint):
+        """
+        The _notify_listener function is a decorator that call a listener after
+        the decorated coroutine is called
+
+        :param endpoint: the endpoint for witch the listener will fetch
+        :return: a callable
+        """
         def wrapper(func: Callable):
             @wraps(func)
             async def decorator(self: Client, *args, **kwargs) -> Response:
@@ -176,11 +184,17 @@ class Client(RequestListenerManager):
     @_notify_listener(Endpoint.user())
     async def user(self, **_kwargs) -> UserData:
         """
-        This function is used to get your information.
+        This method is used to get your information.
 
-        :param self: Refer to the class instance
-        :param _kwargs: Pass in a dictionary of arguments
-        :return: A userdata object
+        :param _kwargs: Keyword arguments
+        :return: A UserData object
+        :rtype: UserData
+
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.fetch_user_info()
         payload: dict[str, Any] = response.response
@@ -189,13 +203,19 @@ class Client(RequestListenerManager):
     @_notify_listener(Endpoint.logs())
     async def get_logs(self, app_id: str, **_kwargs) -> LogsData:
         """
-        The get_logs function is used to get logs for an application.
+        The get_logs method is used to get logs for an application.
 
-        :param self: Refer to the class instance
-        :param app_id: str: ;Identify the application id
-        :param _kwargs: Pass in any additional parameters that may be required
-        for the function to work
-        :return: A LogsData object, which is a named tuple
+        :param app_id: Specify the application by id
+        :param _kwargs: Keyword arguments
+        :return: A LogsData object
+        :rtype: LogsData
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.fetch_logs(app_id)
         payload: dict[str, Any] | None = response.response
@@ -209,12 +229,19 @@ class Client(RequestListenerManager):
     @_notify_listener(Endpoint.app_status())
     async def app_status(self, app_id: str, **_kwargs) -> StatusData:
         """
-        The app_status function is used to get the status of an application.
+        The app_status method is used to get the status of an application.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Specify the application id
-        :param _kwargs: Pass in keyword arguments to a function
+        :param app_id: Specify the application by id
+        :param _kwargs: Keyword arguments
         :return: A StatusData object
+        :rtype: StatusData
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.fetch_app_status(app_id)
         payload: dict[str, Any] = response.response
@@ -223,50 +250,76 @@ class Client(RequestListenerManager):
     @_notify_listener(Endpoint.start())
     async def start_app(self, app_id: str, **_kwargs) -> Response:
         """
-        The start_app function starts an application.
+        The start_app method starts an application.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Identify the application to start
-        :param _kwargs: Pass a variable number of keyword arguments to the
-        function
+        :param app_id: Specify the application by id
+        :param _kwargs: Keyword arguments
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         return await self._http.start_application(app_id)
 
     @_notify_listener(Endpoint.stop())
     async def stop_app(self, app_id: str, **_kwargs) -> Response:
         """
-        The stop_app function stops an application.
+        The stop_app method stops an application.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Specify the application id
-        :param _kwargs: Pass in keyword arguments to the function
+        :param app_id: Specify the application by id
+        :param _kwargs: Keyword arguments
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         return await self._http.stop_application(app_id)
 
     @_notify_listener(Endpoint.restart())
     async def restart_app(self, app_id: str, **_kwargs) -> Response:
         """
-        The restart_app function is used to restart an application.
+        The restart_app method is restarts an application.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Specify the application id
-        :param _kwargs: Pass a variable number of keyword arguments to the
-        function
+        :param app_id: Specify the application id
+        :param _kwargs: Keyword arguments
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         return await self._http.restart_application(app_id)
 
     @_notify_listener(Endpoint.backup())
     async def backup(self, app_id: str, **_kwargs) -> BackupData:
         """
-        The backup function is used to backup an application.
+        The backup method is used to backup an application.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Identify the application to be backed up
-        :param _kwargs: Pass in additional parameters to the function
+        :param app_id: Specify the application id
+        :param _kwargs: Keyword arguments
         :return: A BackupData object
+        :rtype: BackupData
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.backup(app_id)
         payload: dict[str, Any] = response.response
@@ -275,40 +328,59 @@ class Client(RequestListenerManager):
     @_notify_listener(Endpoint.delete_app())
     async def delete_app(self, app_id: str, **_kwargs) -> Response:
         """
-        The delete_app function deletes an application.
+        The delete_app method deletes an application.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Specify the application id
-        :param _kwargs: Pass a variable number of keyword arguments to the
-        function
+        :param app_id: The application id
+        :param _kwargs: Keyword arguments
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         return await self._http.delete_application(app_id)
 
     @_notify_listener(Endpoint.commit())
     async def commit(self, app_id: str, file: File, **_kwargs) -> Response:
         """
-        The commit function is used to commit an application.
+        The commit method is used to commit an application.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Identify the application
-        :param file: File: Specify the file object to be committed
-        :param _kwargs: Pass a variable number of keyword arguments to the
-        function
-        :return: A response object
+        :param app_id: Specify the application by id
+        :param file: File: Specify the File object to be committed
+        :param _kwargs: Keyword arguments
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         return await self._http.commit(app_id, file)
 
     @_notify_listener(Endpoint.user())
     async def app(self, app_id: str, **_kwargs) -> Application:
         """
-        The app function is used to get an application.
+        The app method returns an Application object.
 
-        :param self: Refer to the class instance
-        :param app_id: str: The application id
-        :param _kwargs: Pass a variable number of keyword arguments to the
-        function
-        :return: An application object
+        :param app_id: Specify the application by id
+        :param _kwargs: Keyword arguments
+        :return: An Application object
+        :rtype: Application
+
+        :raises ApplicationNotFound: Raised when is not found an application
+                with the specified id
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.fetch_user_info()
         payload = response.response
@@ -326,12 +398,18 @@ class Client(RequestListenerManager):
     @_notify_listener(Endpoint.user())
     async def all_apps(self, **_kwargs) -> list[Application]:
         """
-        The all_apps function returns a list of all applications that the user
+        The all_apps method returns a list of all applications that the user
         has access to.
 
-        :param self: Refer to the class instance
-        :param _kwargs: Pass in the avoid_listener parameter
+        :param _kwargs: Keyword arguments
         :return: A list of Application objects
+        :rtype: list[Application]
+
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.fetch_user_info()
         payload = response.response
@@ -345,14 +423,45 @@ class Client(RequestListenerManager):
     @_notify_listener(Endpoint.upload())
     async def upload_app(self, file: File, **_kwargs) -> UploadData:
         """
-        The upload_app function uploads an application to the server.
+        The upload_app method uploads an application to the server.
 
-        :param self: Refer to the class instance
-        :param file: File: Upload a file
-        :param _kwargs: Pass a variable number of keyword arguments to a
-        function
-        :return: An UploadData object, which is a class that contains the data
-        of the application uploaded
+        :param file: Upload a file
+        :param _kwargs: Keyword arguments
+        :return: An UploadData object
+        :rtype: UploadData
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        :raises FewMemory: Raised when user memory reached the maximum
+                amount of memory
+        :raises BadMemory: Raised when the memory in configuration file is
+                invalid
+        :raises MissingConfigFile: Raised when the .zip file is missing the
+                config file (squarecloud.app/squarecloud.config)
+        :raises MissingDependenciesFile: Raised when the .zip file is missing
+                the dependencies file (requirements.txt, package.json, ...)
+        :raises MissingMainFile: Raised when the .zip file is missing the main
+                file (main.py, index.js, ...)
+        :raises InvalidMain: Raised when the field MAIN in config file is
+                invalid or when the main file is corrupted
+        :raises InvalidDisplayName: Raised when the field DISPLAY_NAME
+                in config file is invalid
+        :raises MissingDisplayName: Raised when the DISPLAY_NAME field is
+                missing in the config file
+        :raises InvalidMemory: Raised when the MEMORY field is invalid
+        :raises MissingMemory: Raised when the MEMORY field is missing in
+                the config file
+        :raises InvalidVersion: Raised when the VERSION field is invalid,
+                the value accepted is "recommended" or "latest"
+        :raises MissingVersion: Raised when the VERSION field is missing in
+                the config file
+        :raises InvalidAccessToken: Raised when a GitHub access token
+                provided is invalid
+        :raises InvalidDomain: Raised when a domain provided is invalid
         """
         if not isinstance(file, File):
             raise InvalidFile(f'you need provide an {File.__name__} object')
@@ -370,14 +479,20 @@ class Client(RequestListenerManager):
         self, app_id: str, path: str, **_kwargs
     ) -> list[FileInfo]:
         """
-        The app_files_list function returns a list of your application files.
+        The app_files_list method returns a list of your application files.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Identify the application id
-        :param path: str: Specify the path to the file
-        :param _kwargs: Pass a variable number of keyword arguments to a
-        function
-        :return: A list of your Application files
+        :param app_id: Specify the application by id
+        :param path: Specify the path to the file
+        :param _kwargs: Keyword arguments
+        :return: A list of FileInfo objects
+        :rtype: list[FileInfo]
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.fetch_app_files_list(
             app_id, path
@@ -385,7 +500,7 @@ class Client(RequestListenerManager):
         if not response.response:
             return []
         return [
-            FileInfo(**data, path=path + f'/{data.get("name")}')
+            FileInfo(**data, app_id=app_id, path=path + f'/{data.get("name")}')
             for data in response.response
         ]
 
@@ -394,15 +509,21 @@ class Client(RequestListenerManager):
         self, app_id: str, path: str, **_kwargs
     ) -> BytesIO | None:
         """
-        The read_app_file function reads a file from the specified path and
+        The read_app_file method reads a file from the specified path and
         returns a BytesIO representation.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Specify the application id
+        :param app_id: Specify the application by id
         :param path: str: Specify the path of the file to be read
-        :param _kwargs: Pass in additional arguments to the function
+        :param _kwargs: Keyword arguments
         :return: A BytesIO representation of the file
-        :doc-author: Trelent
+        :rtype: BytesIO | None
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.read_app_file(app_id, path)
         if response.response:
@@ -412,17 +533,23 @@ class Client(RequestListenerManager):
     async def create_app_file(
         self, app_id: str, file: File, path: str, **_kwargs
     ) -> Response:
-        """ ""
-        The create_app_file function creates a new file in the specified
+        """
+        The create_app_file method creates a new file in the specified
         directory.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Specify the application id
-        :param file: File: Pass the file to be created
-        :param path: str: Specify the directory to create the file in
-        :param _kwargs: Pass a variable number of keyword arguments to the
-        function
+        :param app_id: Specify the application by id
+        :param file: Pass the file to be created
+        :param path: Specify the directory to create the file in
+        :param _kwargs: Keyword arguments
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         if not isinstance(file, File):
             raise SquareException(
@@ -440,28 +567,37 @@ class Client(RequestListenerManager):
     async def delete_app_file(
         self, app_id: str, path: str, **_kwargs
     ) -> Response:
-        """ "
-        The delete_app_file function deletes a file in the specified directory.
+        """
+        The delete_app_file method deletes a file in the specified directory.
 
-        :param self: Refer to the class instance
-        :param app_id: str: Specify the application id
-        :param path: str: Specify the directory where the file should be
+        :param app_id: Specify the application byd id
+        :param path: Specify the directory where the file should be
         deleted
-        :param _kwargs: Pass a variable number of keyword arguments to the
-        function
+        :param _kwargs: Keyword arguments
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         return await self._http.file_delete(app_id, path)
 
     @_notify_listener(Endpoint.statistics())
     async def statistics(self, **_kwargs) -> StatisticsData:
         """
-        The statistics function returns a StatisticsData object
+        The statistics method returns a StatisticsData object
 
-        :param self: Refer to the class instance
-        :param _kwargs: Pass in a dictionary of parameters
-        :return: A StatisticsData object, which is a class that contains all
-        the data returned by the endpoint
+        :param _kwargs: Keyword arguments
+        :return: A StatisticsData object
+        :rtype: StatisticsData
+
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.get_statistics()
         data = response.response['statistics']
@@ -469,14 +605,20 @@ class Client(RequestListenerManager):
 
     @_notify_listener(Endpoint.app_data())
     async def app_data(self, app_id: str, **_kwargs) -> AppData:
-        """ "
-        The app_data function is used to get application data.
+        """
+        The app_data method is used to get application data.
 
-        :param self: Refer to the class instance
-        :param app_id: str: The application id
-        :param _kwargs: Pass a variable number of keyword arguments to the
-        function
+        :param app_id: Specify the application by id
+        :param _kwargs: Keyword arguments
         :return: An AppData object
+        :rtype: AppData
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.get_app_data(app_id)
         return AppData(**response.response)
@@ -486,13 +628,20 @@ class Client(RequestListenerManager):
         self, app_id: str, **_kwargs
     ) -> list[list[DeployData]]:
         """
-        The last_deploys function returns a list of DeployData objects.
+        The last_deploys method returns a list of DeployData objects.
 
         :param self: Represent the instance of a class
-        :param app_id: str: Specify the app id
-        :param _kwargs: Pass a variable number of keyword arguments to the
-        function
+        :param app_id: str: Specify the application by id
+        :param _kwargs: Keyword arguments
         :return: A list of DeployData objects
+        :rtype: list[list[DeployData]]
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         response: Response = await self._http.get_last_deploys(app_id)
         data = response.response
@@ -502,6 +651,24 @@ class Client(RequestListenerManager):
     async def github_integration(
         self, app_id: str, access_token: str, **_kwargs
     ) -> str:
+        """
+        The github_integration method returns a GitHub Webhook url to integrate
+        with your GitHub repository
+
+        :param app_id: Specify the application by id
+        :param access_token: your GitHub access token
+        :param _kwargs: Keyword arguments
+        :return: A GitHub Webhook url
+
+        :raises InvalidAccessToken: Raised when a GitHub access token
+                provided is invalid
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        """
         response: Response = await self._http.create_github_integration(
             app_id=app_id, github_access_token=access_token
         )
@@ -512,6 +679,23 @@ class Client(RequestListenerManager):
     async def set_custom_domain(
         self, app_id: str, custom_domain: str, **_kwargs
     ) -> Response:
+        """
+        The set_custom_domain method sets a custom domain to your website
+
+        :param app_id: Specify the application by id
+        :param custom_domain: Specify the custom domain to use for your website
+        :param _kwargs: Keyword arguments
+        :return: A Response object
+        :rtype: Response
+
+        :raises InvalidDomain: Raised when a domain provided is invalid
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        """
         return await self._http.update_custom_domain(
             app_id=app_id, custom_domain=custom_domain
         )
@@ -520,6 +704,21 @@ class Client(RequestListenerManager):
     async def domain_analytics(
         self, app_id: str, **_kwargs
     ) -> DomainAnalytics:
+        """
+        The domain_analytics method return a DomainAnalytics object
+
+        :param app_id: Specify the application by id
+        :param _kwargs: Keyword arguments
+        :return: A DomainAnalytics object
+        :rtype: DomainAnalytics
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        """
         response: Response = await self._http.domain_analytics(
             app_id=app_id,
         )

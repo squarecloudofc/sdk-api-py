@@ -58,6 +58,7 @@ class CaptureListenerManager:
         :param call: Callable: Define the function that will be called when a
         request is made to the endpoint
         :return: None
+        :raises InvalidListener: Raised if the endpoint is already registered
         """
         allowed_endpoints: tuple[Endpoint, Endpoint, Endpoint, Endpoint] = (
             Endpoint.logs(),

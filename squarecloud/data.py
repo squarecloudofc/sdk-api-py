@@ -268,7 +268,7 @@ class FileInfo:
     :type lastModified: conint(ge=0) | float
     :type path: str
     """
-
+    app_id: str
     type: Literal['file', 'directory']
     name: str
     size: confloat(ge=0)

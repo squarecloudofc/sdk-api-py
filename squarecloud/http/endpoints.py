@@ -110,7 +110,7 @@ class Endpoint:
 
     @classmethod
     def user(cls) -> Endpoint:
-        """Returns an Endpoint object that represents the /user/me endpoint."""
+        """Returns an Endpoint object that represents the /user endpoint."""
         return cls('USER')
 
     @classmethod

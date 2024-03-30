@@ -41,8 +41,7 @@ class AppCache:
         attributes.
 
 
-        :return: The instance of the class
-        :rtype: None
+        :return: None
         """
         self._status: StatusData | None = None
         self._logs: LogsData | None = None
@@ -52,9 +51,10 @@ class AppCache:
     @property
     def status(self) -> StatusData:
         """
-        The status function returns the status of the application.
+        The status method is a property that returns the cached StatusData of
+        the application.
 
-        :return: The status of the application.
+        :return: A StatusData object.
         :rtype: StatusData
         """
         return self._status
@@ -62,7 +62,8 @@ class AppCache:
     @property
     def logs(self) -> LogsData:
         """
-        The logs function the logs of the application.
+        The logs method is a property that returns the cached LogsData of
+        the application.
 
         :return: The logs of your application
         :rtype: LogsData
@@ -72,7 +73,8 @@ class AppCache:
     @property
     def backup(self) -> BackupData:
         """
-        The backup function is used to create a backup of the application.
+        The backup method is a property that returns the cached BackupData of
+        the application.
 
         :return: The value of the _backup attribute
         :rtype: BackupData
@@ -82,7 +84,8 @@ class AppCache:
     @property
     def app_data(self) -> AppData:
         """
-        The app_data function is a property that returns the AppData object.
+        The app_data method is a property that returns the cached AppData
+        object
 
         :return: The data from the app_data
         :rtype: AppData
@@ -91,12 +94,11 @@ class AppCache:
 
     def clear(self):
         """
-        The clear function is used to clear the status, logs, backup and data
+        The clear method is used to clear the status, logs, backup and data
         variables.
 
         :param self: Refer to the class instance
         :return: None
-        :rtype: None
         """
         self._status = None
         self._logs = None
@@ -105,17 +107,15 @@ class AppCache:
 
     def update(self, *args):
         """
-        The update function is used to update the data of a given instance.
+        The update method is used to update the data of a given instance.
         It takes in an arbitrary number of arguments, and updates the
         corresponding data if it is one of the following types:
         StatusData, LogsData, BackupData or AppData.
         If any other type is provided as an argument to this function,
         a SquareException will be raised.
 
-        :param self: Refer to the class instance
         :param args: Pass a variable number of arguments to a function
         :return: None
-        :rtype: None
         """
         for arg in args:
             if isinstance(arg, StatusData):
@@ -173,26 +173,24 @@ class Application(CaptureListenerManager):
         desc: str | None = None,
     ) -> None:
         """
-        The `__init__` function is called when the class is instantiated.
+        The `__init__` method is called when the class is instantiated.
         It sets up all the attributes that are passed in as arguments,
         and does any other initialization your class needs before It's ready
         for use.
 
 
-        :param self: Refer to the class instance.
-        :param client: 'Client': Store a reference to the client that created
+        :param client: Store a reference to the client that created
         this app.
-        :param http: HTTPClient: Make http requests to the api.
-        :param id: str: The id of the app.
-        :param tag: str: The tag of the app.
-        :param ram: PositiveInt: The amount of ram that is allocated.
-        :param lang: str: The programming language of the app.
-        :param cluster: str: The cluster that the app is hosted on
-        :param isWebsite: bool: Whether if the app is a website
-        :param desc: str | None: Define the description of the app
+        :param http: Store a reference to the HTTPClient
+        :param id: The application id
+        :param tag: The tag of the app
+        :param ram: The amount of ram that is allocated
+        :param lang: The programming language of the app
+        :param cluster: The cluster that the app is hosted on
+        :param isWebsite: Whether if the app is a website
+        :param desc: Define the description of the app
 
         :return: None
-        :rtype: None
         """
         self._id: str = id
         self._tag: str = tag
@@ -210,23 +208,22 @@ class Application(CaptureListenerManager):
 
     def __repr__(self) -> str:
         """
-        The __repr__ function is used to create a string representation of an
+        The `__repr__` method is used to create a string representation of an
         object.
         This is useful for debugging, logging and other instances where you
         would want a string representation of the object.
         The __repr__ function should return a string that would make sense to
         someone looking at the results in the interactive interpreter.
 
-
-        :param self: Refer to the class instance
         :return: The class name, tag and id of the element
+        :rtype: str
         """
         return f'<{self.__class__.__name__} tag={self.tag} id={self.id}>'
 
     @property
     def client(self) -> 'Client':
         """
-        The client function is a property that returns the client object.
+        The client method is a property that returns the client object.
 
         :return: The client instance
         :rtype: Client
@@ -237,7 +234,7 @@ class Application(CaptureListenerManager):
     def id(self) -> str:
         """
         The id function is a property that returns
-         the id of the application.
+        the id of the application.
 
         :return: The id of the application
         :rtype: str
@@ -317,6 +314,13 @@ class Application(CaptureListenerManager):
 
     @staticmethod
     def _notify_listener(endpoint: Endpoint):
+        """
+        The _notify_listener function is a decorator that call a listener after
+        the decorated coroutine is called
+
+        :param endpoint: the endpoint for witch the listener will fetch
+        :return: a callable
+        """
         def wrapper(func: Callable):
             @wraps(func)
             async def decorator(self, *args, **kwargs):
@@ -337,6 +341,13 @@ class Application(CaptureListenerManager):
 
     @staticmethod
     def _update_cache(func: Callable):
+        """
+        This is a decorator checks whether the kwargs `update_cache` in the
+        decorated coroutine is not False, and updates the application cache
+
+        :param func:
+        :return: a callable
+        """
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
             update_cache = kwargs.pop('update_cache', True)
@@ -349,7 +360,7 @@ class Application(CaptureListenerManager):
 
     def capture(self, endpoint: Endpoint) -> Callable:
         """
-        The capture function is a decorator that can be used to add a function
+        The capture function is a decorator that can be used to add a callable
         to be called when a request is made to the specified endpoint.
 
         :param self: Refer to the class instance.
@@ -374,6 +385,7 @@ class Application(CaptureListenerManager):
             :param func: Pass the function to be wrapped
             :return: The wrapper function itself
             :rtype: None
+            :raises InvalidListener: Raised if the endpoint is already registered
             """
             self.include_listener(endpoint, func)
             return func
@@ -384,7 +396,7 @@ class Application(CaptureListenerManager):
     @_notify_listener(Endpoint.app_data())
     async def data(self, *_args, **__kwargs) -> AppData:
         """
-        The data function is used to retrieve the data of an app.
+        The data method is used to retrieve the data of this app.
 
         :param self: Refer to the class instance
         :return: A AppData object
@@ -397,7 +409,7 @@ class Application(CaptureListenerManager):
     @_notify_listener(Endpoint.logs())
     async def logs(self, *_args, **__kwargs) -> LogsData:
         """
-        The logs function is used to get the application's logs.
+        The logs method is used to get the application's logs.
 
         :param self: Refer to the class instance
         :return: A LogsData object

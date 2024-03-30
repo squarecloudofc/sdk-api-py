@@ -57,12 +57,11 @@ class Response:
 
     def __repr__(self):
         """
-        The __repr__ function is used to compute the &quot;official&quot;
-        string representation of an object.
-        This is how you would make an object of the class.
+        The __repr__ function is used to compute the string representation of
+        an object.
 
         :param self: Refer to the instance of the class
-        :return: The name of the class and the status
+        :return: The name of the class and the data of the response
         """
         return f'{Response.__name__}({self.data})'
 
@@ -123,10 +122,43 @@ class HTTPClient:
         """
         Sends a request to the Square API and returns the response.
 
-        Args:
-            route: the route to send a request
-        Returns:
-            RawResponseData
+        :param route: the route to send a request
+        :param kwargs: Keyword arguments
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        :raises FewMemory: Raised when user memory reached the maximum
+                amount of memory
+        :raises BadMemory: Raised when the memory in configuration file is
+                invalid
+        :raises MissingConfigFile: Raised when the .zip file is missing the
+                config file (squarecloud.app/squarecloud.config)
+        :raises MissingDependenciesFile: Raised when the .zip file is missing
+                the dependencies file (requirements.txt, package.json, ...)
+        :raises MissingMainFile: Raised when the .zip file is missing the main
+                file (main.py, index.js, ...)
+        :raises InvalidMain: Raised when the field MAIN in config file is
+                invalid or when the main file is corrupted
+        :raises InvalidDisplayName: Raised when the field DISPLAY_NAME
+                in config file is invalid
+        :raises MissingDisplayName: Raised when the DISPLAY_NAME field is
+                missing in the config file
+        :raises InvalidMemory: Raised when the MEMORY field is invalid
+        :raises MissingMemory: Raised when the MEMORY field is missing in
+                the config file
+        :raises InvalidVersion: Raised when the VERSION field is invalid,
+                the value accepted is "recommended" or "latest"
+        :raises MissingVersion: Raised when the VERSION field is missing in
+                the config file
+        :raises InvalidAccessToken: Raised when a GitHub access token
+                provided is invalid
+        :raises InvalidDomain: Raised when a domain provided is invalid
         """
         headers = {
             'Authorization': self.api_key,
@@ -199,10 +231,16 @@ class HTTPClient:
 
     async def fetch_user_info(self) -> Response:
         """
-        Make a request to USER route
+        Fetches user information and returns the response object
 
-        Returns:
-            Response
+        :return: A Response object
+        :rtype: Response
+
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route = Router(Endpoint.user())
         response: Response = await self.request(route)
@@ -210,13 +248,18 @@ class HTTPClient:
 
     async def fetch_app_status(self, app_id: str) -> Response:
         """
-        Make a request for STATUS route
+        Fetches status of a hosted application
 
-        Args:
-            app_id:
+        :param app_id:  The application id
+        :return: A Response object
+        :rtype: Response
 
-        Returns:
-            Response
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.app_status(), app_id=app_id)
         response: Response = await self.request(route)
@@ -224,26 +267,37 @@ class HTTPClient:
 
     async def fetch_logs(self, app_id: str) -> Response | None:
         """
-        Make a request for LOGS route
+        Fetches logs of a hosted application
 
-        Args:
-            app_id:
+        :param app_id: The application id
+        :return: A Response object or None
 
-        Returns:
-            Response
+        :rtype: Response | None
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.logs(), app_id=app_id)
         return await self.request(route)
 
     async def start_application(self, app_id: str) -> Response:
         """
-        Make a request for START route
+        Start a hosted application
 
-        Args:
-            app_id: the application ID
+        :param app_id: The application id
+        :return: A Response object
+        :rtype: Response
 
-        Returns:
-            Response
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.start(), app_id=app_id)
         response: Response = await self.request(route)
@@ -251,13 +305,18 @@ class HTTPClient:
 
     async def stop_application(self, app_id: str) -> Response:
         """
-        Make a request for STOP route
+        Stop a hosted application
 
-        Args:
-            app_id: the application ID
+        :param app_id: The application id
+        :return: A Response object
+        :rtype: Response
 
-        Returns:
-            Response
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.stop(), app_id=app_id)
         response: Response = await self.request(route)
@@ -265,13 +324,18 @@ class HTTPClient:
 
     async def restart_application(self, app_id: str) -> Response:
         """
-        Make a request for RESTART route
+        Restart a hosted application
 
-        Args:
-            app_id: the application ID
+        :param app_id: The application id
+        :return: A Response object
+        :rtype: Response
 
-        Returns:
-            Response
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.restart(), app_id=app_id)
         response: Response = await self.request(route)
@@ -279,12 +343,18 @@ class HTTPClient:
 
     async def backup(self, app_id: str) -> Response:
         """
-        Make a request for BACKUP route
-        Args:
-            app_id: the application ID
+        Backup a hosted application
 
-        Returns:
-            Response
+        :param app_id: The application id
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.backup(), app_id=app_id)
         response: Response = await self.request(route)
@@ -292,9 +362,18 @@ class HTTPClient:
 
     async def delete_application(self, app_id: str) -> Response:
         """
-        Make a request for DELETE route
-        Args:
-            app_id: the application ID
+        Delete a hosted application
+
+        :param app_id: The application id
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.delete_app(), app_id=app_id)
         response: Response = await self.request(route)
@@ -302,13 +381,19 @@ class HTTPClient:
 
     async def commit(self, app_id: str, file: File) -> Response:
         """
-        Make a request for COMMIT route
-        Args:
-            app_id: the application ID
-            file: the file to be committed
+        Commit a file to an application
 
-        Returns:
-            Response
+        :param app_id: The application id
+        :param file: A File object to be committed
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.commit(), app_id=app_id)
         response: Response = await self.request(route, file=file)
@@ -316,12 +401,44 @@ class HTTPClient:
 
     async def upload(self, file: File) -> Response:
         """
-        Make a request to UPLOAD route
-        Args:
-            file: file to be uploaded
+        Upload a new application
 
-        Returns:
-            Response
+        :param file: A File object to be uploaded
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        :raises FewMemory: Raised when user memory reached the maximum
+                amount of memory
+        :raises BadMemory: Raised when the memory in configuration file is
+                invalid
+        :raises MissingConfigFile: Raised when the .zip file is missing the
+                config file (squarecloud.app/squarecloud.config)
+        :raises MissingDependenciesFile: Raised when the .zip file is missing
+                the dependencies file (requirements.txt, package.json, ...)
+        :raises MissingMainFile: Raised when the .zip file is missing the main
+                file (main.py, index.js, ...)
+        :raises InvalidMain: Raised when the field MAIN in config file is
+                invalid or when the main file is corrupted
+        :raises InvalidDisplayName: Raised when the field DISPLAY_NAME
+                in config file is invalid
+        :raises MissingDisplayName: Raised when the DISPLAY_NAME field is
+                missing in the config file
+        :raises InvalidMemory: Raised when the MEMORY field is invalid
+        :raises MissingMemory: Raised when the MEMORY field is missing in
+                the config file
+        :raises InvalidVersion: Raised when the VERSION field is invalid,
+                the value accepted is "recommended" or "latest"
+        :raises MissingVersion: Raised when the VERSION field is missing in
+                the config file
+        :raises InvalidAccessToken: Raised when a GitHub access token
+                provided is invalid
+        :raises InvalidDomain: Raised when a domain provided is invalid
         """
         route: Router = Router(Endpoint.upload())
         response: Response = await self.request(route, file=file)
@@ -329,14 +446,20 @@ class HTTPClient:
 
     async def fetch_app_files_list(self, app_id: str, path: str) -> Response:
         """
-        The fetch_app_files_list function returns a list of files in the
-        specified path.
+        Fetches the files list of the application
 
-        :param self: Represent the instance of the class
-        :param app_id: str: Specify the application id to be used in the
+        :param app_id: The application id
         request
-        :param path: str: Specify the path of the file
+        :param path: Specify the directory path
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.files_list(), app_id=app_id, path=path)
         response: Response = await self.request(route)
@@ -346,11 +469,17 @@ class HTTPClient:
         """
         The read_app_file function reads the contents of a file in an app.
 
-        :param self: Represent the instance of the class
-        :param app_id: str: Specify the app id of the application you want to
-        read from
-        :param path: str: Specify the path of the file to be read
+        :param app_id: The application id
+        :param path: Specify the path of the file to be read
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.files_read(), app_id=app_id, path=path)
         response: Response = await self.request(route)
@@ -360,13 +489,19 @@ class HTTPClient:
         self, app_id: str, file: list[bytes], path: str
     ) -> Response:
         """
-        The create_app_file function creates a file in the specified app.
+        The create_app_file method creates a file in the specified app.
 
-        :param self: Reference the object that is calling the function
-        :param app_id: str: Specify the app that you want to create a file for
-        :param file: list[bytes]: Specify the file to be uploaded
+        :param app_id: The application id
+        :param file: Specify the file to be uploaded
         :param path: str: Specify the path of the file
         :return: A Response object
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.files_create(), app_id=app_id)
         response: Response = await self.request(
@@ -376,12 +511,19 @@ class HTTPClient:
 
     async def file_delete(self, app_id: str, path: str) -> Response:
         """
-        The file_delete function deletes a file from the application.
+        The file_delete method deletes a file from the application.
 
-        :param self: Represent the instance of a class
-        :param app_id: str: Identify the application
-        :param path: str: Specify the path of the file to be deleted
+        :param app_id: The application id
+        :param path: Specify the path of the file to be deleted
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(
             Endpoint.files_delete(), app_id=app_id, path=path
@@ -391,11 +533,14 @@ class HTTPClient:
 
     async def get_statistics(self) -> Response:
         """
-        The get_statistics function returns the statistics of the current
-        market.
+        The get_statistics method returns the statistics of the service.
 
-        :param self: Represent the instance of a class
         :return: A Response object
+        :rtype: Response
+
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.statistics())
         response: Response = await self.request(route)
@@ -403,13 +548,19 @@ class HTTPClient:
 
     async def get_app_data(self, app_id: str) -> Response:
         """
-        The get_app_data function returns a Response object containing the
+        The get_app_data method returns a Response object containing the
         app data for the specified app_id.
 
-        :param self: Refer to the current instance of a class
-        :param app_id: str: Specify the app_id of the application you want to
-        get data
+        :param app_id: The application id
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.app_data(), app_id=app_id)
         response: Response = await self.request(route)
@@ -417,12 +568,19 @@ class HTTPClient:
 
     async def get_last_deploys(self, app_id: str) -> Response:
         """
-        The get_last_deploys function returns the last deploys of an
+        The get_last_deploys method returns the last deploys of an
         application.
 
-        :param self: Represent the instance of a class
-        :param app_id: str: Specify the application id
+        :param app_id: The application id
         :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.last_deploys(), app_id=app_id)
         response: Response = await self.request(route)
@@ -432,14 +590,22 @@ class HTTPClient:
         self, app_id: str, github_access_token: str
     ) -> Response:
         """
-        The create_github_integration function returns a webhook to integrate
+        The create_github_integration method returns a webhook to integrate
         with a GitHub repository.
 
-        :param self: Represent the instance of a class
-        :param app_id: str: Identify the app that you want to create a GitHub
-        integration for
-        :param github_access_token: str: Authenticate the user
-        :return: A response object
+        :param app_id: The application id
+        :param github_access_token: GitHub access token
+        :return: A Response object
+        :rtype: Response
+
+        :raises InvalidAccessToken: Raised when a GitHub access token
+                provided is invalid
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.github_integration(), app_id=app_id)
         body = {'access_token': github_access_token}
@@ -450,12 +616,20 @@ class HTTPClient:
         self, app_id: str, custom_domain: str
     ) -> Response:
         """
-        The update_custom_domain function updates the custom domain of an app.
+        The update_custom_domain method updates the custom domain of an app.
 
-        :param self: Represent the instance of a class
-        :param app_id: str: Specify the app_id of the application to update
-        :param custom_domain: str: Set the custom domain for the app
-        :return: A response object
+        :param app_id: The application id
+        :param custom_domain: Set the custom domain for the app
+        :return: A Response object
+        :rtype: Response
+
+        :raises InvalidDomain: Raised when a domain provided is invalid
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(
             Endpoint.custom_domain(),
@@ -469,18 +643,29 @@ class HTTPClient:
 
     async def domain_analytics(self, app_id: str) -> Response:
         """
-        The domain_analytics function returns a list of all domains analytics
+        The domain_analytics method returns a list of all domains analytics
         for the specified app.
 
-        :param self: Represent the instance of a class
-        :param app_id: str: Specify the app_id for which you want to retrieve
-        analytics
-        :return: A response object
+        :param app_id: The application id
+        :return: A Response object
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.domain_analytics(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
     @property
-    def last_response(self):
+    def last_response(self) -> Response | None:
+        """
+        Returns the last response made
+
+        :return: A Response object or None
+        :rtype: Response | None
+        """
         return self._last_response
