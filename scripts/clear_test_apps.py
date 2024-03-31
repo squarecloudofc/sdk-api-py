@@ -2,9 +2,8 @@ import os
 
 from dotenv import load_dotenv
 
-from scripts import run_async_script
 import squarecloud
-from squarecloud import *
+from scripts import run_async_script
 
 load_dotenv()
 client = squarecloud.Client(os.getenv('KEY'))
