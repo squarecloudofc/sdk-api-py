@@ -11,6 +11,10 @@ def run_async_script(func: Callable):
             before = datetime.now()
             result = asyncio.run(func(*args, **kwargs))
             after = datetime.now()
-            print(f'\u2713 Script ran successfully in '
-                  f'{(after - before).seconds} seconds!')
+            print(
+                f'\u2713 Script ran successfully in '
+                f'{(after - before).seconds} seconds!'
+            )
+            return result
+
     return wrapper
