@@ -21,8 +21,8 @@ class ConfigFile:
     ) -> None:
         if version not in ('latest', 'recommended'):
             raise ValueError('Invalid version')
-        if memory < 100:
-            raise ValueError('Memory must be greater than 100MB')
+        if memory < 256:
+            raise ValueError('Memory must be greater than 256MB')
         elif memory < 512 and subdomain:
             raise ValueError('Websites memory must be grater than 512MB')
         self.display_name = display_name
