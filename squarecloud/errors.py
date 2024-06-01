@@ -216,7 +216,13 @@ class InvalidDomain(RequestError):
 
     def __init__(self, domain: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.message = f'{domain} is a invalid custom domain'
+        self.message = f'"{domain}" is a invalid custom domain'
+
+
+class InvalidStart(InvalidConfig):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message = 'Invalid start value in configuration file'
 
 
 class InvalidListener(SquareException):
