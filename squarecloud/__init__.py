@@ -15,4 +15,4 @@ from .data import (
 from .file import File
 from .http.endpoints import Endpoint
 
-__version__ = '3.3.0'
+__version__ = '3.4.0'
