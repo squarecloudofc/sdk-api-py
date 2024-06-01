@@ -48,7 +48,7 @@ async def app_group(ctx: Context, app_id: str, token: str):
     if not app_id:
         click.echo(ctx.get_help())
         return
-    client = Client(token, debug=False)
+    client = Client(token, log_level='CRITICAL')
     if not ctx.invoked_subcommand:
         with Console().status('loading'):
             app = await client.app(app_id)
@@ -114,7 +114,7 @@ async def get_app_status(ctx: Context):
 @click.pass_context
 @run_async
 async def app_list(ctx: Context, token: str):
-    client = Client(token, debug=False)
+    client = Client(token, log_level='CRITICAL')
     with Console().status('loading'):
         apps: list[Application] = await client.all_apps()
     if not apps:
@@ -299,8 +299,8 @@ async def delete_app(ctx: Context):
 )
 @run_async
 async def upload_app(token: str, file: BufferedReader):
-    client = Client(token, debug=False)
-    with Console().status('loading'):
+    client = Client(token, log_level='CRITICAL')
+    with Console().status('uploading'):
         upload_data: UploadData = await client.upload_app(
             file=squarecloud.File(file)
         )
