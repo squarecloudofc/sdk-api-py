@@ -5,7 +5,7 @@ ConfigFile(
     display_name='an cool name',
     description='an cool description',
     main='main.py',
-    memory=100,
+    memory=256,
     version='recommended',  # default 'recommended'
     auto_restart=False,  # default True
 )
