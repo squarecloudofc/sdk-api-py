@@ -16,6 +16,7 @@ click = '^8.1.6'
 rich = '^13.5.2'
 pydantic = '^2.5.2'
 python-dotenv = '^1.0.0'
+pypi = "^2.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = '^7.4.3'
@@ -58,10 +59,10 @@ line_length = 79
 
 [tool.taskipy.tasks]
 lint = 'isort . && blue . && ruff .'
-#pre_test = 'task lint'
-test = 'pytest -s --reruns 5 --only-rerun TooManyRequests --reruns-delay 20 -x --cov=tests tests'
+pre_test = 'task lint'
+test = 'pytest -vv -s --reruns 5 --only-rerun TooManyRequests --reruns-delay 60 -x --cov=tests tests'
 post_test = 'coverage html'
-cli = 'poetry run squarecloud'
+cli = 'python -m squarecloud.cli.main'
 publish-test = 'poetry publish -r pypi-test --build'
 install-test = 'pip install -i https://test.pypi.org/pypi/ --extra-index-url https://pypi.org/simple --upgrade squarecloud-api'
 docs = 'mkdocs serve'
