@@ -17,6 +17,7 @@ from ..errors import (
     InvalidDomain,
     InvalidMain,
     InvalidMemory,
+    InvalidStart,
     InvalidVersion,
     MissingConfigFile,
     MissingDependenciesFile,
@@ -92,6 +93,7 @@ def _get_error(code: str) -> type[RequestError] | None:
         'MISSING_VERSION': MissingVersion,
         'INVALID_ACCESS_TOKEN': InvalidAccessToken,
         'REGEX_VALIDATION': InvalidDomain,
+        'INVALID_START': InvalidStart,
     }
     error_class = errors.get(code, None)
     if error_class is None:
@@ -528,21 +530,6 @@ class HTTPClient:
         route: Router = Router(
             Endpoint.files_delete(), app_id=app_id, path=path
         )
-        response: Response = await self.request(route)
-        return response
-
-    async def get_statistics(self) -> Response:
-        """
-        The get_statistics method returns the statistics of the service.
-
-        :return: A Response object
-        :rtype: Response
-
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        route: Router = Router(Endpoint.statistics())
         response: Response = await self.request(route)
         return response
 

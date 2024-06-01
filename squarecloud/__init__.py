@@ -8,7 +8,6 @@ from .data import (
     FileInfo,
     LogsData,
     PlanData,
-    StatisticsData,
     StatusData,
     UploadData,
     UserData,

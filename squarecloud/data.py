@@ -268,37 +268,13 @@ class FileInfo:
     :type lastModified: conint(ge=0) | float
     :type path: str
     """
+
     app_id: str
     type: Literal['file', 'directory']
     name: str
     size: confloat(ge=0)
     lastModified: conint(ge=0) | float
     path: str
-
-    def to_dict(self):
-        return self.__dict__.copy()
-
-
-@dataclass(frozen=True)
-class StatisticsData:
-    """
-    Host statistics
-
-    :ivar users: Amount of users that uses the host
-    :ivar apps: Amount of apps hosted
-    :ivar websites: Amount of websites hosted
-    :ivar ping: Service ping
-
-    :type users: conint(ge=0)
-    :type apps: conint(ge=0)
-    :type websites: conint(ge=0)
-    :type ping: confloat(ge=0)
-    """
-
-    users: conint(ge=0)
-    apps: conint(ge=0)
-    websites: conint(ge=0)
-    ping: confloat(ge=0)
 
     def to_dict(self):
         return self.__dict__.copy()

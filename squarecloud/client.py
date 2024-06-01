@@ -1,7 +1,6 @@
 """This module is a wrapper for using the SquareCloud API"""
 from __future__ import annotations
 
-import logging
 from functools import wraps
 from io import BytesIO
 from typing import Any, Callable, Literal, TextIO
@@ -16,7 +15,6 @@ from .data import (  # LogsData,
     DomainAnalytics,
     FileInfo,
     LogsData,
-    StatisticsData,
     StatusData,
     UploadData,
     UserData,
@@ -25,6 +23,7 @@ from .errors import ApplicationNotFound, InvalidFile, SquareException
 from .file import File
 from .http import HTTPClient, Response
 from .http.endpoints import Endpoint
+from .listeners import Listener, ListenerConfig
 from .listeners.request_listener import RequestListenerManager
 from .logging import logger
 
@@ -92,7 +91,17 @@ def create_config_file(
 class Client(RequestListenerManager):
     """A client for interacting with the SquareCloud API."""
 
-    def __init__(self, api_key: str, debug: bool = True) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        log_level: Literal[
+            'DEBUG',
+            'INFO',
+            'WARNING',
+            'ERROR',
+            'CRITICAL',
+        ] = 'INFO',
+    ) -> None:
         """
         The __init__ function is called when the class is instantiated.
         It sets up the instance of the class, and defines all of its
@@ -105,11 +114,11 @@ class Client(RequestListenerManager):
         :param debug: bool: Set the logging level to debug
         :return: None
         """
-        self.debug = debug
+        self.log_level = log_level
         self._api_key = api_key
         self._http = HTTPClient(api_key=api_key)
-        if self.debug:
-            logger.setLevel(logging.DEBUG)
+        self.logger = logger
+        logger.setLevel(log_level)
         super().__init__()
 
     @property
@@ -122,7 +131,7 @@ class Client(RequestListenerManager):
         """
         return self._api_key
 
-    def on_request(self, endpoint: Endpoint):
+    def on_request(self, endpoint: Endpoint, **kwargs):
         """
         The on_request function is a decorator that allows you to register a
         function as an endpoint listener.
@@ -148,11 +157,16 @@ class Client(RequestListenerManager):
             :raises SquarecloudException: Raised if the endpoint is already
                     registered
             """
-            if not self.get_request_listener(endpoint):
-                return self.add_request_listener(endpoint, func)
-            raise SquareException(
-                f'Already exists an capture_listener for {endpoint}'
+            for key, value in kwargs.items():
+                if key not in ListenerConfig.__annotations__:
+                    raise ValueError(
+                        f'Invalid listener configuration: "{key}={value}"'
+                    )
+            config = ListenerConfig(**kwargs)
+            listener = Listener(
+                endpoint=endpoint, callback=func, client=self, config=config
             )
+            self.include_listener(listener)
 
         return wrapper
 
@@ -165,6 +179,7 @@ class Client(RequestListenerManager):
         :param endpoint: the endpoint for witch the listener will fetch
         :return: a callable
         """
+
         def wrapper(func: Callable):
             @wraps(func)
             async def decorator(self: Client, *args, **kwargs) -> Response:
@@ -174,7 +189,11 @@ class Client(RequestListenerManager):
                 response = self._http.last_response
                 if kwargs.get('avoid_listener', False):
                     return result
-                await self.notify(endpoint=endpoint, response=response)
+                await self.notify(
+                    endpoint=endpoint,
+                    response=response,
+                    extra=kwargs.get('extra'),
+                )
                 return result
 
             return decorator
@@ -585,23 +604,6 @@ class Client(RequestListenerManager):
                 code is 429
         """
         return await self._http.file_delete(app_id, path)
-
-    @_notify_listener(Endpoint.statistics())
-    async def statistics(self, **_kwargs) -> StatisticsData:
-        """
-        The statistics method returns a StatisticsData object
-
-        :param _kwargs: Keyword arguments
-        :return: A StatisticsData object
-        :rtype: StatisticsData
-
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.get_statistics()
-        data = response.response['statistics']
-        return StatisticsData(**data)
 
     @_notify_listener(Endpoint.app_data())
     async def app_data(self, app_id: str, **_kwargs) -> AppData:

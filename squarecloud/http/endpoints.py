@@ -31,7 +31,6 @@ class Endpoint:
         'COMMIT': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/commit'},
         'DELETE_APP': {'METHOD': 'DELETE', 'PATH': '/apps/{app_id}/delete'},
         'UPLOAD_APP': {'METHOD': 'POST', 'PATH': '/apps/upload'},
-        'STATISTICS': {'METHOD': 'GET', 'PATH': '/service/statistics'},
         'FILES_LIST': {
             'METHOD': 'GET',
             'PATH': '/apps/{app_id}/files/list?path={path}',
@@ -223,14 +222,6 @@ class Endpoint:
         /apps/{app_id}/files/delete endpoint.
         """
         return cls('FILES_DELETE')
-
-    @classmethod
-    def statistics(cls) -> Endpoint:
-        """
-        Returns an Endpoint object that represents the
-        /service/statistics endpoint.
-        """
-        return cls('STATISTICS')
 
     @classmethod
     def last_deploys(cls):
