@@ -19,6 +19,7 @@ from .data import (
 )
 from .file import File
 from .http import Endpoint, HTTPClient, Response
+from .listeners import Listener, ListenerConfig
 from .listeners.capture_listener import CaptureListenerManager
 
 # avoid circular imports
@@ -321,9 +322,10 @@ class Application(CaptureListenerManager):
         :param endpoint: the endpoint for witch the listener will fetch
         :return: a callable
         """
+
         def wrapper(func: Callable):
             @wraps(func)
-            async def decorator(self, *args, **kwargs):
+            async def decorator(self: Application, *args, **kwargs) -> Any:
                 result = await func(self, *args, **kwargs)
                 avoid_listener = kwargs.pop('avoid_listener', False)
                 if not (avoid_listener or self.always_avoid_listeners):
@@ -348,6 +350,7 @@ class Application(CaptureListenerManager):
         :param func:
         :return: a callable
         """
+
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
             update_cache = kwargs.pop('update_cache', True)
@@ -358,7 +361,7 @@ class Application(CaptureListenerManager):
 
         return wrapper
 
-    def capture(self, endpoint: Endpoint) -> Callable:
+    def capture(self, endpoint: Endpoint, **kwargs) -> Callable:
         """
         The capture function is a decorator that can be used to add a callable
         to be called when a request is made to the specified endpoint.
@@ -371,7 +374,7 @@ class Application(CaptureListenerManager):
         """
 
         def wrapper(
-            func: Callable[[Endpoint, Endpoint], Any]
+            call: Callable[[Endpoint, Endpoint], Any]
         ) -> Callable[[Endpoint, Endpoint], Any]:
             """
             The wrapper function is a decorator that takes in the endpoint as
@@ -382,13 +385,27 @@ class Application(CaptureListenerManager):
             with the function passed to wrapper().
             Otherwise, it raises another SquareException.
 
-            :param func: Pass the function to be wrapped
+            :param call: Pass the function to be wrapped
             :return: The wrapper function itself
             :rtype: None
-            :raises InvalidListener: Raised if the endpoint is already registered
+            :raises InvalidListener: Raised if the endpoint is already
+            registered
             """
-            self.include_listener(endpoint, func)
-            return func
+            for key, value in kwargs.items():
+                if key not in ListenerConfig.__annotations__:
+                    raise ValueError(
+                        f'Invalid listener configuration: "{key}={value}"'
+                    )
+            config = ListenerConfig(**kwargs)
+            listener = Listener(
+                app=self,
+                client=self.client,
+                endpoint=endpoint,
+                callback=call,
+                config=config,
+            )
+            self.include_listener(listener)
+            return call
 
         return wrapper
 

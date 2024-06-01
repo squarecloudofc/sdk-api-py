@@ -1,13 +1,13 @@
 import inspect
+import logging
 import types
-from typing import Any, Callable, Union
+from typing import Any, Union
 
 import pydantic
-from pydantic import BaseModel
 
 from .. import data, errors
 from ..http import Endpoint
-from . import Listener
+from . import Listener, ListenerManager
 
 ListenerDataTypes = Union[
     data.AppData,
@@ -17,7 +17,7 @@ ListenerDataTypes = Union[
 ]
 
 
-class CaptureListenerManager:
+class CaptureListenerManager(ListenerManager):
     """CaptureListenerManager"""
 
     def __init__(self):
@@ -30,85 +30,30 @@ class CaptureListenerManager:
         :param self: Refer to the class instance
         :return: A dictionary of the capture listeners and request listeners
         """
-        self.capture_listeners: dict[str, Callable] = {}
+        super().__init__()
 
-    def get_listener(self, endpoint: Endpoint) -> Listener | None:
-        """
-        The get_listener function is used to get the capture listener
-        for a given endpoint.
-
-        :param self: Refer to the class instance
-        :param endpoint: Endpoint: Get the capture listener from the endpoint
-        name
-        :return: The capture listener for the given endpoint
-        """
-        return self.capture_listeners.get(endpoint.name)
-
-    def include_listener(self, endpoint: Endpoint, call: Callable) -> Listener:
-        """
-        The include_listener function adds a listener to the
-        capture_listeners dictionary.
-        The key is the name of an endpoint, and the value is a callable
-        function that will be called when
-        the endpoint's data has been captured.
-
-        :param self: Refer to the class instance
-        :param endpoint: Endpoint: Specify the endpoint that you want to
-        listen to
-        :param call: Callable: Define the function that will be called when a
-        request is made to the endpoint
-        :return: None
-        :raises InvalidListener: Raised if the endpoint is already registered
-        """
+    def include_listener(self, listener: Listener) -> Listener:
         allowed_endpoints: tuple[Endpoint, Endpoint, Endpoint, Endpoint] = (
             Endpoint.logs(),
             Endpoint.app_status(),
             Endpoint.backup(),
             Endpoint.app_data(),
         )
-        callback_args = inspect.signature(call).parameters
-        listener = Listener(
-            endpoint=endpoint,
-            callback=call,
-            callback_args=callback_args,
-        )
 
-        if endpoint not in allowed_endpoints:
+        if listener.endpoint not in allowed_endpoints:
             raise errors.InvalidListener(
                 message='the endpoint to capture must be '
                 f'{allowed_endpoints}',
-                listener=call,
+                listener=listener.callback,
             )
-
-        if self.get_listener(endpoint):
+        if self.get_listener(listener.endpoint):
             raise errors.InvalidListener(
                 message='Already exists an capture_listener for '
-                f'{endpoint}',
-                listener=call,
+                f'{listener.endpoint}',
+                listener=listener.callback,
             )
-        self.capture_listeners.update({endpoint.name: listener})
+        self.listeners.update({listener.endpoint.name: listener})
         return listener
-
-    def remove_listener(self, endpoint: Endpoint) -> Callable:
-        """
-        The remove_capture_listener function removes a capture listener from
-        the list of listeners.
-
-        :param self: Refer to the class instance
-        :param endpoint: Endpoint: Identify the endpoint to remove
-        :return: The capture_listener that was removed from the dictionary
-        """
-        if self.get_listener(endpoint):
-            return self.capture_listeners.pop(endpoint.name)
-
-    def clear_capture_listeners(self) -> None:
-        """
-        The clear_capture_listeners function clears the capture_listeners list.
-
-        :param self: Refer to the class instance
-        :return: None
-        """
-        self.capture_listeners = None
 
     async def notify(
         self,
@@ -116,7 +61,7 @@ class CaptureListenerManager:
         before: ListenerDataTypes | None,
         after: ListenerDataTypes,
         extra: Any = None,
-    ) -> Any:
+    ) -> Any | Exception:
         """
         The on_capture function is called when a capture event occurs.
 
@@ -127,43 +72,83 @@ class CaptureListenerManager:
         :param extra:
         :return: The result of the call function
         """
-        kwargs: dict[str, Any] = {}
-        if not (listener_call := self.get_listener(endpoint)):
+        # TODO ATUALIZAR DOCSTRINGS AQUI
+
+        def filter_annotations(annotations: list[Any]) -> Any:
+            for item in annotations:
+                if issubclass(item, pydantic.BaseModel):
+                    yield item
+
+        if not (listener := self.get_listener(endpoint)):
             return
-        call_params = listener_call.callback_args
+        logger = logging.getLogger('squarecloud')
+        kwargs: dict[str, Any] = {}
+        call_params = listener.callback_params
+        call_extra_param: inspect.Parameter | None = call_params.get('extra')
+        extra_ann: Any | None = None
+
         if 'before' in call_params.keys():
             kwargs['before'] = before
         if 'after' in call_params.keys():
             kwargs['after'] = after
         if 'extra' in call_params.keys():
             kwargs['extra'] = extra
+        info_msg: str = (
+            f'ENDPOINT: {listener.endpoint}\n'
+            f'APP-TAG: {listener.app.tag}\n'
+            f'APP-ID: {listener.app.id}'
+        )
+        if extra:
+            info_msg += f'\nEXTRA: {extra}'
+            extra_ann: Any = call_extra_param.annotation
 
-        call_extra_param: inspect.Parameter | None = call_params.get('extra')
+        if (
+            call_extra_param is not None
+            and extra_ann is not None
+            and extra_ann != call_extra_param.empty
+        ):
 
-        if call_extra_param:
-            annotation: Any = call_extra_param.annotation
+            cast_result = self.cast_to_pydantic_model(extra_ann, extra)
+            if not cast_result:
+                msg: str = (
+                    f'a "{extra_ann.__name__}"'
+                    if not isinstance(extra_ann, types.UnionType)
+                    else [
+                        x.__name__
+                        for x in filter_annotations(extra_ann.__args__)
+                    ]
+                )
+                logger.warning(
+                    'Failed on cast extra argument in '
+                    f'"{listener.callback.__name__}" into '
+                    f'{msg} pydantic model.\n'
+                    f'{info_msg}\n'
+                    f'The listener has been skipped.',
+                    extra={'type': 'listener'},
+                )
+                return
+            kwargs['extra'] = cast_result
 
-            if isinstance(annotation, types.UnionType):
-                for ty in annotation.__args__:
-                    if ty is None:
-                        continue
-                    if not issubclass(ty, BaseModel):
-                        continue
-                    try:
-                        kwargs['extra'] = ty(**kwargs['extra'])
-                        break
-                    except pydantic.ValidationError:
-                        continue
+        is_coro: bool = inspect.iscoroutinefunction(listener.callback)
+        try:
+            if is_coro:
+                listener_result = await listener.callback(**kwargs)
             else:
-                if issubclass(annotation, BaseModel):
-                    try:
-                        kwargs['extra'] = call_extra_param.annotation(
-                            **kwargs['extra']
-                        )
-                    except pydantic.ValidationError:
-                        kwargs['extra'] = None
-
-        is_coro: bool = inspect.iscoroutinefunction(listener_call.callback)
-        if is_coro:
-            return await listener_call.callback(**kwargs)
-        return listener_call.callback(**kwargs)
+                listener_result = listener.callback(**kwargs)
+            logger.info(
+                f'listener "{listener.callback.__name__}" was invoked.\n'
+                f'{info_msg}\n'
+                f'RETURN: {listener_result}',
+                extra={'type': 'listener'},
+            )
+            return listener_result
+        except Exception as exc:
+            logger.error(
+                f'Failed to call listener "{listener.callback.__name__}.\n'
+                f'Error: {exc.__repr__()}.\n'
+                f'APP-TAG: {listener.app.tag}\n'
+                f'APP-ID: {listener.app.id}',
+                extra={'type': 'listener'},
+            )
+            if listener.config.force_raise:
+                raise exc

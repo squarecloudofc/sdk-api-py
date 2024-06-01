@@ -1,10 +1,15 @@
-import asyncio
-from typing import Any, Callable
+import inspect
+import logging
+import types
+from typing import Any
+
+import pydantic
 
 from ..http import Endpoint, Response
+from . import ListenerManager
 
 
-class RequestListenerManager:
+class RequestListenerManager(ListenerManager):
     """CaptureListenerManager"""
 
     def __init__(self):
@@ -17,59 +22,11 @@ class RequestListenerManager:
         :param self: Refer to the class instance
         :return: A dictionary of the capture listeners and request listeners
         """
-        self.request_listeners: dict[str, Callable] = {}
+        super().__init__()
 
-    def get_request_listener(self, endpoint: Endpoint) -> Callable:
-        """
-        The get_request_listener function is a helper function that returns
-        the request listener for an endpoint.
-
-        :param self: Refer to the class instance
-        :param endpoint: Endpoint: Get the name of the endpoint
-        :return: The request listener for a given endpoint
-        """
-        return self.request_listeners.get(endpoint.name)
-
-    def add_request_listener(self, endpoint: Endpoint, call: Callable) -> None:
-        """
-        The add_request_listener function adds a request listener to the list
-        of listeners.
-
-        :param self: Refer to the class instance
-        :param endpoint: Endpoint: Specify the endpoint that you want to
-        listen for
-        :param call: Callable: Specify the function that will be called when a
-        request is received
-        :return: None
-        """
-        if not self.get_request_listener(endpoint):
-            return self.request_listeners.update({endpoint.name: call})
-
-    def remove_request_listener(self, endpoint: Endpoint) -> Callable:
-        """
-        The remove_request_listener function removes a request listener from
-        the capture_listeners dictionary.
-        The function takes an endpoint as its only argument and returns
-        the removed request listener.
-
-        :param self: Refer to the class instance
-        :param endpoint: Endpoint: Identify the endpoint that is being removed
-        from the capture_listeners dictionary
-        :return: The listener that was removed
-        """
-        if self.get_request_listener(endpoint):
-            return self.request_listeners.pop(endpoint.name)
-
-    def clear_request_listeners(self) -> None:
-        """
-        The clear_request_listeners function clears the capture_listeners list.
-
-        :param self: Refer to the class instance
-        :return: None
-        """
-        self.request_listeners = None
-
-    async def notify(self, endpoint: Endpoint, response: Response) -> Any:
+    async def notify(
+        self, endpoint: Endpoint, response: Response, extra: Any
+    ) -> Any:
         """
         The on_request function is called when a request has been made to the
         endpoint.
@@ -80,9 +37,70 @@ class RequestListenerManager:
         :param response: Response: Get the response from the endpoint
         :return: The result of the call function
         """
-        call: Callable = self.get_request_listener(endpoint)
-        if not call:
+
+        def filter_annotations(annotations: list[Any]) -> Any:
+            for item in annotations:
+                if issubclass(item, pydantic.BaseModel):
+                    yield item
+
+        if not (listener := self.get_listener(endpoint)):
             return
-        if asyncio.iscoroutinefunction(call):
-            return await call(response=response)
-        return call(response=response)
+        logger = logging.getLogger('squarecloud')
+        kwargs: dict[str, Any] = {}
+        call_params = listener.callback_params
+        call_extra_param: inspect.Parameter | None = call_params.get('extra')
+        annotation: Any | None = None
+
+        if 'response' in call_params.keys():
+            kwargs['response'] = response
+        if 'extra' in call_params.keys():
+            kwargs['extra'] = extra
+
+        if extra:
+            annotation: Any = call_extra_param.annotation
+        if (
+            call_extra_param is not None
+            and annotation is not None
+            and annotation != call_extra_param.empty
+        ):
+            annotation: Any = call_extra_param.annotation
+            cast_result = self.cast_to_pydantic_model(annotation, extra)
+            if not cast_result:
+                msg: str = (
+                    f'a "{annotation.__name__}"'
+                    if not isinstance(annotation, types.UnionType)
+                    else [
+                        x.__name__
+                        for x in filter_annotations(annotation.__args__)
+                    ]
+                )
+                logger.warning(
+                    'Failed on cast extra argument in '
+                    f'"{listener.callback.__name__}" into '
+                    f'{msg}.\n'
+                    f'The listener has been skipped.',
+                    extra={'type': 'listener'},
+                )
+                return
+            kwargs['extra'] = cast_result
+        is_coro: bool = inspect.iscoroutinefunction(listener.callback)
+        try:
+            if is_coro:
+                listener_result = await listener.callback(**kwargs)
+            else:
+                listener_result = listener.callback(**kwargs)
+            logger.info(
+                f'listener "{listener.callback.__name__}" was invoked.\n'
+                f'Endpoint: {listener.endpoint}\n'
+                f'RETURN: {listener_result}\n',
+                extra={'type': 'listener'},
+            )
+            return listener_result
+        except Exception as exc:
+            logger.error(
+                f'Failed to call listener "{listener.callback.__name__}.\n'
+                f'Error: {exc.__repr__()}.\n',
+                extra={'type': 'listener'},
+            )
+            if listener.config.force_raise:
+                raise exc
