@@ -16,7 +16,7 @@ class TestRequestListeners:
         config = ConfigFile(
             display_name='normal_test',
             main='main.py',
-            memory=100,
+            memory=256,
         )
         await asyncio.sleep(10)
         upload_data: UploadData = await client.upload_app(
@@ -28,7 +28,7 @@ class TestRequestListeners:
         config = ConfigFile(
             display_name='invalid_main',
             main='index.js',
-            memory=100,
+            memory=256,
         )
         with pytest.raises(errors.InvalidMain):
             upload_data: UploadData = await client.upload_app(
@@ -40,7 +40,7 @@ class TestRequestListeners:
         config = ConfigFile(
             display_name='missing_main',
             main='',
-            memory=100,
+            memory=256,
         )
         with pytest.raises(errors.MissingMainFile):
             upload_data: UploadData = await client.upload_app(
@@ -64,7 +64,7 @@ class TestRequestListeners:
         config = ConfigFile(
             display_name='test_' * 200,
             main='main.py',
-            memory=100,
+            memory=256,
         )
         with pytest.raises(errors.InvalidDisplayName):
             upload_data: UploadData = await client.upload_app(
@@ -76,7 +76,7 @@ class TestRequestListeners:
         config = ConfigFile(
             display_name='',
             main='main.py',
-            memory=100,
+            memory=256,
         )
         with pytest.raises(errors.MissingDisplayName):
             upload_data: UploadData = await client.upload_app(
@@ -88,10 +88,11 @@ class TestRequestListeners:
         config = ConfigFile(
             display_name='memory_test',
             main='main.py',
-            memory=100,
+            memory=
+            256,
         ).content()
         with pytest.raises(errors.BadMemory):
-            config = config.replace('100', '1')
+            config = config.replace('256', '1')
             upload_data: UploadData = await client.upload_app(
                 File(create_zip(config), filename='file.zip')
             )
@@ -101,9 +102,9 @@ class TestRequestListeners:
         config = ConfigFile(
             display_name='memory_test',
             main='main.py',
-            memory=100
+            memory=256
         ).content()
-        config = config.replace('100', '')
+        config = config.replace('256', '')
         with pytest.raises(errors.MissingMemory):
             upload_data: UploadData = await client.upload_app(
                 File(create_zip(config), filename='file.zip')
@@ -114,7 +115,7 @@ class TestRequestListeners:
         config = ConfigFile(
             display_name='version_test',
             main='main.py',
-            memory=100,
+            memory=256,
         ).content()
         config = config.replace('recommended', 'invalid_version')
         with pytest.raises(errors.InvalidVersion):
@@ -127,7 +128,7 @@ class TestRequestListeners:
         config = ConfigFile(
             display_name='version_test',
             main='main.py',
-            memory=100,
+            memory=256,
         ).content()
         config = config.replace('recommended', '')
         with pytest.raises(errors.MissingVersion):

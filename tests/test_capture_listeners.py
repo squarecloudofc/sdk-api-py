@@ -1,4 +1,5 @@
 import pytest
+from pydantic import BaseModel
 
 from squarecloud import Endpoint, errors
 from squarecloud.app import Application
@@ -8,10 +9,10 @@ from squarecloud.listeners import Listener
 
 def _clear_listener_on_rerun(endpoint: Endpoint):
     def decorator(func):
-        def wrapper(self, app: Application):
+        async def wrapper(self, app: Application):
             if app.get_listener(endpoint):
                 app.remove_listener(endpoint)
-            return func(self, app)
+            return await func(self, app=app)
         return wrapper
     return decorator
 
@@ -23,7 +24,7 @@ class TestGeneralUse:
 
     @_clear_listener_on_rerun(Endpoint.app_status())
     async def test_capture_status(self, app: Application):
-        @app.capture(Endpoint.app_status())
+        @app.capture(Endpoint.app_status(), force_raise=True)
         async def capture_status(before, after):
             assert before is None
             assert isinstance(after, StatusData)
@@ -31,7 +32,7 @@ class TestGeneralUse:
 
     @_clear_listener_on_rerun(Endpoint.backup())
     async def test_capture_backup(self, app: Application):
-        @app.capture(Endpoint.backup())
+        @app.capture(Endpoint.backup(), force_raise=True)
         async def capture_backup(before, after):
             assert before is None
             assert isinstance(after, BackupData)
@@ -40,8 +41,8 @@ class TestGeneralUse:
 
     @_clear_listener_on_rerun(Endpoint.logs())
     async def test_capture_logs(self, app: Application):
-        @app.capture(Endpoint.logs())
-        async def capture_status(before, after):
+        @app.capture(Endpoint.logs(), force_raise=True)
+        async def capture_logs(before, after):
             assert before is None
             assert isinstance(after, LogsData)
         await app.logs()
@@ -49,7 +50,7 @@ class TestGeneralUse:
     @_clear_listener_on_rerun(Endpoint.app_data())
     async def test_app_data(self, app: Application):
 
-        @app.capture(Endpoint('APP_DATA'))
+        @app.capture(Endpoint('APP_DATA'), force_raise=True)
         async def capture_data(before, after):
             assert before is None
             assert isinstance(after, AppData)
@@ -58,53 +59,81 @@ class TestGeneralUse:
     @_clear_listener_on_rerun(Endpoint.app_status())
     async def test_extra(self, app: Application):
         metadata: dict[str, int] = {'metadata': 69}
-        app.remove_listener(Endpoint.app_status())
 
-        @app.capture(Endpoint.app_status())
+        @app.capture(Endpoint.app_status(), force_raise=True)
         async def capture_status(extra):
             assert isinstance(extra, dict)
             assert extra == metadata
 
         await app.status(extra=metadata)
-        app.remove_listener(Endpoint.app_status())
 
     @_clear_listener_on_rerun(Endpoint.app_status())
     async def test_extra_is_none(self, app: Application):
-        @app.capture(Endpoint.app_status())
+        @app.capture(Endpoint.app_status(), force_raise=True)
         async def capture_status(extra):
             assert extra is None
 
         await app.status()
-        app.remove_listener(Endpoint.app_status())
 
+    @_clear_listener_on_rerun(Endpoint.app_status())
     async def test_manage_listeners(self, app: Application):
         listener: Listener
 
         def callback_one(): pass
 
         listener = app.include_listener(
-            Endpoint.app_status(), callback_one
+            Listener(
+                app=app,
+                endpoint=Endpoint.app_status(),
+                callback=callback_one,
+            )
         )
 
         assert app.get_listener(Endpoint.app_status()).callback is callback_one
         assert app.get_listener(
             Endpoint.app_status()
         ).endpoint == Endpoint.app_status()
-        assert not app.get_listener(Endpoint.app_status()).callback_args
+        assert not app.get_listener(Endpoint.app_status()).callback_params
         assert listener.callback is callback_one
         assert listener.endpoint == Endpoint.app_status()
 
         def callback_two(): pass
 
         with pytest.raises(errors.InvalidListener):
-            app.include_listener(Endpoint.app_status(), callback_two)
+            app.include_listener(
+                Listener(
+                    app=app,
+                    endpoint=Endpoint.app_status(),
+                    callback=callback_two,
+                )
+            )
 
         app.remove_listener(Endpoint.app_status())
         assert app.get_listener(Endpoint.app_status()) is None
 
         listener = app.include_listener(
-            Endpoint.app_status(), callback_two
-        )
-
+                Listener(
+                    app=app,
+                    endpoint=Endpoint.app_status(),
+                    callback=callback_two,
+                )
+            )
         assert listener.callback is callback_two
         assert listener.endpoint == Endpoint.app_status()
+
+    @_clear_listener_on_rerun(endpoint=Endpoint.app_status())
+    async def test_pydantic_cast(self, app: Application):
+        class Person(BaseModel):
+            name: str
+            age: int
+
+        class Car(BaseModel):
+            year: int
+
+        @app.capture(Endpoint.app_status(), force_raise=True)
+        async def capture_status(extra: Person | Car | dict):
+            assert isinstance(extra, Car) or isinstance(extra, Person)
+            return extra
+
+        await app.status(extra={'name': 'Jhon', 'age': 18})
+        await app.status(extra={'year': 1969})

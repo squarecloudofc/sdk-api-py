@@ -1,6 +1,7 @@
 from io import BytesIO
 
 import pytest
+from pydantic import BaseModel
 
 from squarecloud import Client, Endpoint, File
 from squarecloud.app import Application
@@ -11,7 +12,6 @@ from squarecloud.data import (
     DomainAnalytics,
     FileInfo,
     LogsData,
-    StatisticsData,
     StatusData,
     UserData,
 )
@@ -20,10 +20,21 @@ from squarecloud.http import Response
 from . import GITHUB_ACCESS_TOKEN
 
 
+def _clear_listener_on_rerun(endpoint: Endpoint):
+    def decorator(func):
+        async def wrapper(self, client:  Client, app: Application):
+            if client.get_listener(endpoint):
+                client.remove_listener(endpoint)
+            return await func(self, client=client, app=app)
+        return wrapper
+    return decorator
+
+
 @pytest.mark.asyncio(scope='session')
 @pytest.mark.listeners
 @pytest.mark.request_listener
 class TestRequestListeners:
+    @_clear_listener_on_rerun(Endpoint.logs())
     async def test_request_logs(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.logs()
         expected_result: LogsData | None
@@ -38,6 +49,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, LogsData)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.app_status())
     async def test_request_app_status(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.app_status()
         expected_result: StatusData | None
@@ -52,6 +64,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, StatusData)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.backup())
     async def test_request_backup(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.backup()
         expected_result: BackupData | None
@@ -66,6 +79,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, BackupData)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.start())
     async def test_request_start_app(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.start()
         expected_result: Response | None
@@ -80,6 +94,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.stop())
     async def test_request_stop_app(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.stop()
         expected_result: Response | None
@@ -94,6 +109,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.restart())
     async def test_request_restart_app(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.restart()
         expected_result: Response | None
@@ -108,6 +124,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.app_data())
     async def test_request_app_data(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.app_data()
         expected_result: AppData | None
@@ -122,23 +139,14 @@ class TestRequestListeners:
         assert isinstance(expected_result, AppData)
         assert isinstance(expected_response, Response)
 
-    async def test_request_statistics(self, client: Client):
-        endpoint: Endpoint = Endpoint.statistics()
-        expected_result: StatisticsData | None
-        expected_response: Response | None = None
-
-        @client.on_request(endpoint)
-        async def test_listener(response: Response):
-            nonlocal expected_response
-            expected_response = response
-
-        expected_result = await client.statistics()
-        assert isinstance(expected_result, StatisticsData)
-        assert isinstance(expected_response, Response)
-
-    async def test_request_app_files_list(self, client: Client, app: Application):
+    @_clear_listener_on_rerun(Endpoint.files_list())
+    async def test_request_app_files_list(
+        self,
+        client: Client,
+        app: Application
+    ):
         endpoint: Endpoint = Endpoint.files_list()
-        expected_result: StatisticsData | None
+        expected_result: list[FileInfo] | None
         expected_response: Response | None = None
 
         @client.on_request(endpoint)
@@ -151,6 +159,7 @@ class TestRequestListeners:
         assert isinstance(expected_result[0], FileInfo)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.files_read())
     async def test_request_read_file(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.files_read()
         expected_result: BytesIO | None
@@ -165,6 +174,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, BytesIO)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.files_create())
     async def test_request_create_file(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.files_create()
         expected_result: Response | None
@@ -181,6 +191,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.files_delete())
     async def test_request_delete_file(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.files_delete()
         expected_result: Response | None
@@ -197,6 +208,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.commit())
     async def test_request_commit(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.commit()
         expected_result: Response | None
@@ -213,6 +225,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.user())
     async def test_request_user(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.user()
         expected_result: UserData | None
@@ -227,6 +240,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, UserData)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.last_deploys())
     async def test_last_deploys(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.last_deploys()
         expected_result: list[list[DeployData]] | None
@@ -241,6 +255,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, list)
         assert isinstance(expected_response, Response)
 
+    @_clear_listener_on_rerun(Endpoint.github_integration())
     async def test_github_integration(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.github_integration()
         expected_result: str | None
@@ -262,6 +277,7 @@ class TestRequestListeners:
         lambda app: not app.is_website,
         reason='application is not website'
     )
+    @_clear_listener_on_rerun(Endpoint.domain_analytics())
     async def test_domain_analytics(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.domain_analytics()
         expected_result: DomainAnalytics | None
@@ -280,6 +296,7 @@ class TestRequestListeners:
         lambda app: not app.is_website,
         reason='application is not website'
     )
+    @_clear_listener_on_rerun(Endpoint.custom_domain())
     async def test_set_custom_domain(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.custom_domain()
 
@@ -306,3 +323,22 @@ class TestRequestListeners:
         )
         assert isinstance(expected_result, str)
         assert isinstance(expected_response, Response)
+
+    @_clear_listener_on_rerun(endpoint=Endpoint.app_status())
+    async def test_pydantic_cast(self, client: Client, app: Application):
+        class Person(BaseModel):
+            name: str
+            age: int
+
+        class Car(BaseModel):
+            year: int
+
+        @client.on_request(Endpoint.app_status(), force_raise=True)
+        async def capture_status(extra: Person | Car | dict):
+            assert isinstance(extra, Car) or isinstance(extra, Person)
+            return extra
+
+        await client.app_status(
+            app_id=app.id, extra={'name': 'Jhon', 'age': 18}
+        )
+        await client.app_status(app_id=app.id, extra={'year': 1969})

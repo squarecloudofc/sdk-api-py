@@ -2,9 +2,7 @@ import asyncio
 import os
 
 import pytest
-import rich
 from dotenv import load_dotenv
-from rich.console import Console
 from rich.status import Status
 
 from squarecloud import Client, File, FileInfo, UploadData
@@ -25,7 +23,7 @@ def event_loop():
 @pytest.fixture(scope='session')
 def client() -> Client:
     load_dotenv()
-    return Client(os.getenv('KEY'), False)
+    return Client(os.getenv('KEY'), log_level='DEBUG')
 
 
 @pytest.fixture(scope='session')
@@ -33,7 +31,7 @@ async def app(client: Client) -> Application:
     config = ConfigFile(
         display_name='normal_test',
         main='main.py',
-        memory=100,
+        memory=256,
     )
     with Status('uploading test application...', spinner='point'):
         upload_data: UploadData = await client.upload_app(

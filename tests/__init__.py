@@ -4,6 +4,8 @@ import zipfile
 
 from dotenv import load_dotenv
 
+from squarecloud import Client, Endpoint
+from squarecloud.app import Application
 from squarecloud.utils import ConfigFile
 
 load_dotenv()
@@ -30,3 +32,13 @@ def create_zip(config: ConfigFile | str):
     buffer.seek(0)
 
     return buffer.getvalue()
+
+
+def _clear_listener_on_rerun(endpoint: Endpoint):
+    def decorator(func):
+        async def wrapper(self, app: Application | Client, *args, **kwargs):
+            if app.get_listener(endpoint):
+                app.remove_listener(endpoint)
+            return await func(self, app=app)
+        return wrapper
+    return decorator
