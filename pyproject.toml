@@ -66,9 +66,10 @@ cli = 'python -m squarecloud.cli.main'
 publish-test = 'poetry publish -r pypi-test --build'
 install-test = 'pip install -i https://test.pypi.org/pypi/ --extra-index-url https://pypi.org/simple --upgrade squarecloud-api'
 docs = 'mkdocs serve'
+clear-test-apps = 'python -m scripts.clear_test_apps'
 
 [tool.poetry.scripts]
-clear-test-apps = 'scripts.clear_test_apps:delete_test_apps'
+squarecloud = 'squarecloud.cli.main:safe_entry_point'
 
 [tool.ruff]
 line-length = 79
