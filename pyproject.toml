@@ -1,6 +1,6 @@
 [tool.poetry]
 name = 'squarecloud-api'
-version = '3.4.0'
+version = '3.4.1'
 description = 'SquareCloud API wrapper'
 authors = ['Robert Nogueira <robertlucasnogueira@gmail.com>']
 repository = 'https://github.com/squarecloudofc/wrapper-api-py'
