@@ -15,3 +15,7 @@ async def delete_test_apps():
         if '_test' in app.tag:
             await app.delete()
             print(f'\U0001F5D1 Deleted app {app.tag}, with id {app.id}...')
+
+
+if __name__ == '__main__':
+    delete_test_apps()
