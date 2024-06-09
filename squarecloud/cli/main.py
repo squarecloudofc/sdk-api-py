@@ -128,12 +128,12 @@ def create_config(
         )
     if r:
         path = prompt(
-            'where do you want to save the file', default='squarecloud.app'
+            'where do you want to save the file', default='.'
         )
         config_file.save(path)
         print(
             Panel(
-                f'\u2728  file saved successfully at {path}',
+                f'\u2728  file saved successfully at {path}/squarecloud.app',
                 border_style='green',
                 style='green',
             )
