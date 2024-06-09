@@ -8,7 +8,7 @@ from typing import Any, Callable, Literal, TextIO
 from typing_extensions import deprecated
 
 from .app import Application
-from .data import (  # LogsData,
+from .data import (
     AppData,
     BackupData,
     DeployData,

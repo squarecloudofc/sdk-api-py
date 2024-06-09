@@ -4,21 +4,6 @@ from __future__ import annotations
 class Endpoint:
     """Endpoint"""
 
-    # ENDPOINTS_V1 = {
-    #     'USER_ME': {'METHOD': 'GET', 'PATH': '/user'},
-    #     'USER_INFO': {'METHOD': 'GET', 'PATH': '/user/{user_id}'},
-    #     'APP_STATUS': {'METHOD': 'GET', 'PATH': '/status/{app_id}'},
-    #     'LOGS': {'METHOD': 'GET', 'PATH': '/logs/{app_id}'},
-    #     'FULL_LOGS': {'METHOD': 'GET', 'PATH': '/full-logs/{app_id}'},
-    #     'START': {'METHOD': 'POST', 'PATH': '/start/{app_id}'},
-    #     'STOP': {'METHOD': 'POST', 'PATH': '/stop/{app_id}'},
-    #     'RESTART': {'METHOD': 'POST', 'PATH': '/restart/{app_id}'},
-    #     'BACKUP': {'METHOD': 'GET', 'PATH': '/backup/{app_id}'},
-    #     'COMMIT': {'METHOD': 'POST', 'PATH': '/commit/{app_id}'},
-    #     'DELETE': {'METHOD': 'POST', 'PATH': '/delete/{app_id}'},
-    #     'UPLOAD': {'METHOD': 'POST', 'PATH': '/upload'},
-    # }
-
     ENDPOINTS_V2 = {
         'USER': {'METHOD': 'GET', 'PATH': '/user'},
         'APP_DATA': {'METHOD': 'GET', 'PATH': '/apps/{app_id}'},

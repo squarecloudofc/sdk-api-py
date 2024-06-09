@@ -72,7 +72,6 @@ class CaptureListenerManager(ListenerManager):
         :param extra:
         :return: The result of the call function
         """
-        # TODO ATUALIZAR DOCSTRINGS AQUI
 
         def filter_annotations(annotations: list[Any]) -> Any:
             for item in annotations:

@@ -160,22 +160,6 @@ class ListenerManager:
                 result = None
         return result
 
-    # async def notify(
-    #     self,
-    #     endpoint: Endpoint,
-    #     extra: Any = None,
-    #     **kwargs,
-    # ) -> Any | Exception:
-    #     """
-    #     The notify method is called when a capture event occurs.
-    #
-    #     :param self: Refer to the class instance
-    #     :param endpoint: Endpoint: Get the endpoint that is being called
-    #     :param extra:
-    #     :return: The result of the call function
-    #     """
-    #     pass
-
 
 ListenerDataTypes = Union[
     data.AppData,
