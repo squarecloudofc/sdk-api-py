@@ -12,9 +12,9 @@ client = squarecloud.Client(os.getenv('KEY'))
 @run_async_script
 async def delete_test_apps():
     for app in await client.all_apps():
-        if '_test' in app.tag:
+        if '_test' in app.name:
             await app.delete()
-            print(f'\U0001F5D1 Deleted app {app.tag}, with id {app.id}...')
+            print(f'\U0001F5D1 Deleted app {app.name}, with id {app.id}...')
 
 
 if __name__ == '__main__':

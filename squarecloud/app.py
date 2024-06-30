@@ -152,12 +152,13 @@ class Application(CaptureListenerManager):
         '_data',
         'cache',
         '_id',
-        '_tag',
+        '_name',
         '_desc',
+        '_domain',
+        '_custom',
         '_ram',
         '_lang',
         '_cluster',
-        '_isWebsite',
         'always_avoid_listeners',
     ]
 
@@ -166,11 +167,12 @@ class Application(CaptureListenerManager):
         client: 'Client',
         http: HTTPClient,
         id: str,
-        tag: str,
+        name: str,
         ram: PositiveInt,
         lang: str,
         cluster: str,
-        isWebsite: bool,
+        domain: str | None,
+        custom: str | None,
         desc: str | None = None,
     ) -> None:
         """
@@ -184,22 +186,24 @@ class Application(CaptureListenerManager):
         this app.
         :param http: Store a reference to the HTTPClient
         :param id: The application id
-        :param tag: The tag of the app
+        :param name: The tag of the app
         :param ram: The amount of ram that is allocated
         :param lang: The programming language of the app
         :param cluster: The cluster that the app is hosted on
-        :param isWebsite: Whether if the app is a website
         :param desc: Define the description of the app
+        :param domain: Define the domain of the app
+        :param custom: Define the custom domain of the app
 
         :return: None
         """
         self._id: str = id
-        self._tag: str = tag
+        self._name: str = name
+        self._domain: str | None = domain
+        self._custom: str | None = custom
         self._desc: str | None = desc
         self._ram: PositiveInt = ram
         self._lang: str = lang
         self._cluster: str = cluster
-        self._isWebsite: bool = isWebsite
         self._client: 'Client' = client
         self._http: HTTPClient = http
         self._listener: CaptureListenerManager = CaptureListenerManager()
@@ -243,14 +247,14 @@ class Application(CaptureListenerManager):
         return self._id
 
     @property
-    def tag(self) -> str:
+    def name(self) -> str:
         """
         The tag function is a property that returns the application tag.
 
         :return: The tag of the application
         :rtype: str
         """
-        return self._tag
+        return self._name
 
     @property
     def desc(self) -> str | None:
@@ -275,9 +279,7 @@ class Application(CaptureListenerManager):
         return self._ram
 
     @property
-    def lang(
-        self,
-    ) -> str:
+    def lang(self) -> str:
         """
         The lang function is a property that returns the application's
         programing language.
@@ -288,9 +290,7 @@ class Application(CaptureListenerManager):
         return self._lang
 
     @property
-    def cluster(
-        self,
-    ) -> str:
+    def cluster(self) -> str:
         """
         The cluster function is a property that returns the
         cluster that the application is
@@ -303,15 +303,28 @@ class Application(CaptureListenerManager):
         return self._cluster
 
     @property
-    def is_website(self) -> bool:
+    def domain(self) -> str | None:
         """
-        The is_website function is a property that returns a boolean value
-        indicating whether th application is a website.
+        The domain function is a property that returns the
+        application's domain.
 
-        :return: A boolean value, true or false
-        :rtype: bool
+
+        :return: The application's domain
+        :rtype: str | None
         """
-        return self._isWebsite
+        return self._domain
+
+    @property
+    def custom(self) -> str | None:
+        """
+        The custom function is a property that returns the
+        application's custom domain.
+
+
+        :return: The application's domain
+        :rtype: str | None
+        """
+        return self._custom
 
     @staticmethod
     def _notify_listener(endpoint: Endpoint):

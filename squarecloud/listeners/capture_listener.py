@@ -94,7 +94,7 @@ class CaptureListenerManager(ListenerManager):
             kwargs['extra'] = extra
         info_msg: str = (
             f'ENDPOINT: {listener.endpoint}\n'
-            f'APP-TAG: {listener.app.tag}\n'
+            f'APP-TAG: {listener.app.name}\n'
             f'APP-ID: {listener.app.id}'
         )
         if extra:

@@ -127,9 +127,7 @@ def create_config(
             default='Y',
         )
     if r:
-        path = prompt(
-            'where do you want to save the file', default='.'
-        )
+        path = prompt('where do you want to save the file', default='.')
         config_file.save(path)
         print(
             Panel(

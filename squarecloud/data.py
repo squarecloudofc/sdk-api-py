@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, Literal
+from typing import Any, Dict, Literal, Optional
 
 from pydantic import confloat, conint
 from pydantic.dataclasses import dataclass
@@ -88,15 +88,12 @@ class AppData:
     :ivar cluster: The cluster that the app is hosted on
     :ivar ram: The amount of RAM that application is using
     :ivar language The programming language of the app.:
-    :ivar isWebsite: Whether if the app is a website
 
     :type id: str
     :type name: str
     :type cluster: str
     :type ram: confloat(ge=0);
     :type language: Language
-    :type isWebsite: bool
-    :type gitIntegration: bool
     :type domain: str | None = None
     :type custom: str | None = None
     :type desc: str | None = None
@@ -106,10 +103,8 @@ class AppData:
     name: str
     cluster: str
     ram: confloat(ge=0)
-    language: str
+    language: Optional[str]
     cluster: str
-    isWebsite: bool
-    gitIntegration: bool
     domain: str | None = None
     custom: str | None = None
     desc: str | None = None
@@ -124,18 +119,18 @@ class UserData:
     User data class
 
     :ivar id: User ID;
-    :ivar tag: Username
+    :ivar name: Username
     :ivar plan: User plan
     :ivar email: User email
 
     :type id: conint(ge=0)
-    :type tag: str
+    :type name: str
     :type plan: PlanData
     :type email: str | None = None
     """
 
     id: conint(ge=0)
-    tag: str
+    name: str
     plan: PlanData
     email: str | None = None
 
@@ -223,7 +218,7 @@ class UploadData:
     Upload data class
 
     :ivar id: ID of the uploaded application
-    :ivar tag: Tag of the uploaded application
+    :ivar name: Tag of the uploaded application
     :ivar language: Programming language of the uploaded application
     :ivar ram: Ram allocated for the uploaded application
     :ivar cpu: Cpu of the uploaded application
@@ -231,7 +226,7 @@ class UploadData:
     :ivar subdomain: Subdomain of the uploaded application (only in websites)
 
     :type id: str
-    :type tag: str
+    :type name: str
     :type language: Language
     :type ram: confloat(ge=0)
     :type cpu: confloat(ge=0)
@@ -240,7 +235,7 @@ class UploadData:
     """
 
     id: str
-    tag: str
+    name: str
     language: Language
     ram: confloat(ge=0)
     cpu: confloat(ge=0)
@@ -272,9 +267,9 @@ class FileInfo:
     app_id: str
     type: Literal['file', 'directory']
     name: str
-    size: confloat(ge=0)
     lastModified: conint(ge=0) | float
     path: str
+    size: confloat(ge=0.0) = 0.0
 
     def to_dict(self):
         return self.__dict__.copy()

@@ -412,6 +412,9 @@ class Client(RequestListenerManager):
         if not app_data:
             raise ApplicationNotFound(app_id=app_id)
         app_data = app_data.pop()
+        app_data['language'] = app_data.pop('lang')
+        app_data = AppData(**app_data).to_dict()
+        app_data['lang'] = app_data.pop('language')
         return Application(client=self, http=self._http, **app_data)
 
     @_notify_listener(Endpoint.user())
@@ -433,10 +436,12 @@ class Client(RequestListenerManager):
         response: Response = await self._http.fetch_user_info()
         payload = response.response
         apps_data: list = payload['applications']
-        apps: list[Application] = [
-            Application(client=self, http=self._http, **data)
-            for data in apps_data
-        ]
+        apps: list[Application] = []
+        for data in apps_data:
+            data['language'] = data.pop('lang')
+            data = AppData(**data).to_dict()
+            data['lang'] = data.pop('language')
+            apps.append(Application(client=self, http=self._http, **data))
         return apps
 
     @_notify_listener(Endpoint.upload())

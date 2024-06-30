@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from . import errors, utils
-from .client import Client
 from .app import Application
+from .client import Client
 from .data import (
     AppData,
     BackupData,
