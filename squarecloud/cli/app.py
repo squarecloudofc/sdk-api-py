@@ -52,7 +52,7 @@ async def app_group(ctx: Context, app_id: str, token: str):
     if not ctx.invoked_subcommand:
         with Console().status('loading'):
             app = await client.app(app_id)
-            table = Table(title=app.tag, header_style='purple')
+            table = Table(title=app.name, header_style='purple')
             table.add_column('Name', justify='center')
             table.add_column('ID', justify='center')
             table.add_column('RAM', justify='center')
@@ -61,12 +61,11 @@ async def app_group(ctx: Context, app_id: str, token: str):
             table.add_column('Cluster', justify='center')
 
             table.add_row(
-                app.tag,
+                app.name,
                 app.id,
                 str(app.ram),
                 app.lang,
                 app.desc,
-                str(app.is_website),
                 app.cluster,
                 style='green',
             )
@@ -132,16 +131,14 @@ async def app_list(ctx: Context, token: str):
     table.add_column('RAM', justify='center')
     table.add_column('Language', justify='center')
     table.add_column('Description', justify='center')
-    table.add_column('Is Website', justify='center')
     table.add_column('Cluster', justify='center')
     for app in apps:
         table.add_row(
-            app.tag,
+            app.name,
             app.id,
             str(app.ram),
             app.lang,
             app.desc,
-            str(app.is_website),
             app.cluster,
             style='green',
         )
