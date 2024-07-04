@@ -223,7 +223,7 @@ class Application(CaptureListenerManager):
         :return: The class name, tag and id of the element
         :rtype: str
         """
-        return f'<{self.__class__.__name__} tag={self.tag} id={self.id}>'
+        return f'<{self.__class__.__name__} tag={self.name} id={self.id}>'
 
     @property
     def client(self) -> 'Client':
