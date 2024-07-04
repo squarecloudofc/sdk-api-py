@@ -6,6 +6,8 @@ from .client import Client
 from .data import (
     AppData,
     BackupData,
+    DeployData,
+    DomainAnalytics,
     FileInfo,
     LogsData,
     PlanData,
