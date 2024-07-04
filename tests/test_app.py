@@ -1,5 +1,6 @@
 import pytest
 
+import squarecloud
 from squarecloud.app import Application
 from tests import GITHUB_ACCESS_TOKEN
 
@@ -7,34 +8,39 @@ from tests import GITHUB_ACCESS_TOKEN
 @pytest.mark.asyncio(scope='session')
 @pytest.mark.app
 class TestApp:
+    async def test_magic_methods(self, app: Application):
+        assert app.__repr__() == f'<{Application.__name__} tag={app.name} id={app.id}>'
+
     async def test_app_data(self, app: Application):
-        await app.data()
+        assert isinstance(await app.data(), squarecloud.AppData)
 
     async def test_app_status(self, app: Application):
-        await app.status()
+        assert isinstance(await app.status(), squarecloud.StatusData)
 
     async def test_app_logs(self, app: Application):
-        await app.logs()
+        assert isinstance(await app.logs(), squarecloud.LogsData)
 
     async def test_app_backup(self, app: Application):
-        await app.backup()
+        assert isinstance(await app.backup(), squarecloud.BackupData)
 
     async def test_app_github_integration(self, app: Application):
-        await app.github_integration(GITHUB_ACCESS_TOKEN)
+        assert isinstance(await app.github_integration(GITHUB_ACCESS_TOKEN), str)
 
     async def test_app_last_deploys(self, app: Application):
-        await app.last_deploys()
+        assert isinstance(await app.last_deploys(), list)
 
     @pytest.mark.skipif(
         lambda app: not app.is_website,
         reason='application is not website'
     )
     async def test_domain_analytics(self, app: Application):
-        await app.domain_analytics()
+        assert isinstance(
+            await app.domain_analytics(), squarecloud.DomainAnalytics
+        )
 
     @pytest.mark.skipif(
         lambda app: not app.is_website,
         reason='application is not website'
     )
     async def test_set_custom_domain(self, app: Application):
-        await app.set_custom_domain('test.com.br')
+        assert isinstance(await app.set_custom_domain('test.com.br'), str)
