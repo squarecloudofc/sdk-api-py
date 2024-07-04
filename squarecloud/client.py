@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from functools import wraps
 from io import BytesIO
-from typing import Any, Callable, Literal, TextIO
+from typing import Any, Callable, Literal, ParamSpec, TextIO, TypeVar
 
 from typing_extensions import deprecated
 
@@ -26,6 +26,9 @@ from .http.endpoints import Endpoint
 from .listeners import Listener, ListenerConfig
 from .listeners.request_listener import RequestListenerManager
 from .logging import logger
+
+P = ParamSpec('P')
+R = TypeVar('R')
 
 
 @deprecated(
@@ -180,10 +183,12 @@ class Client(RequestListenerManager):
         :return: a callable
         """
 
-        def wrapper(func: Callable):
+        def wrapper(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
-            async def decorator(self: Client, *args, **kwargs) -> Response:
-                result: Any
+            async def decorator(
+                self: Client, *args: P.args, **kwargs: P.kwargs
+            ) -> R:
+                # result: Any
                 response: Response
                 result = await func(self, *args, **kwargs)
                 response = self._http.last_response
