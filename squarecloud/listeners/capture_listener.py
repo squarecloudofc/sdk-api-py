@@ -145,7 +145,7 @@ class CaptureListenerManager(ListenerManager):
             logger.error(
                 f'Failed to call listener "{listener.callback.__name__}.\n'
                 f'Error: {exc.__repr__()}.\n'
-                f'APP-TAG: {listener.app.tag}\n'
+                f'APP-TAG: {listener.app.name}\n'
                 f'APP-ID: {listener.app.id}',
                 extra={'type': 'listener'},
             )
