@@ -13,7 +13,7 @@ ListenerDataTypes = Union[
     data.AppData,
     data.StatusData,
     data.LogsData,
-    data.BackupData,
+    data.Backup,
 ]
 
 

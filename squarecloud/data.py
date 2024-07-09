@@ -6,9 +6,6 @@ from typing import Any, Dict, Literal, Optional
 from pydantic import confloat, conint
 from pydantic.dataclasses import dataclass
 
-# pylint: disable=too-many-instance-attributes
-# pylint: disable=invalid-name
-
 
 @dataclass(frozen=True)
 class PlanData:
@@ -197,16 +194,27 @@ class LogsData:
 
 
 @dataclass(frozen=True)
-class BackupData:
+class BackupInfo:
+    name: str
+    size: int
+    modified: datetime
+    key: str
+
+
+@dataclass(frozen=True)
+class Backup:
     """
     Backup data class
 
-    :ivar downloadURL: Url for download your backup
+    :ivar url: Url for download your backup
+    :ivar key: The backup's key
 
-    :type downloadURL: str
+    :type url: str
+    :type key: str
     """
 
-    downloadURL: str
+    url: str
+    key: str
 
     def to_dict(self):
         return self.__dict__.copy()
@@ -286,9 +294,16 @@ class DeployData:
 
 
 @dataclass(frozen=True)
+class AnalyticsTotal:
+    visits: int
+    megabytes: float
+    bytes: int
+
+
+@dataclass(frozen=True)
 class DomainAnalytics:
     hostname: str
-    total: list[Any]
+    total: list[AnalyticsTotal]
     countries: list[Any]
     methods: list[Any]
     referers: list[Any]

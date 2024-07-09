@@ -8,9 +8,9 @@ from typing import Any, Callable, Literal, ParamSpec, TextIO, TypeVar
 from typing_extensions import deprecated
 
 from .app import Application
-from .data import (
+from .data import (  # BackupInfo,
     AppData,
-    BackupData,
+    Backup,
     DeployData,
     DomainAnalytics,
     FileInfo,
@@ -329,14 +329,14 @@ class Client(RequestListenerManager):
         return await self._http.restart_application(app_id)
 
     @_notify_listener(Endpoint.backup())
-    async def backup(self, app_id: str, **_kwargs) -> BackupData:
+    async def backup(self, app_id: str, **_kwargs) -> Backup:
         """
         The backup method is used to backup an application.
 
         :param app_id: Specify the application id
         :param _kwargs: Keyword arguments
-        :return: A BackupData object
-        :rtype: BackupData
+        :return: A Backup object
+        :rtype: Backup
 
         :raises NotFoundError: Raised when the request status code is 404
         :raises BadRequestError: Raised when the request status code is 400
@@ -347,7 +347,9 @@ class Client(RequestListenerManager):
         """
         response: Response = await self._http.backup(app_id)
         payload: dict[str, Any] = response.response
-        return BackupData(**payload)
+        return Backup(**payload)
+
+    # async def app_backups(self) -> list[BackupInfo]:
 
     @_notify_listener(Endpoint.delete_app())
     async def delete_app(self, app_id: str, **_kwargs) -> Response:

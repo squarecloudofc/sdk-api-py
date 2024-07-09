@@ -10,7 +10,7 @@ from squarecloud import errors
 
 from .data import (
     AppData,
-    BackupData,
+    Backup,
     DeployData,
     DomainAnalytics,
     FileInfo,
@@ -46,7 +46,7 @@ class AppCache:
         """
         self._status: StatusData | None = None
         self._logs: LogsData | None = None
-        self._backup: BackupData | None = None
+        self._backup: Backup | None = None
         self._app_data: AppData | None = None
 
     @property
@@ -72,13 +72,13 @@ class AppCache:
         return self._logs
 
     @property
-    def backup(self) -> BackupData:
+    def backup(self) -> Backup:
         """
-        The backup method is a property that returns the cached BackupData of
+        The backup method is a property that returns the cached Backup of
         the application.
 
         :return: The value of the _backup attribute
-        :rtype: BackupData
+        :rtype: Backup
         """
         return self._backup
 
@@ -111,7 +111,7 @@ class AppCache:
         The update method is used to update the data of a given instance.
         It takes in an arbitrary number of arguments, and updates the
         corresponding data if it is one of the following types:
-        StatusData, LogsData, BackupData or AppData.
+        StatusData, LogsData, Backup or AppData.
         If any other type is provided as an argument to this function,
         a SquareException will be raised.
 
@@ -123,7 +123,7 @@ class AppCache:
                 self._status = arg
             elif isinstance(arg, LogsData):
                 self._logs = arg
-            elif isinstance(arg, BackupData):
+            elif isinstance(arg, Backup):
                 self._backup = arg
             elif isinstance(arg, AppData):
                 self._app_data = arg
@@ -133,7 +133,7 @@ class AppCache:
                     for i in [
                         StatusData,
                         LogsData,
-                        BackupData,
+                        Backup,
                         AppData,
                     ]
                 ]
@@ -463,15 +463,15 @@ class Application(CaptureListenerManager):
 
     @_update_cache
     @_notify_listener(Endpoint.backup())
-    async def backup(self, *_args, **__kwargs) -> BackupData:
+    async def backup(self, *_args, **__kwargs) -> Backup:
         """
         The backup function is used to create a backup of the application.
 
         :param self: Refer to the class instance
-        :return: A BackupData object
-        :rtype: BackupData
+        :return: A Backup object
+        :rtype: Backup
         """
-        backup: BackupData = await self.client.backup(self.id)
+        backup: Backup = await self.client.backup(self.id)
         return backup
 
     async def start(self) -> Response:

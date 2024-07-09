@@ -5,7 +5,8 @@ from .app import Application
 from .client import Client
 from .data import (
     AppData,
-    BackupData,
+    Backup,
+    BackupInfo,
     DeployData,
     DomainAnalytics,
     FileInfo,
