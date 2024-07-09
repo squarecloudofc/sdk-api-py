@@ -5,17 +5,19 @@ class Endpoint:
     """Endpoint"""
 
     ENDPOINTS_V2 = {
-        'USER': {'METHOD': 'GET', 'PATH': '/user'},
+        'USER': {'METHOD': 'GET', 'PATH': '/users/me'},
         'APP_DATA': {'METHOD': 'GET', 'PATH': '/apps/{app_id}'},
         'APP_STATUS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/status'},
+        'ALL_APP_STATUS': {'METHOD': 'GET', 'PATH': '/apps/status'},
+        'ALL_BACKUPS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/backups'},
         'LOGS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/logs'},
         'START': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/start'},
         'STOP': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/stop'},
         'RESTART': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/restart'},
-        'BACKUP': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/backup'},
+        'BACKUP': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/backups'},
         'COMMIT': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/commit'},
-        'DELETE_APP': {'METHOD': 'DELETE', 'PATH': '/apps/{app_id}/delete'},
-        'UPLOAD_APP': {'METHOD': 'POST', 'PATH': '/apps/upload'},
+        'DELETE_APP': {'METHOD': 'DELETE', 'PATH': '/apps/{app_id}'},
+        'UPLOAD_APP': {'METHOD': 'POST', 'PATH': '/apps'},
         'FILES_LIST': {
             'METHOD': 'GET',
             'PATH': '/apps/{app_id}/files/list?path={path}',
@@ -34,15 +36,19 @@ class Endpoint:
         },
         'LAST_DEPLOYS': {
             'METHOD': 'GET',
-            'PATH': '/apps/{app_id}/deploy/list',
+            'PATH': '/apps/{app_id}/deployments',
+        },
+        'CURRENT_WEBHOOK': {
+            'METHOD': 'GET',
+            'PATH': '/apps/{app_id}/deployments/current',
         },
         'GITHUB_INTEGRATION': {
             'METHOD': 'POST',
-            'PATH': '/apps/{app_id}/deploy/git-webhook',
+            'PATH': '/apps/{app_id}/deploy/webhook',
         },
         'CUSTOM_DOMAIN': {
             'METHOD': 'POST',
-            'PATH': '/apps/{app_id}/network/custom/{custom_domain}',
+            'PATH': '/apps/{app_id}/network/custom',
         },
         'DOMAIN_ANALYTICS': {
             'METHOD': 'GET',
