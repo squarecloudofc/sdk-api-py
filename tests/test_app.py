@@ -1,6 +1,7 @@
 import pytest
 
 import squarecloud
+from squarecloud import BackupInfo
 from squarecloud.app import Application
 from tests import GITHUB_ACCESS_TOKEN
 
@@ -44,3 +45,8 @@ class TestApp:
     )
     async def test_set_custom_domain(self, app: Application):
         assert isinstance(await app.set_custom_domain('test.com.br'), str)
+
+    async def test_get_all_backups(self, app: Application):
+        backups = await app.all_backups()
+        assert isinstance(backups, list)
+        assert isinstance(backups[0], BackupInfo)
