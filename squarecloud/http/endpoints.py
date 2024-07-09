@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 class Endpoint:
-    """Endpoint"""
+    """Class representing an API endpoint."""
 
     ENDPOINTS_V2 = {
         'USER': {'METHOD': 'GET', 'PATH': '/users/me'},
@@ -58,16 +58,10 @@ class Endpoint:
 
     def __init__(self, name: str) -> None:
         """
-        The __init__ function is called when the class is instantiated.
-        It sets up the instance of the class, and defines its attributes.
-        The __init__ function takes in a name parameter, which it uses to look
-        up an endpoint from ENDPOINTS_V2.
-        ENDPOINTS_V2 is a dictionary that contains all of our endpoints for
-        version 2 of our API.
+        Initialize an Endpoint instance with the given name.
 
-        :param self: Represent the instance of the class
-        :param name: str: Set the name of the endpoint
-        :return: None
+        :param name: The name of the endpoint.
+        :raises ValueError: If the endpoint name is invalid.
         """
         if not (endpoint := self.ENDPOINTS_V2.get(name)):
             raise ValueError(f"Invalid endpoint: '{name}'")
@@ -75,38 +69,36 @@ class Endpoint:
         self.method: str = endpoint['METHOD']
         self.path: str = endpoint['PATH']
 
-    def __eq__(self, other: Endpoint):
+    def __eq__(self, other: object) -> bool:
         """
-        The __eq__ function is used to compare two objects of the same class.
-        It returns True if they are equal, and False otherwise.
+        Compare two Endpoint instances for equality.
 
-        :param self: Refer to the current instance of the class
-        :param other: Endpoint: Check if the other object is an instance of
-        endpoint
-        :return: A boolean value
+        :param other: The other Endpoint instance to compare.
+        :return: True if both instances have the same name, otherwise False.
         """
         return isinstance(other, Endpoint) and self.name == other.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
-        The __repr__ function is used to compute the &quot;official&quot;
-        string representation of an object.
-        This is how you would make an object of the class. The goal of
+        Return the official string representation of the Endpoint instance.
 
-        :param self: Represent the instance of the class
-        :return: A string that is the representation of an object
+        :return: A string representation of the Endpoint instance.
         """
         return f"{Endpoint.__name__}('{self.name}')"
 
     @classmethod
     def user(cls) -> Endpoint:
-        """Returns an Endpoint object that represents the /user endpoint."""
+        """
+        Returns an Endpoint object that represents the
+        /user endpoint.
+        """
         return cls('USER')
 
     @classmethod
     def app_data(cls) -> Endpoint:
         """
-        Returns an Endpoint object that represents the /apps/{app_id} endpoint.
+        Returns an Endpoint object that represents the
+        /apps/{app_id} endpoint.
         """
         return cls('APP_DATA')
 
@@ -154,7 +146,7 @@ class Endpoint:
     def backup(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
-        /apps/{app_id}/backup endpoint.
+        /apps/{app_id}/backups endpoint.
         """
         return cls('BACKUP')
 
@@ -170,7 +162,7 @@ class Endpoint:
     def delete_app(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
-        /apps/{app_id}/delete endpoint.
+        /apps/{app_id} endpoint.
         """
         return cls('DELETE_APP')
 
@@ -178,7 +170,7 @@ class Endpoint:
     def upload(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
-        /apps/upload endpoint.
+        /apps endpoint.
         """
         return cls('UPLOAD_APP')
 
@@ -215,24 +207,23 @@ class Endpoint:
         return cls('FILES_DELETE')
 
     @classmethod
-    def last_deploys(cls):
+    def last_deploys(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
-        /apps/{app_id}/deploy/list endpoint.
+        /apps/{app_id}/deployments endpoint.
         """
-
         return cls('LAST_DEPLOYS')
 
     @classmethod
-    def github_integration(cls):
+    def github_integration(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
-        /apps/{app_id}/deploy/git-webhook endpoint.
+        /apps/{app_id}/deploy/webhook endpoint.
         """
         return cls('GITHUB_INTEGRATION')
 
     @classmethod
-    def domain_analytics(cls):
+    def domain_analytics(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
         /apps/{app_id}/network/analytics endpoint.
@@ -240,12 +231,36 @@ class Endpoint:
         return cls('DOMAIN_ANALYTICS')
 
     @classmethod
-    def custom_domain(cls):
+    def custom_domain(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
-        /apps/{app_id}/network/custom/{custom_domain} endpoint.
+        /apps/{app_id}/network/custom endpoint.
         """
         return cls('CUSTOM_DOMAIN')
+
+    @classmethod
+    def all_backups(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/backups endpoint.
+        """
+        return cls('ALL_BACKUPS')
+
+    @classmethod
+    def all_app_status(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/status endpoint.
+        """
+        return cls('ALL_APP_STATUS')
+
+    @classmethod
+    def current_webhook(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/deployments/current endpoint.
+        """
+        return cls('CURRENT_WEBHOOK')
 
 
 # pylint: disable=too-few-public-methods
