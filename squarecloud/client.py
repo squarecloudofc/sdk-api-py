@@ -8,9 +8,10 @@ from typing import Any, Callable, Literal, ParamSpec, TextIO, TypeVar
 from typing_extensions import deprecated
 
 from .app import Application
-from .data import (  # BackupInfo,
+from .data import (
     AppData,
     Backup,
+    BackupInfo,
     DeployData,
     DomainAnalytics,
     FileInfo,
@@ -737,3 +738,10 @@ class Client(RequestListenerManager):
             app_id=app_id,
         )
         return DomainAnalytics(**response.response)
+
+    @_notify_listener(Endpoint.all_backups())
+    async def all_app_backups(self, app_id: str, **_kwargs):
+        response: Response = await self._http.get_all_app_backups(
+            app_id=app_id
+        )
+        return [BackupInfo(**backup_data) for backup_data in response.response]
