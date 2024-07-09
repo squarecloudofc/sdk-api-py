@@ -8,7 +8,7 @@ class Endpoint:
         'USER': {'METHOD': 'GET', 'PATH': '/users/me'},
         'APP_DATA': {'METHOD': 'GET', 'PATH': '/apps/{app_id}'},
         'APP_STATUS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/status'},
-        'ALL_APP_STATUS': {'METHOD': 'GET', 'PATH': '/apps/status'},
+        'ALL_APPS_STATUS': {'METHOD': 'GET', 'PATH': '/apps/status'},
         'ALL_BACKUPS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/backups'},
         'LOGS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/logs'},
         'START': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/start'},
@@ -247,12 +247,12 @@ class Endpoint:
         return cls('ALL_BACKUPS')
 
     @classmethod
-    def all_app_status(cls) -> Endpoint:
+    def all_apps_status(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
         /apps/status endpoint.
         """
-        return cls('ALL_APP_STATUS')
+        return cls('ALL_APPS_STATUS')
 
     @classmethod
     def current_webhook(cls) -> Endpoint:
