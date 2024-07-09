@@ -23,7 +23,7 @@ def event_loop():
 @pytest.fixture(scope='session')
 def client() -> Client:
     load_dotenv()
-    return Client(os.getenv('KEY'), log_level='DEBUG')
+    return Client(os.getenv('KEY'))
 
 
 @pytest.fixture(scope='session')
