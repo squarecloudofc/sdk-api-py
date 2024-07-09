@@ -11,6 +11,7 @@ from squarecloud import errors
 from .data import (
     AppData,
     Backup,
+    BackupInfo,
     DeployData,
     DomainAnalytics,
     FileInfo,
@@ -647,3 +648,7 @@ class Application(CaptureListenerManager):
             self.id, custom_domain, avoid_listener=True
         )
         return response
+
+    async def all_backups(self):
+        backups: list[BackupInfo] = await self.client.all_app_backups(self.id)
+        return backups
