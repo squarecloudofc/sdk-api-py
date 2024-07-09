@@ -647,6 +647,15 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
+    async def get_all_app_backups(self, app_id: str) -> Response:
+        """
+        Returns a list of all backups of the specified application
+        :return:
+        """
+        route: Router = Router(Endpoint.all_backups(), app_id=app_id)
+        response: Response = await self.request(route)
+        return response
+
     @property
     def last_response(self) -> Response | None:
         """
