@@ -7,7 +7,7 @@ from squarecloud import Client, Endpoint, File
 from squarecloud.app import Application
 from squarecloud.data import (
     AppData,
-    BackupData,
+    Backup,
     DeployData,
     DomainAnalytics,
     FileInfo,
@@ -67,8 +67,8 @@ class TestRequestListeners:
     @_clear_listener_on_rerun(Endpoint.backup())
     async def test_request_backup(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.backup()
-        expected_result: BackupData | None
-        expected_response: BackupData | None = None
+        expected_result: Backup | None
+        expected_response: Backup | None = None
 
         @client.on_request(endpoint)
         async def test_listener(response: Response):
@@ -76,7 +76,7 @@ class TestRequestListeners:
             expected_response = response
 
         expected_result = await client.backup(app.id)
-        assert isinstance(expected_result, BackupData)
+        assert isinstance(expected_result, Backup)
         assert isinstance(expected_response, Response)
 
     @_clear_listener_on_rerun(Endpoint.start())

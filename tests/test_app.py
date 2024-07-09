@@ -21,7 +21,7 @@ class TestApp:
         assert isinstance(await app.logs(), squarecloud.LogsData)
 
     async def test_app_backup(self, app: Application):
-        assert isinstance(await app.backup(), squarecloud.BackupData)
+        assert isinstance(await app.backup(), squarecloud.Backup)
 
     async def test_app_github_integration(self, app: Application):
         assert isinstance(await app.github_integration(GITHUB_ACCESS_TOKEN), str)

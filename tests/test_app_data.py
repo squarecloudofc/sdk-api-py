@@ -3,7 +3,7 @@ from time import sleep
 import pytest
 
 from squarecloud.app import Application
-from squarecloud.data import BackupData, LogsData, StatusData
+from squarecloud.data import Backup, LogsData, StatusData
 
 
 @pytest.mark.asyncio(scope='session')
@@ -34,7 +34,7 @@ class Tests:
         assert cache.backup is None
 
         cache.update(backup)
-        assert isinstance(cache.backup, BackupData)
+        assert isinstance(cache.backup, Backup)
 
         cache.clear()
         assert cache.backup is None

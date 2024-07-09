@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from squarecloud import Endpoint, errors
 from squarecloud.app import Application
-from squarecloud.data import AppData, BackupData, LogsData, StatusData
+from squarecloud.data import AppData, Backup, LogsData, StatusData
 from squarecloud.listeners import Listener
 
 
@@ -35,7 +35,7 @@ class TestGeneralUse:
         @app.capture(Endpoint.backup(), force_raise=True)
         async def capture_backup(before, after):
             assert before is None
-            assert isinstance(after, BackupData)
+            assert isinstance(after, Backup)
 
         await app.backup()
 
