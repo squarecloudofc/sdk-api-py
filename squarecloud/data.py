@@ -76,6 +76,14 @@ class StatusData:
 
 
 @dataclass(frozen=True)
+class ResumedStatus:
+    id: str
+    running: bool
+    cpu: str
+    ram: str
+
+
+@dataclass(frozen=True)
 class AppData:
     """
     Application data class
@@ -316,3 +324,11 @@ class DomainAnalytics:
 
     def to_dict(self):
         return self.__dict__.copy()
+
+
+@dataclass(frozen=True)
+class DNSRecord:
+    type: str
+    name: str
+    value: str
+    status: str
