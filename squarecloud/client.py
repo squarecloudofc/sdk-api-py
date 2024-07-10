@@ -13,9 +13,11 @@ from .data import (
     Backup,
     BackupInfo,
     DeployData,
+    DNSRecord,
     DomainAnalytics,
     FileInfo,
     LogsData,
+    ResumedStatus,
     StatusData,
     UploadData,
     UserData,
@@ -740,8 +742,33 @@ class Client(RequestListenerManager):
         return DomainAnalytics(**response.response)
 
     @_notify_listener(Endpoint.all_backups())
-    async def all_app_backups(self, app_id: str, **_kwargs):
+    async def all_app_backups(
+        self, app_id: str, **_kwargs
+    ) -> list[BackupInfo]:
         response: Response = await self._http.get_all_app_backups(
             app_id=app_id
         )
         return [BackupInfo(**backup_data) for backup_data in response.response]
+
+    @_notify_listener(Endpoint.all_apps_status())
+    async def all_apps_status(self, **_kwargs) -> list[ResumedStatus]:
+        response: Response = await self._http.all_apps_status()
+        all_status = []
+        for status in response.response:
+            if status['running'] is True:
+                all_status.append(ResumedStatus(**status))
+        return all_status
+
+    @_notify_listener(Endpoint.move_file())
+    async def move_app_file(
+        self, app_id: str, origin: str, dest: str, **_kwargs
+    ) -> Response:
+        response: Response = await self._http.move_app_file(
+            app_id=app_id, origin=origin, dest=dest
+        )
+        return response
+
+    @_notify_listener(Endpoint.dns_records())
+    async def dns_records(self, app_id: str) -> list[DNSRecord]:
+        response: Response = await self._http.dns_records(app_id)
+        return [DNSRecord(**data) for data in response.response]
