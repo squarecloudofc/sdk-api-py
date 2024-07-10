@@ -8,10 +8,13 @@ from squarecloud.app import Application
 from squarecloud.data import (
     AppData,
     Backup,
+    BackupInfo,
     DeployData,
+    DNSRecord,
     DomainAnalytics,
     FileInfo,
     LogsData,
+    ResumedStatus,
     StatusData,
     UserData,
 )
@@ -25,7 +28,7 @@ def _clear_listener_on_rerun(endpoint: Endpoint):
         async def wrapper(self, client:  Client, app: Application):
             if client.get_listener(endpoint):
                 client.remove_listener(endpoint)
-            return await func(self, client=client, app=app)
+            return await func(self, client, app)
         return wrapper
     return decorator
 
@@ -298,16 +301,6 @@ class TestRequestListeners:
     )
     @_clear_listener_on_rerun(Endpoint.custom_domain())
     async def test_set_custom_domain(self, client: Client, app: Application):
-        endpoint: Endpoint = Endpoint.custom_domain()
-
-        if not client.get_request_listener(endpoint):
-            @client.on_request(endpoint)
-            async def test(response: Response):
-                assert isinstance(response, Response)
-
-        await client.set_custom_domain(
-            '6c8e9b785cce4f99984f9ca1c5470d51', 'test.com.br'
-        )
         endpoint: Endpoint = Endpoint.github_integration()
         expected_result: str | None
         expected_response: Response | None = None
@@ -322,6 +315,71 @@ class TestRequestListeners:
             GITHUB_ACCESS_TOKEN,
         )
         assert isinstance(expected_result, str)
+        assert isinstance(expected_response, Response)
+
+    @_clear_listener_on_rerun(Endpoint.all_backups())
+    async def test_all_backups(self, client: Client, app: Application):
+        endpoint: Endpoint = Endpoint.all_backups()
+        expected_result: list[BackupInfo] | None
+        expected_response: Response | None = None
+
+        @client.on_request(endpoint)
+        async def test_listener(response: Response):
+            nonlocal expected_response
+            expected_response = response
+
+        expected_result = await client.all_app_backups(app.id)
+        assert isinstance(expected_result, list)
+        assert isinstance(expected_result[0], BackupInfo)
+        assert isinstance(expected_response, Response)
+
+    @_clear_listener_on_rerun(Endpoint.all_apps_status())
+    async def test_all_apps_status(self, client: Client, app: Application):
+        endpoint: Endpoint = Endpoint.all_apps_status()
+        expected_result: list[ResumedStatus] | None
+        expected_response: Response | None = None
+
+        @client.on_request(endpoint)
+        async def test_listener(response: Response):
+            nonlocal expected_response
+            expected_response = response
+
+        expected_result = await client.all_apps_status()
+        assert isinstance(expected_result, list)
+        assert isinstance(expected_result[0], ResumedStatus)
+        assert isinstance(expected_response, Response)
+
+    @_clear_listener_on_rerun(Endpoint.move_file())
+    async def test_move_app_file(self, client: Client, app: Application):
+        endpoint: Endpoint = Endpoint.move_file()
+        expected_result: Response | None
+        expected_response: Response | None = None
+
+        @client.on_request(endpoint)
+        async def test_listener(response: Response):
+            nonlocal expected_response
+            expected_response = response
+
+        expected_result = await client.move_app_file(
+            app.id, 'test.txt', 'test_move.txt'
+        )
+        assert isinstance(expected_result, Response)
+        assert isinstance(expected_response, Response)
+
+    @_clear_listener_on_rerun(Endpoint.dns_records())
+    async def test_move_app_file(self, client: Client, app: Application):
+        endpoint: Endpoint = Endpoint.dns_records()
+        expected_result: list[DNSRecord] | None
+        expected_response: Response | None = None
+
+        @client.on_request(endpoint)
+        async def test_listener(response: Response):
+            nonlocal expected_response
+            expected_response = response
+
+        expected_result = await client.dns_records(app.id)
+        assert isinstance(expected_result, list)
+        assert isinstance(expected_result[0], DNSRecord)
         assert isinstance(expected_response, Response)
 
     @_clear_listener_on_rerun(endpoint=Endpoint.app_status())

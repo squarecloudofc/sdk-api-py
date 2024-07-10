@@ -3,6 +3,7 @@ import pytest
 import squarecloud
 from squarecloud import BackupInfo
 from squarecloud.app import Application
+from squarecloud.http import Response
 from tests import GITHUB_ACCESS_TOKEN
 
 
@@ -50,3 +51,8 @@ class TestApp:
         backups = await app.all_backups()
         assert isinstance(backups, list)
         assert isinstance(backups[0], BackupInfo)
+
+    async def test_move_file(self, app: Application):
+        response = await app.move_file('main.py', 'test.py')
+        assert isinstance(response, Response)
+        assert response.status == 'success'
