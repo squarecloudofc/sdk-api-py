@@ -656,6 +656,22 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
+    async def all_apps_status(self) -> Response:
+        route: Router = Router(Endpoint.all_apps_status())
+        response: Response = await self.request(route)
+        return response
+
+    async def move_app_file(self, app_id: str, origin: str, dest: str):
+        route: Router = Router(Endpoint.move_file(), app_id=app_id)
+        body = {'path': origin, 'to': dest}
+        response: Response = await self.request(route, json=body)
+        return response
+
+    async def dns_records(self, app_id: str) -> Response:
+        route: Router = Router(Endpoint.dns_records(), app_id=app_id)
+        response: Response = await self.request(route)
+        return response
+
     @property
     def last_response(self) -> Response | None:
         """
