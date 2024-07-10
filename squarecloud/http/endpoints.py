@@ -27,13 +27,14 @@ class Endpoint:
             'PATH': '/apps/{app_id}/files/read?path={path}',
         },
         'FILES_CREATE': {
-            'METHOD': 'POST',
-            'PATH': '/apps/{app_id}/files/create',
+            'METHOD': 'PUT',
+            'PATH': '/apps/{app_id}/files',
         },
         'FILES_DELETE': {
             'METHOD': 'DELETE',
             'PATH': '/apps/{app_id}/files/delete?path={path}',
         },
+        'MOVE_FILE': {'METHOD': 'PATCH', 'PATH': '/apps/{app_id}/files'},
         'LAST_DEPLOYS': {
             'METHOD': 'GET',
             'PATH': '/apps/{app_id}/deployments',
@@ -54,6 +55,7 @@ class Endpoint:
             'METHOD': 'GET',
             'PATH': '/apps/{app_id}/network/analytics',
         },
+        'DNSRECORDS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/network/dns'},
     }
 
     def __init__(self, name: str) -> None:
@@ -261,6 +263,22 @@ class Endpoint:
         /apps/{app_id}/deployments/current endpoint.
         """
         return cls('CURRENT_WEBHOOK')
+
+    @classmethod
+    def move_file(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/files
+        """
+        return cls('MOVE_FILE')
+
+    @classmethod
+    def dns_records(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/network/dns
+        """
+        return cls('DNSRECORDS')
 
 
 # pylint: disable=too-few-public-methods
