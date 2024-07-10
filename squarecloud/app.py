@@ -13,6 +13,7 @@ from .data import (
     Backup,
     BackupInfo,
     DeployData,
+    DNSRecord,
     DomainAnalytics,
     FileInfo,
     LogsData,
@@ -652,3 +653,10 @@ class Application(CaptureListenerManager):
     async def all_backups(self):
         backups: list[BackupInfo] = await self.client.all_app_backups(self.id)
         return backups
+
+    async def move_file(self, origin: str, dest: str):
+        return await self.client.move_app_file(self.id, origin, dest)
+
+    @_notify_listener(Endpoint.dns_records())
+    async def dns_records(self) -> list[DNSRecord]:
+        return await self.client.dns_records(self.id)
