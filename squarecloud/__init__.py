@@ -15,6 +15,8 @@ from .data import (
     StatusData,
     UploadData,
     UserData,
+    ResumedStatus,
+    DNSRecord,
 )
 from .file import File
 from .http.endpoints import Endpoint
