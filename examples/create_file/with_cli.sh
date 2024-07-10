@@ -1,1 +1,0 @@
-squarecloud app <APP-ID> file-create <FILE>

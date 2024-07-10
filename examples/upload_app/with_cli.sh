@@ -1,1 +1,0 @@
-squarecloud upload <ZIP>

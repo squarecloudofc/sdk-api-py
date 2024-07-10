@@ -1,1 +1,0 @@
-squarecloud app <APP-ID> domain-analytics

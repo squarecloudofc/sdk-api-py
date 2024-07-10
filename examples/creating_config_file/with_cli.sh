@@ -1,1 +1,0 @@
-squarecloud create-config-file
