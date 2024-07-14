@@ -23,7 +23,9 @@ class TestFileClient:
 
             assert file.type in ('file', 'directory')
 
-    async def test_read_file(self, client: Client, app: Application, app_files: list[FileInfo]):
+    async def test_read_file(
+        self, client: Client, app: Application, app_files: list[FileInfo]
+    ):
         file_read = await client.read_app_file(app.id, app_files[0].path)
         assert isinstance(file_read, BytesIO)
 
@@ -40,7 +42,9 @@ class TestFileClient:
 @pytest.mark.asyncio(scope='session')
 @pytest.mark.files
 class TestsApplication:
-    async def test_files_list(self, app: Application, app_files: list[FileInfo]):
+    async def test_files_list(
+        self, app: Application, app_files: list[FileInfo]
+    ):
         TestsApplication.TEST_FILES = await app.files_list(path='/')
 
         assert isinstance(app_files, list)
@@ -53,7 +57,9 @@ class TestsApplication:
 
             assert file.type in ('file', 'directory')
 
-    async def test_read_file(self, app: Application, app_files: list[FileInfo]):
+    async def test_read_file(
+        self, app: Application, app_files: list[FileInfo]
+    ):
         file_read = await app.read_file(app_files[0].path)
         assert isinstance(file_read, BytesIO)
 

@@ -11,7 +11,10 @@ from tests import GITHUB_ACCESS_TOKEN
 @pytest.mark.app
 class TestApp:
     async def test_magic_methods(self, app: Application):
-        assert app.__repr__() == f'<{Application.__name__} tag={app.name} id={app.id}>'
+        assert (
+            app.__repr__()
+            == f'<{Application.__name__} tag={app.name} id={app.id}>'
+        )
 
     async def test_app_data(self, app: Application):
         assert isinstance(await app.data(), squarecloud.AppData)
@@ -26,14 +29,15 @@ class TestApp:
         assert isinstance(await app.backup(), squarecloud.Backup)
 
     async def test_app_github_integration(self, app: Application):
-        assert isinstance(await app.github_integration(GITHUB_ACCESS_TOKEN), str)
+        assert isinstance(
+            await app.github_integration(GITHUB_ACCESS_TOKEN), str
+        )
 
     async def test_app_last_deploys(self, app: Application):
         assert isinstance(await app.last_deploys(), list)
 
     @pytest.mark.skipif(
-        lambda app: not app.is_website,
-        reason='application is not website'
+        lambda app: not app.is_website, reason='application is not website'
     )
     async def test_domain_analytics(self, app: Application):
         assert isinstance(
@@ -41,8 +45,7 @@ class TestApp:
         )
 
     @pytest.mark.skipif(
-        lambda app: not app.is_website,
-        reason='application is not website'
+        lambda app: not app.is_website, reason='application is not website'
     )
     async def test_set_custom_domain(self, app: Application):
         assert isinstance(await app.set_custom_domain('test.com.br'), str)

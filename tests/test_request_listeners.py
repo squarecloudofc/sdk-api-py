@@ -25,11 +25,13 @@ from . import GITHUB_ACCESS_TOKEN
 
 def _clear_listener_on_rerun(endpoint: Endpoint):
     def decorator(func):
-        async def wrapper(self, client:  Client, app: Application):
+        async def wrapper(self, client: Client, app: Application):
             if client.get_listener(endpoint):
                 client.remove_listener(endpoint)
             return await func(self, client, app)
+
         return wrapper
+
     return decorator
 
 
@@ -144,9 +146,7 @@ class TestRequestListeners:
 
     @_clear_listener_on_rerun(Endpoint.files_list())
     async def test_request_app_files_list(
-        self,
-        client: Client,
-        app: Application
+        self, client: Client, app: Application
     ):
         endpoint: Endpoint = Endpoint.files_list()
         expected_result: list[FileInfo] | None
@@ -205,9 +205,7 @@ class TestRequestListeners:
             nonlocal expected_response
             expected_response = response
 
-        expected_result = await client.delete_app_file(
-            app.id, '/test.txt'
-        )
+        expected_result = await client.delete_app_file(app.id, '/test.txt')
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
@@ -222,9 +220,7 @@ class TestRequestListeners:
             nonlocal expected_response
             expected_response = response
 
-        expected_result = await client.commit(
-            app.id, File('tests/test.txt')
-        )
+        expected_result = await client.commit(app.id, File('tests/test.txt'))
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
@@ -277,8 +273,7 @@ class TestRequestListeners:
         assert isinstance(expected_response, Response)
 
     @pytest.mark.skipif(
-        lambda app: not app.is_website,
-        reason='application is not website'
+        lambda app: not app.is_website, reason='application is not website'
     )
     @_clear_listener_on_rerun(Endpoint.domain_analytics())
     async def test_domain_analytics(self, client: Client, app: Application):
@@ -296,8 +291,7 @@ class TestRequestListeners:
         assert isinstance(expected_response, Response)
 
     @pytest.mark.skipif(
-        lambda app: not app.is_website,
-        reason='application is not website'
+        lambda app: not app.is_website, reason='application is not website'
     )
     @_clear_listener_on_rerun(Endpoint.custom_domain())
     async def test_set_custom_domain(self, client: Client, app: Application):
@@ -367,7 +361,7 @@ class TestRequestListeners:
         assert isinstance(expected_response, Response)
 
     @_clear_listener_on_rerun(Endpoint.dns_records())
-    async def test_move_app_file(self, client: Client, app: Application):
+    async def test_dns_records(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.dns_records()
         expected_result: list[DNSRecord] | None
         expected_response: Response | None = None

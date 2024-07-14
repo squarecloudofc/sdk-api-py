@@ -32,7 +32,7 @@ async def app(client: Client) -> Application:
         display_name='normal_test',
         main='main.py',
         memory=512,
-        subdomain='bhejbdhjwebjhde'
+        subdomain='bhejbdhjwebjhde',
     )
     with Status('uploading test application...', spinner='point'):
         upload_data: UploadData = await client.upload_app(

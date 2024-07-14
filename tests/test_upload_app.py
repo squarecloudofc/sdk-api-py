@@ -88,8 +88,7 @@ class TestRequestListeners:
         config = ConfigFile(
             display_name='memory_test',
             main='main.py',
-            memory=
-            256,
+            memory=256,
         ).content()
         with pytest.raises(errors.BadMemory):
             config = config.replace('256', '1')
@@ -100,9 +99,7 @@ class TestRequestListeners:
 
     async def test_missing_memory_upload(self, client: Client):
         config = ConfigFile(
-            display_name='memory_test',
-            main='main.py',
-            memory=256
+            display_name='memory_test', main='main.py', memory=256
         ).content()
         config = config.replace('256', '')
         with pytest.raises(errors.MissingMemory):

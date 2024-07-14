@@ -19,15 +19,11 @@ def create_zip(config: ConfigFile | str):
         config = config.content()
 
     with zipfile.ZipFile(buffer, 'w') as zip_file:
-        zip_file.writestr(
-           'requirements.txt', 'discord.py'
-        )
+        zip_file.writestr('requirements.txt', 'discord.py')
 
         zip_file.writestr('main.py', "print('ok')")
 
-        zip_file.writestr(
-            'squarecloud.app', config
-        )
+        zip_file.writestr('squarecloud.app', config)
 
     buffer.seek(0)
 
@@ -40,5 +36,7 @@ def _clear_listener_on_rerun(endpoint: Endpoint):
             if app.get_listener(endpoint):
                 app.remove_listener(endpoint)
             return await func(self, app=app)
+
         return wrapper
+
     return decorator
