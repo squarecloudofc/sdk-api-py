@@ -8,15 +8,15 @@ from .data import (
     Backup,
     BackupInfo,
     DeployData,
+    DNSRecord,
     DomainAnalytics,
     FileInfo,
     LogsData,
     PlanData,
+    ResumedStatus,
     StatusData,
     UploadData,
     UserData,
-    ResumedStatus,
-    DNSRecord,
 )
 from .file import File
 from .http.endpoints import Endpoint
