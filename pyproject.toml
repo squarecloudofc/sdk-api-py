@@ -12,10 +12,8 @@ packages = [{ include = 'squarecloud' }]
 [tool.poetry.dependencies]
 python = '^3.9'
 aiohttp = "3.9.5"
-click = '^8.1.6'
-rich = '^13.5.2'
 pydantic = '^2.5.2'
-python-dotenv = '^1.0.0'
+taskipy = "^1.13.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = '^7.4.3'
@@ -28,7 +26,6 @@ ruff = '^0.0.289'
 memory-profiler = '^0.61.0'
 requests = '^2.31.0'
 pytest-rerunfailures = "^13.0"
-taskipy = "^1.13.0"
 
 [build-system]
 requires = ['poetry-core']
