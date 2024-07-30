@@ -20,11 +20,11 @@ class Endpoint:
         'UPLOAD_APP': {'METHOD': 'POST', 'PATH': '/apps'},
         'FILES_LIST': {
             'METHOD': 'GET',
-            'PATH': '/apps/{app_id}/files/list?path={path}',
+            'PATH': '/apps/{app_id}/files?path={path}',
         },
         'FILES_READ': {
             'METHOD': 'GET',
-            'PATH': '/apps/{app_id}/files/read?path={path}',
+            'PATH': '/apps/{app_id}/files/content?path={path}',
         },
         'FILES_CREATE': {
             'METHOD': 'PUT',
@@ -32,14 +32,14 @@ class Endpoint:
         },
         'FILES_DELETE': {
             'METHOD': 'DELETE',
-            'PATH': '/apps/{app_id}/files/delete?path={path}',
+            'PATH': '/apps/{app_id}/files',
         },
         'MOVE_FILE': {'METHOD': 'PATCH', 'PATH': '/apps/{app_id}/files'},
         'LAST_DEPLOYS': {
             'METHOD': 'GET',
             'PATH': '/apps/{app_id}/deployments',
         },
-        'CURRENT_WEBHOOK': {
+        'CURRENT_INTEGRATION': {
             'METHOD': 'GET',
             'PATH': '/apps/{app_id}/deployments/current',
         },
@@ -257,12 +257,12 @@ class Endpoint:
         return cls('ALL_APPS_STATUS')
 
     @classmethod
-    def current_webhook(cls) -> Endpoint:
+    def current_integration(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
         /apps/{app_id}/deployments/current endpoint.
         """
-        return cls('CURRENT_WEBHOOK')
+        return cls('CURRENT_INTEGRATION')
 
     @classmethod
     def move_file(cls) -> Endpoint:
