@@ -657,6 +657,9 @@ class Application(CaptureListenerManager):
     async def move_file(self, origin: str, dest: str):
         return await self.client.move_app_file(self.id, origin, dest)
 
+    async def current_integration(self):
+        return await self.client.current_app_integration(self.id)
+
     @_notify_listener(Endpoint.dns_records())
     async def dns_records(self) -> list[DNSRecord]:
         return await self.client.dns_records(self.id)

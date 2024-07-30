@@ -528,9 +528,11 @@ class HTTPClient:
                 code is 429
         """
         route: Router = Router(
-            Endpoint.files_delete(), app_id=app_id, path=path
+            Endpoint.files_delete(),
+            app_id=app_id,
         )
-        response: Response = await self.request(route)
+        body = {'path': path}
+        response: Response = await self.request(route, json=body)
         return response
 
     async def get_app_data(self, app_id: str) -> Response:
@@ -635,6 +637,7 @@ class HTTPClient:
 
         :param app_id: The application id
         :return: A Response object
+        :rtype: Response
 
         :raises NotFoundError: Raised when the request status code is 404
         :raises BadRequestError: Raised when the request status code is 400
@@ -650,25 +653,91 @@ class HTTPClient:
     async def get_all_app_backups(self, app_id: str) -> Response:
         """
         Returns a list of all backups of the specified application
-        :return:
+
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
         """
         route: Router = Router(Endpoint.all_backups(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
     async def all_apps_status(self) -> Response:
+        """
+        Returns all applications status
+
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        """
         route: Router = Router(Endpoint.all_apps_status())
         response: Response = await self.request(route)
         return response
 
     async def move_app_file(self, app_id: str, origin: str, dest: str):
+        """
+        Make a http request to move an app file.
+
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        """
         route: Router = Router(Endpoint.move_file(), app_id=app_id)
         body = {'path': origin, 'to': dest}
         response: Response = await self.request(route, json=body)
         return response
 
     async def dns_records(self, app_id: str) -> Response:
+        """
+        Returns dns information of the specified application
+
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        """
         route: Router = Router(Endpoint.dns_records(), app_id=app_id)
+        response: Response = await self.request(route)
+        return response
+
+    async def get_app_current_integration(self, app_id: str) -> Response:
+        """
+        Returns the webhook url of the application current integration
+
+        :return: A Response object
+        :rtype: Response
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        """
+        route: Router = Router(Endpoint.current_integration(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 

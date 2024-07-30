@@ -739,6 +739,7 @@ class Client(RequestListenerManager):
         response: Response = await self._http.domain_analytics(
             app_id=app_id,
         )
+
         return DomainAnalytics(**response.response)
 
     @_notify_listener(Endpoint.all_backups())
@@ -772,3 +773,10 @@ class Client(RequestListenerManager):
     async def dns_records(self, app_id: str) -> list[DNSRecord]:
         response: Response = await self._http.dns_records(app_id)
         return [DNSRecord(**data) for data in response.response]
+
+    @_notify_listener(Endpoint.current_integration())
+    async def current_app_integration(self, app_id: str) -> str | None:
+        response: Response = await self._http.get_app_current_integration(
+            app_id
+        )
+        return response.response['webhook']
