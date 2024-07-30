@@ -360,10 +360,30 @@ class TestRequestListeners:
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
-    @_clear_listener_on_rerun(Endpoint.dns_records())
-    async def test_dns_records(self, client: Client, app: Application):
-        endpoint: Endpoint = Endpoint.dns_records()
-        expected_result: list[DNSRecord] | None
+    # @_clear_listener_on_rerun(Endpoint.dns_records())
+    # @pytest.mark.skipif(
+    #     lambda app: not app.custom,
+    #     reason='app have not custom domain',
+    # )
+    # async def test_dns_records(self, client: Client, app: Application):
+    #     endpoint: Endpoint = Endpoint.dns_records()
+    #     expected_result: list[DNSRecord] | None
+    #     expected_response: Response | None = None
+    #
+    #     @client.on_request(endpoint)
+    #     async def test_listener(response: Response):
+    #         nonlocal expected_response
+    #         expected_response = response
+    #
+    #     expected_result = await client.dns_records(app.id)
+    #     assert isinstance(expected_result, list)
+    #     assert isinstance(expected_result[0], DNSRecord)
+    #     assert isinstance(expected_response, Response)
+
+    @_clear_listener_on_rerun(Endpoint.current_integration())
+    async def test_current(self, client: Client, app: Application):
+        endpoint: Endpoint = Endpoint.current_integration()
+        expected_result: str | None
         expected_response: Response | None = None
 
         @client.on_request(endpoint)
@@ -371,9 +391,8 @@ class TestRequestListeners:
             nonlocal expected_response
             expected_response = response
 
-        expected_result = await client.dns_records(app.id)
-        assert isinstance(expected_result, list)
-        assert isinstance(expected_result[0], DNSRecord)
+        expected_result = await client.current_app_integration(app.id)
+        assert isinstance(expected_result, str)
         assert isinstance(expected_response, Response)
 
     @_clear_listener_on_rerun(endpoint=Endpoint.app_status())

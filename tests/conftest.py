@@ -1,5 +1,7 @@
 import asyncio
 import os
+from random import choice
+from string import ascii_letters
 
 import pytest
 from dotenv import load_dotenv
@@ -32,7 +34,8 @@ async def app(client: Client) -> Application:
         display_name='normal_test',
         main='main.py',
         memory=512,
-        subdomain='bhejbdhjwebjhde',
+        subdomain=''.join(choice(ascii_letters) for _ in range(8)),
+
     )
     with Status('uploading test application...', spinner='point'):
         upload_data: UploadData = await client.upload_app(

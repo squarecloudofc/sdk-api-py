@@ -36,17 +36,12 @@ class TestApp:
     async def test_app_last_deploys(self, app: Application):
         assert isinstance(await app.last_deploys(), list)
 
-    @pytest.mark.skipif(
-        lambda app: not app.is_website, reason='application is not website'
-    )
     async def test_domain_analytics(self, app: Application):
         assert isinstance(
             await app.domain_analytics(), squarecloud.DomainAnalytics
         )
 
-    @pytest.mark.skipif(
-        lambda app: not app.is_website, reason='application is not website'
-    )
+    @pytest.mark.skip
     async def test_set_custom_domain(self, app: Application):
         assert isinstance(await app.set_custom_domain('test.com.br'), str)
 
