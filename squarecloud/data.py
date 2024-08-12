@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
+from importlib.util import find_spec
 from typing import Any, Dict, Literal, Optional
 
-from pydantic import confloat, conint
-from pydantic.dataclasses import dataclass
+if find_spec('pydantic'):
+    from pydantic.dataclasses import dataclass
+else:
+    from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -67,9 +70,9 @@ class StatusData:
     running: bool
     storage: str
     network: Dict[str, Any]
-    requests: conint(ge=0)
-    uptime: conint(ge=0) | None = None
-    time: conint(ge=0) | None = None
+    requests: int
+    uptime: int | None = None
+    time: int | None = None
 
     def to_dict(self):
         return self.__dict__.copy()
@@ -107,7 +110,7 @@ class AppData:
     id: str
     name: str
     cluster: str
-    ram: confloat(ge=0)
+    ram: float
     language: Optional[str]
     cluster: str
     domain: str | None = None
@@ -128,13 +131,13 @@ class UserData:
     :ivar plan: User plan
     :ivar email: User email
 
-    :type id: conint(ge=0)
+    :type id: int
     :type name: str
     :type plan: PlanData
     :type email: str | None = None
     """
 
-    id: conint(ge=0)
+    id: int
     name: str
     plan: PlanData
     email: str | None = None
@@ -253,9 +256,9 @@ class UploadData:
     id: str
     name: str
     language: Language
-    ram: confloat(ge=0)
-    cpu: confloat(ge=0)
-    subdomain: str | None = None
+    ram: float
+    cpu: float
+    domain: str | None = None
     description: str | None = None
 
     def to_dict(self):
@@ -283,9 +286,9 @@ class FileInfo:
     app_id: str
     type: Literal['file', 'directory']
     name: str
-    lastModified: conint(ge=0) | float
+    lastModified: int | float
     path: str
-    size: confloat(ge=0.0) = 0.0
+    size: int = 0
 
     def to_dict(self):
         return self.__dict__.copy()
@@ -310,17 +313,33 @@ class AnalyticsTotal:
 
 @dataclass(frozen=True)
 class DomainAnalytics:
-    hostname: str
-    total: list[AnalyticsTotal]
-    countries: list[Any]
-    methods: list[Any]
-    referers: list[Any]
-    browsers: list[Any]
-    deviceTypes: list[Any]
-    operatingSystems: list[Any]
-    agents: list[Any]
-    hosts: list[Any]
-    paths: list[Any]
+    @dataclass(frozen=True)
+    class Analytics:
+        total: list[AnalyticsTotal]
+        countries: list[Any]
+        methods: list[Any]
+        referers: list[Any]
+        browsers: list[Any]
+        deviceTypes: list[Any]
+        operatingSystems: list[Any]
+        agents: list[Any]
+        hosts: list[Any]
+        paths: list[Any]
+
+        def to_dict(self):
+            return self.__dict__.copy()
+
+    @dataclass(frozen=True)
+    class Domain:
+        hostname: str
+        analytics: DomainAnalytics.Analytics | None
+
+    @dataclass(frozen=True)
+    class Custom:
+        analytics: DomainAnalytics.Analytics | None
+
+    domain: Domain
+    custom: Custom
 
     def to_dict(self):
         return self.__dict__.copy()

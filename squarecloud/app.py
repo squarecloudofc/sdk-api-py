@@ -4,8 +4,6 @@ from functools import wraps
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Callable
 
-from pydantic import PositiveInt
-
 from squarecloud import errors
 
 from .data import (
@@ -170,7 +168,7 @@ class Application(CaptureListenerManager):
         http: HTTPClient,
         id: str,
         name: str,
-        ram: PositiveInt,
+        ram: int,
         lang: str,
         cluster: str,
         domain: str | None,
@@ -203,7 +201,7 @@ class Application(CaptureListenerManager):
         self._domain: str | None = domain
         self._custom: str | None = custom
         self._desc: str | None = desc
-        self._ram: PositiveInt = ram
+        self._ram: int = ram
         self._lang: str = lang
         self._cluster: str = cluster
         self._client: 'Client' = client

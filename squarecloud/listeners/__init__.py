@@ -1,11 +1,13 @@
 import inspect
 import types
 from dataclasses import dataclass
+from importlib.util import find_spec
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable, Optional, Type, Union
 
-import pydantic
-from pydantic import BaseModel
+if find_spec('pydantic'):
+    import pydantic
+    from pydantic import BaseModel
 
 from .. import data, errors
 from ..http.endpoints import Endpoint
@@ -137,9 +139,9 @@ class ListenerManager:
 
     @classmethod
     def cast_to_pydantic_model(
-        cls, model: Type[BaseModel], values: dict[Any, Any]
+        cls, model: Type['BaseModel'], values: dict[Any, Any]
     ):
-        result: BaseModel | None | dict = values
+        result: 'BaseModel' | None | dict = values
         if isinstance(model, types.UnionType):
             for ty in model.__args__:
                 if ty is None:

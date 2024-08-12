@@ -1,9 +1,11 @@
 import inspect
 import logging
 import types
+from importlib.util import find_spec
 from typing import Any
 
-import pydantic
+if using_pydantic := find_spec('pydantic'):
+    import pydantic
 
 from ..http import Endpoint, Response
 from . import ListenerManager
@@ -37,6 +39,7 @@ class RequestListenerManager(ListenerManager):
         :param response: Response: Get the response from the endpoint
         :return: The result of the call function
         """
+        global using_pydantic
 
         def filter_annotations(annotations: list[Any]) -> Any:
             for item in annotations:
@@ -62,6 +65,7 @@ class RequestListenerManager(ListenerManager):
             call_extra_param is not None
             and annotation is not None
             and annotation != call_extra_param.empty
+            and using_pydantic
         ):
             annotation: Any = call_extra_param.annotation
             cast_result = self.cast_to_pydantic_model(annotation, extra)

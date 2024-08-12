@@ -1,7 +1,11 @@
+import sys
+from importlib.util import find_spec
 from io import BytesIO
 
 import pytest
-from pydantic import BaseModel
+
+if using_pydantic := bool(find_spec('pydantic')):
+    from pydantic import BaseModel
 
 from squarecloud import Client, Endpoint, File
 from squarecloud.app import Application
@@ -395,6 +399,9 @@ class TestRequestListeners:
         assert isinstance(expected_result, str)
         assert isinstance(expected_response, Response)
 
+    @pytest.mark.skipif(
+        'not using_pydantic', reason='pydantic not installed'
+    )
     @_clear_listener_on_rerun(endpoint=Endpoint.app_status())
     async def test_pydantic_cast(self, client: Client, app: Application):
         class Person(BaseModel):

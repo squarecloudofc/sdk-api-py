@@ -1,13 +1,15 @@
 import inspect
 import logging
 import types
+from importlib.util import find_spec
 from typing import Any, Union
-
-import pydantic
 
 from .. import data, errors
 from ..http import Endpoint
 from . import Listener, ListenerManager
+
+if find_spec('pydantic'):
+    import pydantic
 
 ListenerDataTypes = Union[
     data.AppData,
