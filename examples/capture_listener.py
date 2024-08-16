@@ -1,3 +1,4 @@
+import squarecloud
 import squarecloud as square
 from squarecloud import Endpoint
 
@@ -8,7 +9,7 @@ async def example():
     app = await client.app('application_id')
 
     @app.capture(endpoint=Endpoint.logs())
-    async def on_logs_request(before, after):
+    async def on_logs_request(before: squarecloud.E, after):
         if after != before:
             print(f'New logs!!! {after}')
 
