@@ -21,4 +21,4 @@ from .data import (
 from .file import File
 from .http.endpoints import Endpoint
 
-__version__ = '3.6.2'
+__version__ = '3.7.0'
