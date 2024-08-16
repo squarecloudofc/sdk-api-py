@@ -7,6 +7,7 @@ from typing import Any, Callable, Literal, ParamSpec, TextIO, TypeVar
 
 from typing_extensions import deprecated
 
+from ._internal.decorators import validate
 from .app import Application
 from .data import (
     AppData,
@@ -253,6 +254,7 @@ class Client(RequestListenerManager):
 
         return logs_data
 
+    @validate
     @_notify_listener(Endpoint.app_status())
     async def app_status(self, app_id: str, **_kwargs) -> StatusData:
         """
@@ -274,6 +276,7 @@ class Client(RequestListenerManager):
         payload: dict[str, Any] = response.response
         return StatusData(**payload)
 
+    @validate
     @_notify_listener(Endpoint.start())
     async def start_app(self, app_id: str, **_kwargs) -> Response:
         """
@@ -293,6 +296,7 @@ class Client(RequestListenerManager):
         """
         return await self._http.start_application(app_id)
 
+    @validate
     @_notify_listener(Endpoint.stop())
     async def stop_app(self, app_id: str, **_kwargs) -> Response:
         """
@@ -312,6 +316,7 @@ class Client(RequestListenerManager):
         """
         return await self._http.stop_application(app_id)
 
+    @validate
     @_notify_listener(Endpoint.restart())
     async def restart_app(self, app_id: str, **_kwargs) -> Response:
         """
@@ -331,6 +336,7 @@ class Client(RequestListenerManager):
         """
         return await self._http.restart_application(app_id)
 
+    @validate
     @_notify_listener(Endpoint.backup())
     async def backup(self, app_id: str, **_kwargs) -> Backup:
         """
@@ -354,6 +360,7 @@ class Client(RequestListenerManager):
 
     # async def app_backups(self) -> list[BackupInfo]:
 
+    @validate
     @_notify_listener(Endpoint.delete_app())
     async def delete_app(self, app_id: str, **_kwargs) -> Response:
         """
@@ -373,6 +380,7 @@ class Client(RequestListenerManager):
         """
         return await self._http.delete_application(app_id)
 
+    @validate
     @_notify_listener(Endpoint.commit())
     async def commit(self, app_id: str, file: File, **_kwargs) -> Response:
         """
@@ -393,6 +401,7 @@ class Client(RequestListenerManager):
         """
         return await self._http.commit(app_id, file)
 
+    @validate
     @_notify_listener(Endpoint.user())
     async def app(self, app_id: str, **_kwargs) -> Application:
         """
@@ -454,6 +463,7 @@ class Client(RequestListenerManager):
             apps.append(Application(client=self, http=self._http, **data))
         return apps
 
+    @validate
     @_notify_listener(Endpoint.upload())
     async def upload_app(self, file: File, **_kwargs) -> UploadData:
         """
@@ -508,6 +518,7 @@ class Client(RequestListenerManager):
         payload: dict[str, Any] = response.response
         return UploadData(**payload)
 
+    @validate
     @_notify_listener(Endpoint.files_list())
     async def app_files_list(
         self, app_id: str, path: str, **_kwargs
@@ -538,6 +549,7 @@ class Client(RequestListenerManager):
             for data in response.response
         ]
 
+    @validate
     @_notify_listener(Endpoint.files_read())
     async def read_app_file(
         self, app_id: str, path: str, **_kwargs
@@ -563,6 +575,7 @@ class Client(RequestListenerManager):
         if response.response:
             return BytesIO(bytes(response.response.get('data')))
 
+    @validate
     @_notify_listener(Endpoint.files_create())
     async def create_app_file(
         self, app_id: str, file: File, path: str, **_kwargs
@@ -597,6 +610,7 @@ class Client(RequestListenerManager):
 
         return response
 
+    @validate
     @_notify_listener(Endpoint.files_delete())
     async def delete_app_file(
         self, app_id: str, path: str, **_kwargs
@@ -620,6 +634,7 @@ class Client(RequestListenerManager):
         """
         return await self._http.file_delete(app_id, path)
 
+    @validate
     @_notify_listener(Endpoint.app_data())
     async def app_data(self, app_id: str, **_kwargs) -> AppData:
         """
@@ -640,6 +655,7 @@ class Client(RequestListenerManager):
         response: Response = await self._http.get_app_data(app_id)
         return AppData(**response.response)
 
+    @validate
     @_notify_listener(Endpoint.last_deploys())
     async def last_deploys(
         self, app_id: str, **_kwargs
@@ -664,6 +680,7 @@ class Client(RequestListenerManager):
         data = response.response
         return [[DeployData(**deploy) for deploy in _] for _ in data]
 
+    @validate
     @_notify_listener(Endpoint.github_integration())
     async def github_integration(
         self, app_id: str, access_token: str, **_kwargs
@@ -692,6 +709,7 @@ class Client(RequestListenerManager):
         data = response.response
         return data.get('webhook')
 
+    @validate
     @_notify_listener(Endpoint.custom_domain())
     async def set_custom_domain(
         self, app_id: str, custom_domain: str, **_kwargs
@@ -717,6 +735,7 @@ class Client(RequestListenerManager):
             app_id=app_id, custom_domain=custom_domain
         )
 
+    @validate
     @_notify_listener(Endpoint.domain_analytics())
     async def domain_analytics(
         self, app_id: str, **_kwargs
@@ -742,6 +761,7 @@ class Client(RequestListenerManager):
 
         return DomainAnalytics(**response.response)
 
+    @validate
     @_notify_listener(Endpoint.all_backups())
     async def all_app_backups(
         self, app_id: str, **_kwargs
@@ -760,6 +780,7 @@ class Client(RequestListenerManager):
                 all_status.append(ResumedStatus(**status))
         return all_status
 
+    @validate
     @_notify_listener(Endpoint.move_file())
     async def move_app_file(
         self, app_id: str, origin: str, dest: str, **_kwargs
@@ -769,11 +790,13 @@ class Client(RequestListenerManager):
         )
         return response
 
+    @validate
     @_notify_listener(Endpoint.dns_records())
     async def dns_records(self, app_id: str) -> list[DNSRecord]:
         response: Response = await self._http.dns_records(app_id)
         return [DNSRecord(**data) for data in response.response]
 
+    @validate
     @_notify_listener(Endpoint.current_integration())
     async def current_app_integration(self, app_id: str) -> str | None:
         response: Response = await self._http.get_app_current_integration(

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from squarecloud import errors
 
+from ._internal.decorators import validate
 from .data import (
     AppData,
     Backup,
@@ -526,6 +527,7 @@ class Application(CaptureListenerManager):
         )
         return response
 
+    @validate
     async def commit(self, file: File) -> Response:
         """
         The commit function is used to commit the application.
@@ -541,6 +543,7 @@ class Application(CaptureListenerManager):
         )
         return response
 
+    @validate
     async def files_list(self, path: str) -> list[FileInfo]:
         """
         The files_list function returns a list of files and folders in the
@@ -558,6 +561,7 @@ class Application(CaptureListenerManager):
         )
         return response
 
+    @validate
     async def read_file(self, path: str) -> BytesIO:
         """
         The read_file function reads the contents of a file from an app.
@@ -572,6 +576,7 @@ class Application(CaptureListenerManager):
         )
         return response
 
+    @validate
     async def create_file(self, file: File, path: str) -> Response:
 
         """
@@ -591,6 +596,7 @@ class Application(CaptureListenerManager):
         )
         return response
 
+    @validate
     async def delete_file(self, path: str) -> Response:
         """
         The delete_file function deletes a file from the app.
@@ -620,6 +626,7 @@ class Application(CaptureListenerManager):
         )
         return response
 
+    @validate
     async def github_integration(self, access_token: str) -> str:
         """
         The create_github_integration function returns a webhook to integrate
@@ -642,6 +649,7 @@ class Application(CaptureListenerManager):
         )
         return analytics
 
+    @validate
     async def set_custom_domain(self, custom_domain: str):
         response: Response = await self.client.set_custom_domain(
             self.id, custom_domain, avoid_listener=True
@@ -652,6 +660,7 @@ class Application(CaptureListenerManager):
         backups: list[BackupInfo] = await self.client.all_app_backups(self.id)
         return backups
 
+    @validate
     async def move_file(self, origin: str, dest: str):
         return await self.client.move_app_file(self.id, origin, dest)
 

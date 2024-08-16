@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from importlib.util import find_spec
 from typing import Any, Dict, Literal, Optional
 
-if find_spec('pydantic'):
+from ._internal.constants import USING_PYDANTIC
+
+if USING_PYDANTIC:
     from pydantic.dataclasses import dataclass
 else:
     from dataclasses import dataclass

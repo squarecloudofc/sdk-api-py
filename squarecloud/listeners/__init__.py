@@ -1,11 +1,12 @@
 import inspect
 import types
 from dataclasses import dataclass
-from importlib.util import find_spec
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable, Optional, Type, Union
 
-if find_spec('pydantic'):
+from .._internal.constants import USING_PYDANTIC
+
+if USING_PYDANTIC:
     import pydantic
     from pydantic import BaseModel
 

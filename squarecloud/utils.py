@@ -1,5 +1,7 @@
 from typing import Any, Literal
 
+from squarecloud._internal.decorators import validate
+
 
 class ConfigFile:
     """
@@ -8,6 +10,7 @@ class ConfigFile:
     https://docs.squarecloud.app/articles/how-to-create-your-squarecloud-configuration-file
     """
 
+    @validate
     def __init__(
         self,
         display_name: str,

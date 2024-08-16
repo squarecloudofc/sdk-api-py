@@ -216,6 +216,7 @@ class HTTPClient:
                         log_level = logging.ERROR
                         error = TooManyRequests
                     case _:
+                        log_level = logging.ERROR
                         error = RequestError
 
                 if _ := _get_error(code):

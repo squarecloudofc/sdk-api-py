@@ -1,14 +1,14 @@
 import inspect
 import logging
 import types
-from importlib.util import find_spec
 from typing import Any, Union
 
 from .. import data, errors
+from .._internal.constants import USING_PYDANTIC
 from ..http import Endpoint
 from . import Listener, ListenerManager
 
-if find_spec('pydantic'):
+if USING_PYDANTIC:
     import pydantic
 
 ListenerDataTypes = Union[
