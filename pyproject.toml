@@ -14,6 +14,7 @@ python = '^3.9'
 aiohttp = "3.10.2"
 taskipy = "^1.13.0"
 pydantic = {version = "^2.8.2", optional = true}
+typing-extensions = "^4.12.2"
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
