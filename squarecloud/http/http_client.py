@@ -232,6 +232,12 @@ class HTTPClient:
                     )
                 return response
 
+    @classmethod
+    async def fetch_backup_content(cls, url: str) -> bytes:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                return await response.read()
+
     async def fetch_user_info(self) -> Response:
         """
         Fetches user information and returns the response object

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import os
+import zipfile
 from datetime import datetime
 from typing import Any, Dict, Literal, Optional
 
 from ._internal.constants import USING_PYDANTIC
+from .http import HTTPClient
 
 if USING_PYDANTIC:
     from pydantic.dataclasses import dataclass
@@ -213,7 +216,6 @@ class BackupInfo:
     key: str
 
 
-@dataclass(frozen=True)
 class Backup:
     """
     Backup data class
@@ -225,11 +227,21 @@ class Backup:
     :type key: str
     """
 
-    url: str
-    key: str
+    __slots__ = ('url', 'key')
+
+    def __init__(self, url: str, key: str):
+        self.url = url
+        self.key = key
 
     def to_dict(self):
-        return self.__dict__.copy()
+        return {'url': self.url, 'key': self.key}
+
+    async def download(self, path: str = './') -> zipfile.ZipFile:
+        file_name = os.path.basename(self.url.split('?')[0])
+        content = await HTTPClient.fetch_backup_content(self.url)
+        with zipfile.ZipFile(f'{path}/{file_name}', 'w') as zip_file:
+            zip_file.writestr(f'{path}/{file_name}', content)
+            return zip_file
 
 
 @dataclass(frozen=True)
@@ -279,15 +291,15 @@ class FileInfo:
 
     :type type: Literal['file', 'directory']
     :type name: str
-    :type size: confloat(ge=0)
-    :type lastModified: conint(ge=0) | float
+    :type size: int
+    :type lastModified: int | float | None
     :type path: str
     """
 
     app_id: str
     type: Literal['file', 'directory']
     name: str
-    lastModified: int | float
+    lastModified: int | float | None
     path: str
     size: int = 0
 
