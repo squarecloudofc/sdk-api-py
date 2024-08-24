@@ -1,3 +1,5 @@
+from zipfile import ZipFile
+
 import pytest
 
 import squarecloud
@@ -28,6 +30,11 @@ class TestApp:
     async def test_app_backup(self, app: Application):
         assert isinstance(await app.backup(), squarecloud.Backup)
 
+    async def test_download_backup(self, app: Application):
+        backup = await app.backup()
+        zip_file = await backup.download()
+        assert isinstance(zip_file, ZipFile)
+
     async def test_app_github_integration(self, app: Application):
         assert isinstance(
             await app.github_integration(GITHUB_ACCESS_TOKEN), str
@@ -40,7 +47,6 @@ class TestApp:
         assert isinstance(
             await app.domain_analytics(), squarecloud.DomainAnalytics
         )
-
     @pytest.mark.skip
     async def test_set_custom_domain(self, app: Application):
         assert isinstance(await app.set_custom_domain('test.com.br'), str)
