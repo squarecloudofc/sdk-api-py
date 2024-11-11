@@ -289,7 +289,7 @@ class Router:
     BASE_V2: str = 'https://api.squarecloud.app/v2'
 
     # noinspection StrFormat
-    def __init__(self, endpoint: Endpoint, **params) -> None:
+    def __init__(self, endpoint: Endpoint, **params: str | int) -> None:
         """
         The __init__ function is called when the class is instantiated.
         It sets up the instance of the class, and it's where you define your
@@ -309,7 +309,7 @@ class Router:
             url.format(params)
         self.url = url
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         The __repr__ function is used to generate a string representation of
         an object.

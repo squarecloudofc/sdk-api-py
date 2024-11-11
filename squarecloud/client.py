@@ -1,4 +1,5 @@
 """This module is a wrapper for using the SquareCloud API"""
+
 from __future__ import annotations
 
 from functools import wraps
@@ -29,7 +30,7 @@ from .http import HTTPClient, Response
 from .http.endpoints import Endpoint
 from .listeners import Listener, ListenerConfig
 from .listeners.request_listener import RequestListenerManager
-from .logging import logger
+from .logger import logger
 
 P = ParamSpec('P')
 R = TypeVar('R')
@@ -138,7 +139,7 @@ class Client(RequestListenerManager):
         """
         return self._api_key
 
-    def on_request(self, endpoint: Endpoint, **kwargs):
+    def on_request(self, endpoint: Endpoint, **kwargs) -> Callable:
         """
         The on_request function is a decorator that allows you to register a
         function as an endpoint listener.
@@ -148,7 +149,7 @@ class Client(RequestListenerManager):
         :return: A wrapper function
         """
 
-        def wrapper(func: Callable):
+        def wrapper(func: Callable) -> None:
             """
             The wrapper function is a decorator that wraps the function passed
             to it.
@@ -178,7 +179,7 @@ class Client(RequestListenerManager):
         return wrapper
 
     @staticmethod
-    def _notify_listener(endpoint: Endpoint):
+    def _notify_listener(endpoint: Endpoint) -> Callable:
         """
         The _notify_listener function is a decorator that call a listener after
         the decorated coroutine is called
@@ -455,11 +456,10 @@ class Client(RequestListenerManager):
         response: Response = await self._http.fetch_user_info()
         payload = response.response
         apps_data: list = payload['applications']
+        # todo: terminar aqui
         apps: list[Application] = []
         for data in apps_data:
-            data['language'] = data.pop('lang')
             data = AppData(**data).to_dict()
-            data['lang'] = data.pop('language')
             apps.append(Application(client=self, http=self._http, **data))
         return apps
 
@@ -574,6 +574,7 @@ class Client(RequestListenerManager):
         response: Response = await self._http.read_app_file(app_id, path)
         if response.response:
             return BytesIO(bytes(response.response.get('data')))
+        return None
 
     @validate
     @_notify_listener(Endpoint.files_create())

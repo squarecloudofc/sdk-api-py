@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import zipfile
 from datetime import datetime
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from ._internal.constants import USING_PYDANTIC
 from .http import HTTPClient
@@ -13,9 +13,16 @@ if USING_PYDANTIC:
 else:
     from dataclasses import dataclass
 
+from abc import ABC
+
 
 @dataclass(frozen=True)
-class PlanData:
+class BaseDataClass(ABC):
+    def to_dict(self) -> dict[str, str | dict[str, Any]]:
+        return self.__dict__.copy()
+
+
+class PlanData(BaseDataClass):
     """
     Plan data class
 
@@ -29,21 +36,16 @@ class PlanData:
     """
 
     name: str
-    memory: Dict[str, Any]
-    duration: Dict[str, Any] | None
-
-    def to_dict(self):
-        return self.__dict__.copy()
+    memory: dict[str, Any]
+    duration: dict[str, Any] | None
 
 
-@dataclass(frozen=True)
-class Language:
+class Language(BaseDataClass):
     name: str
     version: str
 
 
-@dataclass(frozen=True)
-class StatusData:
+class StatusData(BaseDataClass):
     """
     Application status class
 
@@ -73,25 +75,20 @@ class StatusData:
     status: str
     running: bool
     storage: str
-    network: Dict[str, Any]
+    network: dict[str, Any]
     requests: int
     uptime: int | None = None
     time: int | None = None
 
-    def to_dict(self):
-        return self.__dict__.copy()
 
-
-@dataclass(frozen=True)
-class ResumedStatus:
+class ResumedStatus(BaseDataClass):
     id: str
     running: bool
     cpu: str
     ram: str
 
 
-@dataclass(frozen=True)
-class AppData:
+class AppData(BaseDataClass):
     """
     Application data class
 
@@ -115,18 +112,14 @@ class AppData:
     name: str
     cluster: str
     ram: float
-    language: Optional[str]
+    language: str | None
     cluster: str
     domain: str | None = None
     custom: str | None = None
     desc: str | None = None
 
-    def to_dict(self):
-        return self.__dict__.copy()
 
-
-@dataclass(frozen=True)
-class UserData:
+class UserData(BaseDataClass):
     """
     User data class
 
@@ -146,12 +139,8 @@ class UserData:
     plan: PlanData
     email: str | None = None
 
-    def to_dict(self):
-        return self.__dict__.copy()
 
-
-@dataclass(frozen=True)
-class LogsData:
+class LogsData(BaseDataClass):
     """Logs data class
 
     :ivar logs: A string containing logs of your application
@@ -161,7 +150,7 @@ class LogsData:
 
     logs: str = ''
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         The __eq__ function is a special function that allows us to compare
         two objects of the same class.
@@ -204,12 +193,8 @@ class LogsData:
         """
         return isinstance(other, LogsData) and self.logs == other.logs
 
-    def to_dict(self):
-        return self.__dict__.copy()
 
-
-@dataclass(frozen=True)
-class BackupInfo:
+class BackupInfo(BaseDataClass):
     name: str
     size: int
     modified: datetime
@@ -229,11 +214,11 @@ class Backup:
 
     __slots__ = ('url', 'key')
 
-    def __init__(self, url: str, key: str):
+    def __init__(self, url: str, key: str) -> None:
         self.url = url
         self.key = key
 
-    def to_dict(self):
+    def to_dict(self) -> None:
         return {'url': self.url, 'key': self.key}
 
     async def download(self, path: str = './') -> zipfile.ZipFile:
@@ -244,8 +229,7 @@ class Backup:
             return zip_file
 
 
-@dataclass(frozen=True)
-class UploadData:
+class UploadData(BaseDataClass):
     """
     Upload data class
 
@@ -274,12 +258,8 @@ class UploadData:
     domain: str | None = None
     description: str | None = None
 
-    def to_dict(self):
-        return self.__dict__.copy()
 
-
-@dataclass(frozen=True)
-class FileInfo:
+class FileInfo(BaseDataClass):
     """
     File information
 
@@ -299,67 +279,48 @@ class FileInfo:
     app_id: str
     type: Literal['file', 'directory']
     name: str
-    lastModified: int | float | None
+    lastModified: int | float | None  # noqa: N815: Ignore mixedCase naming convention
     path: str
     size: int = 0
 
-    def to_dict(self):
-        return self.__dict__.copy()
 
-
-@dataclass(frozen=True)
-class DeployData:
+class DeployData(BaseDataClass):
     id: str
     state: str
     date: datetime
 
-    def to_dict(self):
-        return self.__dict__.copy()
 
-
-@dataclass(frozen=True)
-class AnalyticsTotal:
+class AnalyticsTotal(BaseDataClass):
     visits: int
     megabytes: float
     bytes: int
 
 
-@dataclass(frozen=True)
-class DomainAnalytics:
-    @dataclass(frozen=True)
-    class Analytics:
+class DomainAnalytics(BaseDataClass):
+    class Analytics(BaseDataClass):
         total: list[AnalyticsTotal]
         countries: list[Any]
         methods: list[Any]
         referers: list[Any]
         browsers: list[Any]
-        deviceTypes: list[Any]
-        operatingSystems: list[Any]
+        deviceTypes: list[Any]  # noqa: N815: Ignore mixedCase naming convention
+        operatingSystems: list[Any]  # noqa: N815: Ignore mixedCase naming convention
         agents: list[Any]
         hosts: list[Any]
         paths: list[Any]
 
-        def to_dict(self):
-            return self.__dict__.copy()
-
-    @dataclass(frozen=True)
-    class Domain:
+    class Domain(BaseDataClass):
         hostname: str
         analytics: DomainAnalytics.Analytics | None
 
-    @dataclass(frozen=True)
-    class Custom:
+    class Custom(BaseDataClass):
         analytics: DomainAnalytics.Analytics | None
 
     domain: Domain
     custom: Custom
 
-    def to_dict(self):
-        return self.__dict__.copy()
 
-
-@dataclass(frozen=True)
-class DNSRecord:
+class DNSRecord(BaseDataClass):
     type: str
     name: str
     value: str

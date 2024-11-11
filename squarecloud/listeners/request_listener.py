@@ -15,7 +15,7 @@ from . import ListenerManager
 class RequestListenerManager(ListenerManager):
     """CaptureListenerManager"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         The __init__ function is called when the class is instantiated.
         It sets up the instance variables that will be used by other methods
@@ -28,7 +28,7 @@ class RequestListenerManager(ListenerManager):
         super().__init__()
 
     async def notify(
-        self, endpoint: Endpoint, response: Response, extra: Any
+        self, endpoint: Endpoint, response: Response, extra_value: Any
     ) -> Any:
         """
         The on_request function is called when a request has been made to the
@@ -47,7 +47,7 @@ class RequestListenerManager(ListenerManager):
                     yield item
 
         if not (listener := self.get_listener(endpoint)):
-            return
+            return None
         logger = logging.getLogger('squarecloud')
         kwargs: dict[str, Any] = {}
         call_params = listener.callback_params
@@ -57,26 +57,30 @@ class RequestListenerManager(ListenerManager):
         if 'response' in call_params.keys():
             kwargs['response'] = response
         if 'extra' in call_params.keys():
-            kwargs['extra'] = extra
+            kwargs['extra_value'] = extra_value
 
-        if extra:
-            annotation: Any = call_extra_param.annotation
+        if call_extra_param:
+            annotation = call_extra_param.annotation
         if (
             call_extra_param is not None
             and annotation is not None
             and annotation != call_extra_param.empty
             and USING_PYDANTIC
         ):
-            annotation: Any = call_extra_param.annotation
-            cast_result = self.cast_to_pydantic_model(annotation, extra)
+            annotation = call_extra_param.annotation
+            cast_result = self.cast_to_pydantic_model(annotation, extra_value)
             if not cast_result:
                 msg: str = (
                     f'a "{annotation.__name__}"'
                     if not isinstance(annotation, types.UnionType)
-                    else [
-                        x.__name__
-                        for x in filter_annotations(annotation.__args__)
-                    ]
+                    else str(
+                        [
+                            x.__name__
+                            for x in filter_annotations(
+                                list(annotation.__args__)
+                            )
+                        ]
+                    )
                 )
                 logger.warning(
                     'Failed on cast extra argument in '
@@ -85,7 +89,7 @@ class RequestListenerManager(ListenerManager):
                     f'The listener has been skipped.',
                     extra={'type': 'listener'},
                 )
-                return
+                return None
             kwargs['extra'] = cast_result
         is_coro: bool = inspect.iscoroutinefunction(listener.callback)
         try:

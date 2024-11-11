@@ -22,7 +22,7 @@ ListenerDataTypes = Union[
 class CaptureListenerManager(ListenerManager):
     """CaptureListenerManager"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         The __init__ function is called when the class is instantiated.
         It sets up the instance variables that will be used by other methods
@@ -62,8 +62,8 @@ class CaptureListenerManager(ListenerManager):
         endpoint: Endpoint,
         before: ListenerDataTypes | None,
         after: ListenerDataTypes,
-        extra: Any = None,
-    ) -> Any | Exception:
+        extra_value: Any = None,
+    ) -> Any:
         """
         The on_capture function is called when a capture event occurs.
 
@@ -81,43 +81,48 @@ class CaptureListenerManager(ListenerManager):
                     yield item
 
         if not (listener := self.get_listener(endpoint)):
-            return
+            return None
         logger = logging.getLogger('squarecloud')
         kwargs: dict[str, Any] = {}
         call_params = listener.callback_params
         call_extra_param: inspect.Parameter | None = call_params.get('extra')
-        extra_ann: Any | None = None
+        extra_annotation: Any | None = None
 
         if 'before' in call_params.keys():
             kwargs['before'] = before
         if 'after' in call_params.keys():
             kwargs['after'] = after
         if 'extra' in call_params.keys():
-            kwargs['extra'] = extra
+            kwargs['extra'] = extra_value
         info_msg: str = (
             f'ENDPOINT: {listener.endpoint}\n'
             f'APP-TAG: {listener.app.name}\n'
             f'APP-ID: {listener.app.id}'
         )
-        if extra:
-            info_msg += f'\nEXTRA: {extra}'
-            extra_ann: Any = call_extra_param.annotation
+        if call_extra_param:
+            info_msg += f'\nEXTRA: {extra_value}'
+            extra_annotation = call_extra_param.annotation
 
         if (
             call_extra_param is not None
-            and extra_ann is not None
-            and extra_ann != call_extra_param.empty
+            and extra_annotation is not None
+            and extra_annotation != call_extra_param.empty
         ):
-
-            cast_result = self.cast_to_pydantic_model(extra_ann, extra)
+            cast_result = self.cast_to_pydantic_model(
+                extra_annotation, extra_value
+            )
             if not cast_result:
                 msg: str = (
-                    f'a "{extra_ann.__name__}"'
-                    if not isinstance(extra_ann, types.UnionType)
-                    else [
-                        x.__name__
-                        for x in filter_annotations(extra_ann.__args__)
-                    ]
+                    f'a "{extra_annotation.__name__}"'
+                    if not isinstance(extra_annotation, types.UnionType)
+                    else str(
+                        [
+                            x.__name__
+                            for x in filter_annotations(
+                                list(extra_annotation.__args__)
+                            )
+                        ]
+                    )
                 )
                 logger.warning(
                     'Failed on cast extra argument in '
@@ -127,7 +132,7 @@ class CaptureListenerManager(ListenerManager):
                     f'The listener has been skipped.',
                     extra={'type': 'listener'},
                 )
-                return
+                return None
             kwargs['extra'] = cast_result
 
         is_coro: bool = inspect.iscoroutinefunction(listener.callback)

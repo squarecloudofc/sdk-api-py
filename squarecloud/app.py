@@ -94,7 +94,7 @@ class AppCache:
         """
         return self._app_data
 
-    def clear(self):
+    def clear(self) -> None:
         """
         The clear method is used to clear the status, logs, backup and data
         variables.
@@ -107,7 +107,7 @@ class AppCache:
         self._backup = None
         self._app_data = None
 
-    def update(self, *args):
+    def update(self, *args) -> None:
         """
         The update method is used to update the data of a given instance.
         It takes in an arbitrary number of arguments, and updates the
@@ -165,7 +165,7 @@ class Application(CaptureListenerManager):
 
     def __init__(
         self,
-        client: 'Client',
+        client: Client,
         http: HTTPClient,
         id: str,
         name: str,
@@ -388,7 +388,7 @@ class Application(CaptureListenerManager):
         """
 
         def wrapper(
-            call: Callable[[Endpoint, Endpoint], Any]
+            call: Callable[[Endpoint, Endpoint], Any],
         ) -> Callable[[Endpoint, Endpoint], Any]:
             """
             The wrapper function is a decorator that takes in the endpoint as
@@ -578,7 +578,6 @@ class Application(CaptureListenerManager):
 
     @validate
     async def create_file(self, file: File, path: str) -> Response:
-
         """
         The create_file function creates a file in the specified path.
 
