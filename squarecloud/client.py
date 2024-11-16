@@ -202,7 +202,7 @@ class Client(RequestListenerManager):
                 await self.notify(
                     endpoint=endpoint,
                     response=response,
-                    extra=kwargs.get('extra'),
+                    extra_value=kwargs.get('extra'),
                 )
                 return result
 
@@ -359,8 +359,6 @@ class Client(RequestListenerManager):
         payload: dict[str, Any] = response.response
         return Backup(**payload)
 
-    # async def app_backups(self) -> list[BackupInfo]:
-
     @validate
     @_notify_listener(Endpoint.delete_app())
     async def delete_app(self, app_id: str, **_kwargs) -> Response:
@@ -432,9 +430,7 @@ class Client(RequestListenerManager):
         if not app_data:
             raise ApplicationNotFound(app_id=app_id)
         app_data = app_data.pop()
-        app_data['language'] = app_data.pop('lang')
         app_data = AppData(**app_data).to_dict()
-        app_data['lang'] = app_data.pop('language')
         return Application(client=self, http=self._http, **app_data)
 
     @_notify_listener(Endpoint.user())
@@ -456,7 +452,6 @@ class Client(RequestListenerManager):
         response: Response = await self._http.fetch_user_info()
         payload = response.response
         apps_data: list = payload['applications']
-        # todo: terminar aqui
         apps: list[Application] = []
         for data in apps_data:
             data = AppData(**data).to_dict()
@@ -634,27 +629,6 @@ class Client(RequestListenerManager):
                 code is 429
         """
         return await self._http.file_delete(app_id, path)
-
-    @validate
-    @_notify_listener(Endpoint.app_data())
-    async def app_data(self, app_id: str, **_kwargs) -> AppData:
-        """
-        The app_data method is used to get application data.
-
-        :param app_id: Specify the application by id
-        :param _kwargs: Keyword arguments
-        :return: An AppData object
-        :rtype: AppData
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.get_app_data(app_id)
-        return AppData(**response.response)
 
     @validate
     @_notify_listener(Endpoint.last_deploys())
