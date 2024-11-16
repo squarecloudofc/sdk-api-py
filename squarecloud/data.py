@@ -13,11 +13,14 @@ if USING_PYDANTIC:
 else:
     from dataclasses import dataclass
 
-from abc import ABC
+
+class DataClasMeta(type):
+    def __new__(cls, name: str, bases: tuple, dct: dict[str, Any]) -> type:
+        new_class = super().__new__(cls, name, bases, dct)
+        return dataclass(frozen=True)(new_class)
 
 
-@dataclass(frozen=True)
-class BaseDataClass(ABC):
+class BaseDataClass(metaclass=DataClasMeta):
     def to_dict(self) -> dict[str, str | dict[str, Any]]:
         return self.__dict__.copy()
 
@@ -66,8 +69,8 @@ class StatusData(BaseDataClass):
     :type storage: str
     :type network: Dict[str, Any]
     :type requests: conint(ge=0)
-    :type uptime: conint(ge=0)
-    :type time: conint(ge=0) | None = None
+    :type uptime: int
+    :type time: int | None = None
     """
 
     cpu: str
@@ -102,7 +105,7 @@ class AppData(BaseDataClass):
     :type name: str
     :type cluster: str
     :type ram: confloat(ge=0);
-    :type language: Language
+    :type lang: Language
     :type domain: str | None = None
     :type custom: str | None = None
     :type desc: str | None = None
@@ -112,7 +115,7 @@ class AppData(BaseDataClass):
     name: str
     cluster: str
     ram: float
-    language: str | None
+    lang: str | None
     cluster: str
     domain: str | None = None
     custom: str | None = None
