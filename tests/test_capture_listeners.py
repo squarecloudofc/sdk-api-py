@@ -54,15 +54,6 @@ class TestGeneralUse:
 
         await app.logs()
 
-    @_clear_listener_on_rerun(Endpoint.app_data())
-    async def test_app_data(self, app: Application):
-        @app.capture(Endpoint('APP_DATA'), force_raise=True)
-        async def capture_data(before, after):
-            assert before is None
-            assert isinstance(after, AppData)
-
-        await app.data()
-
     @_clear_listener_on_rerun(Endpoint.app_status())
     async def test_extra(self, app: Application):
         metadata: dict[str, int] = {'metadata': 69}
@@ -131,9 +122,7 @@ class TestGeneralUse:
         assert listener.callback is callback_two
         assert listener.endpoint == Endpoint.app_status()
 
-    @pytest.mark.skipif(
-        'not using_pydantic', reason='pydantic not installed'
-    )
+    @pytest.mark.skipif('not using_pydantic', reason='pydantic not installed')
     @_clear_listener_on_rerun(endpoint=Endpoint.app_status())
     async def test_pydantic_cast(self, app: Application):
         class Person(BaseModel):

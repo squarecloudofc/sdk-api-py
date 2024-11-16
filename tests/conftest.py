@@ -2,6 +2,7 @@ import asyncio
 import os
 from random import choice
 from string import ascii_letters
+from typing import AsyncGenerator
 
 import pytest
 from dotenv import load_dotenv
@@ -14,7 +15,7 @@ from tests import create_zip
 
 
 @pytest.fixture(scope='session')
-def event_loop():
+def event_loop() -> None:
     """Overrides pytest default function scoped event loop"""
     policy = asyncio.get_event_loop_policy()
     loop = policy.new_event_loop()
@@ -29,13 +30,12 @@ def client() -> Client:
 
 
 @pytest.fixture(scope='session')
-async def app(client: Client) -> Application:
+async def app(client: Client) -> AsyncGenerator[Application, None]:
     config = ConfigFile(
         display_name='normal_test',
         main='main.py',
         memory=512,
         subdomain=''.join(choice(ascii_letters) for _ in range(8)),
-
     )
     with Status('uploading test application...', spinner='point'):
         upload_data: UploadData = await client.upload_app(
