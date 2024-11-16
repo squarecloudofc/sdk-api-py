@@ -57,7 +57,7 @@ class RequestListenerManager(ListenerManager):
         if 'response' in call_params.keys():
             kwargs['response'] = response
         if 'extra' in call_params.keys():
-            kwargs['extra_value'] = extra_value
+            kwargs['extra'] = extra_value
 
         if call_extra_param:
             annotation = call_extra_param.annotation
