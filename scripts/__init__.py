@@ -1,12 +1,12 @@
 import asyncio
 from datetime import datetime
-from typing import Callable
+from typing import Any, Callable
 
 from rich.status import Status
 
 
-def run_async_script(func: Callable):
-    def wrapper(*args, **kwargs):
+def run_async_script(func: Callable) -> Callable:
+    def wrapper(*args, **kwargs) -> Any:
         with Status(f'Running {func.__name__}', spinner='point'):
             before = datetime.now()
             result = asyncio.run(func(*args, **kwargs))
