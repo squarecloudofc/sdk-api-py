@@ -433,7 +433,7 @@ class Application(CaptureListenerManager):
 
     @_update_cache
     @_notify_listener(Endpoint.logs())
-    async def logs(self, *_args, **__kwargs) -> LogsData:
+    async def logs(self, *_args, **_kwargs) -> LogsData:
         """
         The logs method is used to get the application's logs.
 
@@ -446,7 +446,7 @@ class Application(CaptureListenerManager):
 
     @_update_cache
     @_notify_listener(Endpoint.app_status())
-    async def status(self, *_args, **__kwargs) -> StatusData:
+    async def status(self, *_args, **_kwargs) -> StatusData:
         """
         The status function returns the status of an application.
 
@@ -459,7 +459,7 @@ class Application(CaptureListenerManager):
 
     @_update_cache
     @_notify_listener(Endpoint.backup())
-    async def backup(self, *_args, **__kwargs) -> Backup:
+    async def backup(self, *_args, **_kwargs) -> Backup:
         """
         The backup function is used to create a backup of the application.
 
