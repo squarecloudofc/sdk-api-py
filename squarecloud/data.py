@@ -58,7 +58,6 @@ class StatusData(BaseDataClass):
     :ivar running: weather the application is running
     :ivar storage: storage used by the application
     :ivar network: network information
-    :ivar requests: requests made by the application
     :ivar uptime: uptime of the application
     :ivar time: time of the application
 
@@ -79,7 +78,6 @@ class StatusData(BaseDataClass):
     running: bool
     storage: str
     network: dict[str, Any]
-    requests: int
     uptime: int | None = None
     time: int | None = None
 
@@ -306,8 +304,12 @@ class DomainAnalytics(BaseDataClass):
         methods: list[Any]
         referers: list[Any]
         browsers: list[Any]
-        deviceTypes: list[Any]  # noqa: N815: Ignore mixedCase naming convention
-        operatingSystems: list[Any]  # noqa: N815: Ignore mixedCase naming convention
+        deviceTypes: list[
+            Any
+        ]  # noqa: N815: Ignore mixedCase naming convention
+        operatingSystems: list[
+            Any
+        ]  # noqa: N815: Ignore mixedCase naming convention
         agents: list[Any]
         hosts: list[Any]
         paths: list[Any]
