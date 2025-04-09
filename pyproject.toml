@@ -7,31 +7,37 @@ repository = 'https://github.com/squarecloudofc/wrapper-api-py'
 documentation = 'https://docs.squarecloud.app/sdks/py'
 license = 'MIT License'
 readme = 'README.md'
-packages = [{ include = 'squarecloud' }]
+packages = [{ include = "squarecloud" }]
+
 
 [tool.poetry.dependencies]
-python = '^3.9'
-aiohttp = "3.10.2"
-taskipy = "^1.13.0"
-pydantic = {version = "^2.8.2", optional = true}
+python = '^3.13'
 typing-extensions = "^4.12.2"
+aiohttp = "^3.11.14"
+isort = "^6.0.1"
+pre-commit = "^4.2.0"
+pytest = "^8.3.5"
+pytest-asyncio = "^0.26.0"
+pytest-cov = "^6.0.0"
+pytest-rerunfailures = "^15.0"
+ruff = "^0.11.2"
+taskipy = "^1.14.1"
+pydantic = "2.9.2"
+bandit = {extras = ["toml"], version = "^1.8.3"}
+cz-conventional-gitmoji = "^0.7.0"
 
 [tool.poetry.extras]
 pydantic = ["pydantic"]
 
 [tool.poetry.group.dev.dependencies]
-pytest = '^7.4.3'
-pytest-cov = '^4.1.0'
-blue = '^0.9.1'
-isort = '^5.12.0'
-pytest-asyncio = '^0.21.1'
-pre-commit = '^3.3.3'
-ruff = '^0.0.289'
 memory-profiler = '^0.61.0'
 requests = '^2.31.0'
-pytest-rerunfailures = "^13.0"
 python-dotenv = "^1.0.1"
-rich = "^13.7.1"
+safety = "^3.3.1"
+vulture = "^2.14"
+mypy-extensions = "^1.0.0"
+commitizen = "^4.5.1"
+bandit = "^1.8.3"
 
 [build-system]
 requires = ['poetry-core']
@@ -54,7 +60,7 @@ profile = 'black'
 line_length = 79
 
 [tool.taskipy.tasks]
-lint = 'isort . && blue . && ruff .'
+lint = 'isort . && blue . && ruff check .'
 pre_test = 'task lint'
 test = 'pytest -vv -s --reruns 5 --only-rerun TooManyRequests --reruns-delay 90 -x --cov=tests tests'
 post_test = 'coverage html'
@@ -64,7 +70,78 @@ clear-test-apps = 'python -m scripts.clear_test_apps'
 
 [tool.ruff]
 line-length = 79
-exclude = ['env']
+exclude = ['env', 'tests']
 
-[tool.ruff.per-file-ignores]
+[tool.bandit]
+exclude_dirs = ["docs", "venv", "migrations", "examples", "tests"]
+skips = ["B101", "B311"]
+severity_threshold = "low"
+confidence_threshold = "low"
+recursive = true
+quiet = false
+
+[tool.bandit.tests]
+B102 = "exec_used"  # Use of 'exec' detected
+B103 = "set_bad_file_permissions"  # Insecure file permissions
+B104 = "hardcoded_bind_all_interfaces"  # Binding to all interfaces
+B105 = "hardcoded_password_string"  # Hardcoded password in a string
+B106 = "hardcoded_password_funcarg"  # Hardcoded password in function argument
+B107 = "hardcoded_password_default"  # Hardcoded password in a default argument
+B108 = "hardcoded_tmp_directory"  # Use of hardcoded temporary directory
+B109 = "password_config_option_not_marked_secret"  # Password config not marked as secret
+B110 = "try_except_pass"  # 'try-except-pass' pattern detected
+B111 = "execute_with_run_as_root_equals_true"  # Executing with 'run_as_root=True'
+B112 = "try_except_continue"  # 'try-except-continue' pattern detected
+B113 = "request_without_timeout"  # HTTP request without a timeout
+
+# Security vulnerabilities in web applications
+B201 = "flask_debug_true"  # Flask app running with 'debug=True'
+B202 = "tarfile_unsafe_members"  # Tarfile extract with unsafe members
+
+# Cryptography-related issues
+B324 = "hashlib"  # Weak or insecure hash function
+
+# SSL/TLS issues
+B501 = "request_with_no_cert_validation"  # Requests without certificate validation
+B502 = "ssl_with_bad_version"  # Use of outdated SSL versions
+B503 = "ssl_with_bad_defaults"  # Insecure SSL defaults
+B504 = "ssl_with_no_version"  # SSL/TLS without specifying a version
+B505 = "weak_cryptographic_key"  # Weak cryptographic key detected
+
+# Serialization & data handling
+B506 = "yaml_load"  # Use of unsafe 'yaml.load'
+B507 = "ssh_no_host_key_verification"  # SSH without host key verification
+B508 = "snmp_insecure_version"  # Insecure SNMP version used
+B509 = "snmp_weak_cryptography"  # Weak SNMP cryptography used
+
+# Process execution risks
+B601 = "paramiko_calls"  # Use of Paramiko library detected
+B602 = "subprocess_popen_with_shell_equals_true"  # Popen with 'shell=True'
+B603 = "subprocess_without_shell_equals_true"  # Popen without 'shell=True'
+B604 = "any_other_function_with_shell_equals_true"  # Dangerous shell execution function
+B605 = "start_process_with_a_shell"  # Starting a process with a shell
+B606 = "start_process_with_no_shell"  # Process started without shell
+B607 = "start_process_with_partial_path"  # Process started with a partial path
+
+# Database security
+B608 = "hardcoded_sql_expressions"  # Hardcoded SQL expressions detected
+B609 = "linux_commands_wildcard_injection"  # Linux command injection via wildcards
+B610 = "django_extra_used"  # Use of Django's 'extra()' method
+B611 = "django_rawsql_used"  # Use of raw SQL in Django
+B612 = "logging_config_insecure_listen"  # Insecure logging configuration
+
+# Miscellaneous security issues
+B613 = "trojansource"  # Trojan Source attack patterns detected
+B614 = "pytorch_load"  # Use of 'torch.load', which can be unsafe
+
+# Template security risks
+B701 = "jinja2_autoescape_false"  # Jinja2 autoescape disabled
+B702 = "use_of_mako_templates"  # Use of Mako templates detected
+B703 = "django_mark_safe"  # Use of Django's 'mark_safe'
+B704 = "markupsafe_markup_xss"  # Potential XSS via MarkupSafe
+
+[tool.commitizen]
+name = "cz_gitmoji"
+
+[tool.ruff.lint.per-file-ignores]
 '__init__.py' = ['F401']
