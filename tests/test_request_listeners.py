@@ -1,4 +1,3 @@
-import sys
 from importlib.util import find_spec
 from io import BytesIO
 
@@ -10,11 +9,9 @@ if using_pydantic := bool(find_spec('pydantic')):
 from squarecloud import Client, Endpoint, File
 from squarecloud.app import Application
 from squarecloud.data import (
-    AppData,
     Backup,
     BackupInfo,
     DeployData,
-    DNSRecord,
     DomainAnalytics,
     FileInfo,
     LogsData,
