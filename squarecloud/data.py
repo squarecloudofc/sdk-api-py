@@ -53,7 +53,6 @@ class StatusData:
     :ivar running: weather the application is running
     :ivar storage: storage used by the application
     :ivar network: network information
-    :ivar requests: requests made by the application
     :ivar uptime: uptime of the application
     :ivar time: time of the application
 
@@ -74,7 +73,6 @@ class StatusData:
     running: bool
     storage: str
     network: Dict[str, Any]
-    requests: int
     uptime: int | None = None
     time: int | None = None
 
