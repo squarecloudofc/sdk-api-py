@@ -62,7 +62,6 @@ class StatusData:
     :type running: bool
     :type storage: str
     :type network: Dict[str, Any]
-    :type requests: conint(ge=0)
     :type uptime: conint(ge=0)
     :type time: conint(ge=0) | None = None
     """
