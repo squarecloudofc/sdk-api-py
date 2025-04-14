@@ -19,12 +19,6 @@
 pip install squarecloud-api
 ````
 
-If you intend to use this SDK for command-line interface (CLI) operations, consider
-installing it with pipx:
-````shell
-pipx install squarecloud-api
-````
-
 ## Getting api key
 
 to get your api key/token just go to the [Square Cloud] website and
