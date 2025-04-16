@@ -11,4 +11,4 @@ async def example() -> None:
     await app.create_file(path='/file.txt', file=square.File('file.txt'))
 
 
-asyncio.run(example)
+asyncio.run(example())
