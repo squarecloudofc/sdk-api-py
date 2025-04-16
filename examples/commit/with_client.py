@@ -10,4 +10,4 @@ async def example() -> None:
     await client.commit(file=file, app_id='application_id')
 
 
-asyncio.run(example)
+asyncio.run(example())
