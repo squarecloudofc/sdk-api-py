@@ -9,4 +9,4 @@ async def example() -> None:
     await client.delete_app_file(app_id='application_id', path='/file.txt')
 
 
-asyncio.run(example)
+asyncio.run(example())
