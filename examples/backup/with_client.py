@@ -10,4 +10,4 @@ async def example() -> None:
     print(backup.downloadURL)  # https://squarecloud.app/dashboard/backup/f.zip
 
 
-asyncio.run(example)
+asyncio.run(example())
