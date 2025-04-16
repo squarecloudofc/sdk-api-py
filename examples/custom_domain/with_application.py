@@ -10,4 +10,4 @@ async def example() -> None:
     await app.set_custom_domain('my_custom_domain.example.br')
 
 
-asyncio.run(example)
+asyncio.run(example())
