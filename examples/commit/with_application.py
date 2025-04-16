@@ -11,4 +11,4 @@ async def example() -> None:
     await app.commit(file=file)
 
 
-asyncio.run(example)
+asyncio.run(example())
