@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal, Type
+from typing import Any, Literal
 
 import aiohttp
 
@@ -29,7 +29,7 @@ from ..errors import (
     RequestError,
     TooManyRequests,
 )
-from ..logging import logger
+from ..logger import logger
 from .endpoints import Endpoint, Router
 
 
@@ -51,12 +51,12 @@ class Response:
         """
         self.data = data
         self.route: Router = route
-        self.status: Literal['success', 'error'] = data.get('status')
-        self.code: int = data.get('code')
-        self.message: str = data.get('message')
-        self.response: dict[str, Any] | list[Any] = data.get('response')
+        self.status: Literal['success', 'error'] = data['status']
+        self.code: int | None = data.get('code')
+        self.message: str | None = data.get('message')
+        self.response: dict[str, Any] | list[Any] = data.get('response', {})
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         The __repr__ function is used to compute the string representation of
         an object.
@@ -97,9 +97,8 @@ def _get_error(code: str) -> type[RequestError] | None:
     }
     error_class = errors.get(code, None)
     if error_class is None:
-        return
-    else:
-        return error_class
+        return None
+    return error_class
 
 
 class HTTPClient:
@@ -120,7 +119,7 @@ class HTTPClient:
         self.__session = aiohttp.ClientSession
         self._last_response: Response | None = None
 
-    async def request(self, route: Router, **kwargs) -> Response | bytes:
+    async def request(self, route: Router, **kwargs: Any) -> Response:
         """
         Sends a request to the Square API and returns the response.
 
@@ -172,7 +171,7 @@ class HTTPClient:
             extra_error_kwargs['domain'] = kwargs.pop('custom_domain')
 
         if route.endpoint in (Endpoint.commit(), Endpoint.upload()):
-            file = kwargs.pop('file')
+            file: File = kwargs.pop('file')
             form = aiohttp.FormData()
             form.add_field('file', file.bytes, filename=file.filename)
             kwargs['data'] = form
@@ -186,7 +185,7 @@ class HTTPClient:
                 self._last_response = response
 
                 code: str | None = data.get('code')
-                error: Type[RequestError] | None = None
+                error: type[RequestError] = RequestError
                 log_msg = '{status} request to route: {route}'
                 log_msg = log_msg.format(
                     status=data.get('status'),
@@ -218,12 +217,11 @@ class HTTPClient:
                     case _:
                         log_level = logging.ERROR
                         error = RequestError
-
-                if _ := _get_error(code):
-                    log_level = logging.ERROR
-                    error = _
-                logger.log(log_level, log_msg, extra={'type': 'http'})
-                if error:
+                if code:
+                    if _ := _get_error(code):
+                        log_level = logging.ERROR
+                        error = _
+                        logger.log(log_level, log_msg, extra={'type': 'http'})
                     raise error(
                         **extra_error_kwargs,
                         route=route.endpoint.name,
@@ -693,7 +691,9 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def move_app_file(self, app_id: str, origin: str, dest: str):
+    async def move_app_file(
+        self, app_id: str, origin: str, dest: str
+    ) -> Response:
         """
         Make a http request to move an app file.
 

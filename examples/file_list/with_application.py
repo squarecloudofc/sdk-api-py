@@ -1,9 +1,11 @@
+import asyncio
+
 import squarecloud as square
 
 client = square.Client(api_key='API KEY')
 
 
-async def example():
+async def example() -> None:
     app = await client.app('application_id')
     files_list = await app.files_list(path='/')  # list[FileInfo(...)]
 
@@ -15,3 +17,6 @@ async def example():
         print(file.size)  # 2140
 
         print(file.lastModified)  # 1677112835000
+
+
+asyncio.run(example)

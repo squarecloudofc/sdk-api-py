@@ -1,4 +1,5 @@
 """This module is a wrapper for using the SquareCloud API"""
+
 from __future__ import annotations
 
 from functools import wraps
@@ -29,22 +30,22 @@ from .http import HTTPClient, Response
 from .http.endpoints import Endpoint
 from .listeners import Listener, ListenerConfig
 from .listeners.request_listener import RequestListenerManager
-from .logging import logger
+from .logger import logger
 
-P = ParamSpec('P')
-R = TypeVar('R')
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 @deprecated(
-    'create_config_file is deprecated, '
-    'use squarecloud.utils.ConfigFile instead.'
+    "create_config_file is deprecated, "
+    "use squarecloud.utils.ConfigFile instead."
 )
 def create_config_file(
     path: str,
     display_name: str,
     main: str,
     memory: int,
-    version: Literal['recommended', 'latest'] = 'recommended',
+    version: Literal["recommended", "latest"] = "recommended",
     description: str | None = None,
     subdomain: str | None = None,
     start: str | None = None,
@@ -73,23 +74,23 @@ def create_config_file(
     :return: File content
     :rtype: str
     """
-    content: str = ''
+    content: str = ""
     optionals: dict[str, Any] = {
-        'DISPLAY_NAME': display_name,
-        'MAIN': main,
-        'MEMORY': memory,
-        'VERSION': version,
-        'DESCRIPTION': description,
-        'SUBDOMAIN': subdomain,
-        'START': start,
-        'AUTORESTART': auto_restart,
+        "DISPLAY_NAME": display_name,
+        "MAIN": main,
+        "MEMORY": memory,
+        "VERSION": version,
+        "DESCRIPTION": description,
+        "SUBDOMAIN": subdomain,
+        "START": start,
+        "AUTORESTART": auto_restart,
     }
     for key, value in optionals.items():
         if value:
-            string: str = f'{key}={value}\n'
+            string: str = f"{key}={value}\n"
             content += string
-    if kwargs.get('save', True):
-        with open(f'./{path}/squarecloud.app', 'w', encoding='utf-8') as file:
+    if kwargs.get("save", True):
+        with open(f"./{path}/squarecloud.app", "w", encoding="utf-8") as file:
             file.write(content)
         return file
     return content
@@ -102,12 +103,12 @@ class Client(RequestListenerManager):
         self,
         api_key: str,
         log_level: Literal[
-            'DEBUG',
-            'INFO',
-            'WARNING',
-            'ERROR',
-            'CRITICAL',
-        ] = 'INFO',
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        ] = "INFO",
     ) -> None:
         """
         The __init__ function is called when the class is instantiated.
@@ -138,7 +139,7 @@ class Client(RequestListenerManager):
         """
         return self._api_key
 
-    def on_request(self, endpoint: Endpoint, **kwargs):
+    def on_request(self, endpoint: Endpoint, **kwargs) -> Callable:
         """
         The on_request function is a decorator that allows you to register a
         function as an endpoint listener.
@@ -148,7 +149,7 @@ class Client(RequestListenerManager):
         :return: A wrapper function
         """
 
-        def wrapper(func: Callable):
+        def wrapper(func: Callable) -> None:
             """
             The wrapper function is a decorator that wraps the function passed
             to it.
@@ -178,7 +179,7 @@ class Client(RequestListenerManager):
         return wrapper
 
     @staticmethod
-    def _notify_listener(endpoint: Endpoint):
+    def _notify_listener(endpoint: Endpoint) -> Callable:
         """
         The _notify_listener function is a decorator that call a listener after
         the decorated coroutine is called
@@ -196,12 +197,12 @@ class Client(RequestListenerManager):
                 response: Response
                 result = await func(self, *args, **kwargs)
                 response = self._http.last_response
-                if kwargs.get('avoid_listener', False):
+                if kwargs.get("avoid_listener", False):
                     return result
                 await self.notify(
                     endpoint=endpoint,
                     response=response,
-                    extra=kwargs.get('extra'),
+                    extra_value=kwargs.get("extra"),
                 )
                 return result
 
@@ -226,7 +227,7 @@ class Client(RequestListenerManager):
         """
         response: Response = await self._http.fetch_user_info()
         payload: dict[str, Any] = response.response
-        return UserData(**payload['user'])
+        return UserData(**payload["user"])
 
     @_notify_listener(Endpoint.logs())
     async def get_logs(self, app_id: str, **_kwargs) -> LogsData:
@@ -358,8 +359,6 @@ class Client(RequestListenerManager):
         payload: dict[str, Any] = response.response
         return Backup(**payload)
 
-    # async def app_backups(self) -> list[BackupInfo]:
-
     @validate
     @_notify_listener(Endpoint.delete_app())
     async def delete_app(self, app_id: str, **_kwargs) -> Response:
@@ -424,20 +423,18 @@ class Client(RequestListenerManager):
         payload = response.response
         app_data = list(
             filter(
-                lambda application: application['id'] == app_id,
-                payload['applications'],
+                lambda application: application["id"] == app_id,
+                payload["applications"],
             )
         )
         if not app_data:
             raise ApplicationNotFound(app_id=app_id)
         app_data = app_data.pop()
-        app_data['language'] = app_data.pop('lang')
         app_data = AppData(**app_data).to_dict()
-        app_data['lang'] = app_data.pop('language')
         return Application(client=self, http=self._http, **app_data)
 
-    @_notify_listener(Endpoint.user())
-    async def all_apps(self, **_kwargs) -> list[Application]:
+    # @_notify_listener(Endpoint.user())
+    async def all_apps(self, **_kwargs) -> list[int]:
         """
         The all_apps method returns a list of all applications that the user
         has access to.
@@ -454,12 +451,10 @@ class Client(RequestListenerManager):
         """
         response: Response = await self._http.fetch_user_info()
         payload = response.response
-        apps_data: list = payload['applications']
+        apps_data: list = payload["applications"]
         apps: list[Application] = []
         for data in apps_data:
-            data['language'] = data.pop('lang')
             data = AppData(**data).to_dict()
-            data['lang'] = data.pop('language')
             apps.append(Application(client=self, http=self._http, **data))
         return apps
 
@@ -508,12 +503,12 @@ class Client(RequestListenerManager):
         :raises InvalidDomain: Raised when a domain provided is invalid
         """
         if not isinstance(file, File):
-            raise InvalidFile(f'you need provide an {File.__name__} object')
+            raise InvalidFile(f"you need provide an {File.__name__} object")
 
         if (file.filename is not None) and (
-            file.filename.split('.')[-1] != 'zip'
+            file.filename.split(".")[-1] != "zip"
         ):
-            raise InvalidFile('the file must be a .zip file')
+            raise InvalidFile("the file must be a .zip file")
         response: Response = await self._http.upload(file)
         payload: dict[str, Any] = response.response
         return UploadData(**payload)
@@ -545,7 +540,7 @@ class Client(RequestListenerManager):
         if not response.response:
             return []
         return [
-            FileInfo(**data, app_id=app_id, path=path + f'/{data.get("name")}')
+            FileInfo(**data, app_id=app_id, path=path + f"/{data.get('name')}")
             for data in response.response
         ]
 
@@ -573,7 +568,8 @@ class Client(RequestListenerManager):
         """
         response: Response = await self._http.read_app_file(app_id, path)
         if response.response:
-            return BytesIO(bytes(response.response.get('data')))
+            return BytesIO(bytes(response.response.get("data")))
+        return None
 
     @validate
     @_notify_listener(Endpoint.files_create())
@@ -600,7 +596,7 @@ class Client(RequestListenerManager):
         """
         if not isinstance(file, File):
             raise SquareException(
-                'the file must be an string or a squarecloud.File object'
+                "the file must be an string or a squarecloud.File object"
             )
         file_bytes = list(file.bytes.read())
         response: Response = await self._http.create_app_file(
@@ -633,27 +629,6 @@ class Client(RequestListenerManager):
                 code is 429
         """
         return await self._http.file_delete(app_id, path)
-
-    @validate
-    @_notify_listener(Endpoint.app_data())
-    async def app_data(self, app_id: str, **_kwargs) -> AppData:
-        """
-        The app_data method is used to get application data.
-
-        :param app_id: Specify the application by id
-        :param _kwargs: Keyword arguments
-        :return: An AppData object
-        :rtype: AppData
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.get_app_data(app_id)
-        return AppData(**response.response)
 
     @validate
     @_notify_listener(Endpoint.last_deploys())
@@ -707,7 +682,7 @@ class Client(RequestListenerManager):
             app_id=app_id, github_access_token=access_token
         )
         data = response.response
-        return data.get('webhook')
+        return data.get("webhook")
 
     @validate
     @_notify_listener(Endpoint.custom_domain())
@@ -776,7 +751,7 @@ class Client(RequestListenerManager):
         response: Response = await self._http.all_apps_status()
         all_status = []
         for status in response.response:
-            if status['running'] is True:
+            if status["running"] is True:
                 all_status.append(ResumedStatus(**status))
         return all_status
 
@@ -802,4 +777,4 @@ class Client(RequestListenerManager):
         response: Response = await self._http.get_app_current_integration(
             app_id
         )
-        return response.response['webhook']
+        return response.response["webhook"]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import wraps
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar
 
 from squarecloud import errors
 
@@ -26,6 +26,12 @@ from .listeners.capture_listener import CaptureListenerManager
 # avoid circular imports
 if TYPE_CHECKING:
     from .client import Client
+
+T = TypeVar('T')
+
+AsyncCallable = TypeVar(
+    'AsyncCallable', bound=Callable[..., Coroutine[Any, Any, T]]
+)
 
 
 class AppCache:
@@ -94,7 +100,7 @@ class AppCache:
         """
         return self._app_data
 
-    def clear(self):
+    def clear(self) -> None:
         """
         The clear method is used to clear the status, logs, backup and data
         variables.
@@ -107,7 +113,7 @@ class AppCache:
         self._backup = None
         self._app_data = None
 
-    def update(self, *args):
+    def update(self, *args) -> None:
         """
         The update method is used to update the data of a given instance.
         It takes in an arbitrary number of arguments, and updates the
@@ -165,7 +171,7 @@ class Application(CaptureListenerManager):
 
     def __init__(
         self,
-        client: 'Client',
+        client: Client,
         http: HTTPClient,
         id: str,
         name: str,
@@ -205,7 +211,7 @@ class Application(CaptureListenerManager):
         self._ram: int = ram
         self._lang: str = lang
         self._cluster: str = cluster
-        self._client: 'Client' = client
+        self._client: Client = client
         self._http: HTTPClient = http
         self._listener: CaptureListenerManager = CaptureListenerManager()
         self.cache: AppCache = AppCache()
@@ -227,7 +233,7 @@ class Application(CaptureListenerManager):
         return f'<{self.__class__.__name__} tag={self.name} id={self.id}>'
 
     @property
-    def client(self) -> 'Client':
+    def client(self) -> Client:
         """
         The client method is a property that returns the client object.
 
@@ -328,7 +334,9 @@ class Application(CaptureListenerManager):
         return self._custom
 
     @staticmethod
-    def _notify_listener(endpoint: Endpoint):
+    def _notify_listener(
+        endpoint: Endpoint,
+    ) -> Callable[[AsyncCallable], AsyncCallable]:
         """
         The _notify_listener function is a decorator that call a listener after
         the decorated coroutine is called
@@ -337,7 +345,7 @@ class Application(CaptureListenerManager):
         :return: a callable
         """
 
-        def wrapper(func: Callable):
+        def wrapper(func: AsyncCallable) -> AsyncCallable:
             @wraps(func)
             async def decorator(self: Application, *args, **kwargs) -> Any:
                 result = await func(self, *args, **kwargs)
@@ -347,7 +355,7 @@ class Application(CaptureListenerManager):
                         endpoint=endpoint,
                         before=self.cache.app_data,
                         after=result,
-                        extra=kwargs.get('extra'),
+                        extra_value=kwargs.get('extra'),
                     )
                 return result
 
@@ -356,7 +364,7 @@ class Application(CaptureListenerManager):
         return wrapper
 
     @staticmethod
-    def _update_cache(func: Callable):
+    def _update_cache(func: AsyncCallable) -> AsyncCallable:
         """
         This is a decorator checks whether the kwargs `update_cache` in the
         decorated coroutine is not False, and updates the application cache
@@ -366,7 +374,7 @@ class Application(CaptureListenerManager):
         """
 
         @wraps(func)
-        async def wrapper(self, *args, **kwargs):
+        async def wrapper(self: Application, *args, **kwargs) -> T:
             update_cache = kwargs.pop('update_cache', True)
             result = await func(self, *args, **kwargs)
             if update_cache:
@@ -388,7 +396,7 @@ class Application(CaptureListenerManager):
         """
 
         def wrapper(
-            call: Callable[[Endpoint, Endpoint], Any]
+            call: Callable[[Endpoint, Endpoint], Any],
         ) -> Callable[[Endpoint, Endpoint], Any]:
             """
             The wrapper function is a decorator that takes in the endpoint as
@@ -424,21 +432,8 @@ class Application(CaptureListenerManager):
         return wrapper
 
     @_update_cache
-    @_notify_listener(Endpoint.app_data())
-    async def data(self, *_args, **__kwargs) -> AppData:
-        """
-        The data method is used to retrieve the data of this app.
-
-        :param self: Refer to the class instance
-        :return: A AppData object
-        :rtype: AppData
-        """
-        app_data: AppData = await self.client.app_data(self.id)
-        return app_data
-
-    @_update_cache
     @_notify_listener(Endpoint.logs())
-    async def logs(self, *_args, **__kwargs) -> LogsData:
+    async def logs(self, *_args, **_kwargs) -> LogsData:
         """
         The logs method is used to get the application's logs.
 
@@ -451,7 +446,7 @@ class Application(CaptureListenerManager):
 
     @_update_cache
     @_notify_listener(Endpoint.app_status())
-    async def status(self, *_args, **__kwargs) -> StatusData:
+    async def status(self, *_args, **_kwargs) -> StatusData:
         """
         The status function returns the status of an application.
 
@@ -464,7 +459,7 @@ class Application(CaptureListenerManager):
 
     @_update_cache
     @_notify_listener(Endpoint.backup())
-    async def backup(self, *_args, **__kwargs) -> Backup:
+    async def backup(self, *_args, **_kwargs) -> Backup:
         """
         The backup function is used to create a backup of the application.
 
@@ -578,7 +573,6 @@ class Application(CaptureListenerManager):
 
     @validate
     async def create_file(self, file: File, path: str) -> Response:
-
         """
         The create_file function creates a file in the specified path.
 
@@ -647,24 +641,23 @@ class Application(CaptureListenerManager):
         analytics: DomainAnalytics = await self.client.domain_analytics(
             self.id, avoid_listener=True
         )
-        return analytics
+        return analytics  # TODO:
 
-    @validate
-    async def set_custom_domain(self, custom_domain: str):
+    async def set_custom_domain(self, custom_domain: str) -> Response:
         response: Response = await self.client.set_custom_domain(
             self.id, custom_domain, avoid_listener=True
         )
         return response
 
-    async def all_backups(self):
+    async def all_backups(self) -> Response:
         backups: list[BackupInfo] = await self.client.all_app_backups(self.id)
         return backups
 
     @validate
-    async def move_file(self, origin: str, dest: str):
+    async def move_file(self, origin: str, dest: str) -> Response:
         return await self.client.move_app_file(self.id, origin, dest)
 
-    async def current_integration(self):
+    async def current_integration(self) -> Response:
         return await self.client.current_app_integration(self.id)
 
     @_notify_listener(Endpoint.dns_records())

@@ -40,7 +40,7 @@ class Listener:
         config: ListenerConfig = ListenerConfig(),
         app: Optional['Application'] = None,
         client: Optional['Client'] = None,
-    ):
+    ) -> None:
         self._app = app
         self._client = client
         self._endpoint = endpoint
@@ -64,12 +64,12 @@ class Listener:
     def callback_params(self) -> MappingProxyType[str, inspect.Parameter]:
         return self._callback_params
 
-    def __repr__(self):
+    def __repr__(self) -> None:
         return f'{self.__class__.__name__}(endpoint={self.endpoint})'
 
 
 class ListenerManager:
-    def __init__(self):
+    def __init__(self) -> None:
         """
         The __init__ method is called when the class is instantiated.
         It sets up the instance variables that will be used by other methods
@@ -79,7 +79,7 @@ class ListenerManager:
         :param self: Refer to the class instance
         :return: A dictionary of the capture listeners and request listeners
         """
-        self.listeners: dict[str, Callable] = {}
+        self.listeners: dict[str, Listener] = {}
 
     def get_listener(self, endpoint: Endpoint) -> Listener | None:
         """
@@ -127,7 +127,7 @@ class ListenerManager:
         :return: The capture_listener that was removed from the dictionary
         """
         if self.get_listener(endpoint):
-            return self.listeners.pop(endpoint.name)
+            self.listeners.pop(endpoint.name)
 
     def clear_listeners(self) -> None:
         """
@@ -141,17 +141,16 @@ class ListenerManager:
     @classmethod
     def cast_to_pydantic_model(
         cls, model: Type['BaseModel'], values: dict[Any, Any]
-    ):
-        result: 'BaseModel' | None | dict = values
+    ) -> None:
+        result: BaseModel | None | dict = values
         if isinstance(model, types.UnionType):
             for ty in model.__args__:
                 if ty is None:
                     continue
-                elif not issubclass(ty, BaseModel):
+                if not issubclass(ty, BaseModel):
                     continue
                 try:
-                    a = ty(**values)
-                    return a
+                    return ty(**values)
                 except pydantic.ValidationError:
                     continue
             return None

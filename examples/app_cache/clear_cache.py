@@ -1,9 +1,11 @@
+import asyncio
+
 import squarecloud as square
 
 client = square.Client('API_KEY')
 
 
-async def example():
+async def example() -> None:
     app = await client.app('application_id')
 
     await app.status()
@@ -19,3 +21,6 @@ async def example():
     print(app.cache.status)  # None
     print(app.cache.logs)  # None
     print(app.cache.backup)  # None
+
+
+asyncio.run(example())

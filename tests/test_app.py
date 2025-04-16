@@ -18,9 +18,6 @@ class TestApp:
             == f'<{Application.__name__} tag={app.name} id={app.id}>'
         )
 
-    async def test_app_data(self, app: Application):
-        assert isinstance(await app.data(), squarecloud.AppData)
-
     async def test_app_status(self, app: Application):
         assert isinstance(await app.status(), squarecloud.StatusData)
 
@@ -47,6 +44,7 @@ class TestApp:
         assert isinstance(
             await app.domain_analytics(), squarecloud.DomainAnalytics
         )
+
     @pytest.mark.skip
     async def test_set_custom_domain(self, app: Application):
         assert isinstance(await app.set_custom_domain('test.com.br'), str)

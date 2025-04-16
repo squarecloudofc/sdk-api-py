@@ -1,4 +1,3 @@
-import sys
 from importlib.util import find_spec
 from io import BytesIO
 
@@ -10,11 +9,9 @@ if using_pydantic := bool(find_spec('pydantic')):
 from squarecloud import Client, Endpoint, File
 from squarecloud.app import Application
 from squarecloud.data import (
-    AppData,
     Backup,
     BackupInfo,
     DeployData,
-    DNSRecord,
     DomainAnalytics,
     FileInfo,
     LogsData,
@@ -131,21 +128,6 @@ class TestRequestListeners:
 
         expected_result = await client.restart_app(app.id)
         assert isinstance(expected_result, Response)
-        assert isinstance(expected_response, Response)
-
-    @_clear_listener_on_rerun(Endpoint.app_data())
-    async def test_request_app_data(self, client: Client, app: Application):
-        endpoint: Endpoint = Endpoint.app_data()
-        expected_result: AppData | None
-        expected_response: Response | None = None
-
-        @client.on_request(endpoint)
-        async def test_listener(response: Response):
-            nonlocal expected_response
-            expected_response = response
-
-        expected_result = await client.app_data(app.id)
-        assert isinstance(expected_result, AppData)
         assert isinstance(expected_response, Response)
 
     @_clear_listener_on_rerun(Endpoint.files_list())
@@ -399,9 +381,7 @@ class TestRequestListeners:
         assert isinstance(expected_result, str)
         assert isinstance(expected_response, Response)
 
-    @pytest.mark.skipif(
-        'not using_pydantic', reason='pydantic not installed'
-    )
+    @pytest.mark.skipif('not using_pydantic', reason='pydantic not installed')
     @_clear_listener_on_rerun(endpoint=Endpoint.app_status())
     async def test_pydantic_cast(self, client: Client, app: Application):
         class Person(BaseModel):

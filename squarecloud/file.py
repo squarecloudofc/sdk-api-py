@@ -21,8 +21,7 @@ class File:
         self,
         fp: str | bytes | os.PathLike[Any] | io.BufferedIOBase,
         filename: str | None = None,
-    ):
-
+    ) -> None:
         """
         The __init__ function is called when the class is instantiated.
         It sets up the instance of the class, and it's where you put all your

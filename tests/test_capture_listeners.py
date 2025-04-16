@@ -2,12 +2,12 @@ from importlib.util import find_spec
 
 import pytest
 
-if using_pydantic := find_spec('pydantic'):
+if using_pydantic := find_spec("pydantic"):
     from pydantic import BaseModel
 
 from squarecloud import Endpoint, errors
 from squarecloud.app import Application
-from squarecloud.data import AppData, Backup, LogsData, StatusData
+from squarecloud.data import Backup, LogsData, StatusData
 from squarecloud.listeners import Listener
 
 
@@ -23,7 +23,7 @@ def _clear_listener_on_rerun(endpoint: Endpoint):
     return decorator
 
 
-@pytest.mark.asyncio(scope='class')
+@pytest.mark.asyncio(scope="class")
 @pytest.mark.listeners
 @pytest.mark.capture_listener
 class TestGeneralUse:
@@ -54,18 +54,9 @@ class TestGeneralUse:
 
         await app.logs()
 
-    @_clear_listener_on_rerun(Endpoint.app_data())
-    async def test_app_data(self, app: Application):
-        @app.capture(Endpoint('APP_DATA'), force_raise=True)
-        async def capture_data(before, after):
-            assert before is None
-            assert isinstance(after, AppData)
-
-        await app.data()
-
     @_clear_listener_on_rerun(Endpoint.app_status())
     async def test_extra(self, app: Application):
-        metadata: dict[str, int] = {'metadata': 69}
+        metadata: dict[str, int] = {"metadata": 69}
 
         @app.capture(Endpoint.app_status(), force_raise=True)
         async def capture_status(extra):
@@ -131,9 +122,7 @@ class TestGeneralUse:
         assert listener.callback is callback_two
         assert listener.endpoint == Endpoint.app_status()
 
-    @pytest.mark.skipif(
-        'not using_pydantic', reason='pydantic not installed'
-    )
+    @pytest.mark.skipif("not using_pydantic", reason="pydantic not installed")
     @_clear_listener_on_rerun(endpoint=Endpoint.app_status())
     async def test_pydantic_cast(self, app: Application):
         class Person(BaseModel):
@@ -148,5 +137,5 @@ class TestGeneralUse:
             assert isinstance(extra, Car) or isinstance(extra, Person)
             return extra
 
-        await app.status(extra={'name': 'Jhon', 'age': 18})
-        await app.status(extra={'year': 1969})
+        await app.status(extra={"name": "Jhon", "age": 18})
+        await app.status(extra={"year": 1969})

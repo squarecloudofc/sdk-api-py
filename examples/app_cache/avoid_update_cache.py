@@ -1,9 +1,11 @@
+import asyncio
+
 import squarecloud as square
 
 client = square.Client('API_KEY')
 
 
-async def example():
+async def example() -> None:
     app = await client.app('application_id')
 
     # below we are setting "update_cache" to False,
@@ -16,3 +18,6 @@ async def example():
     print(app.cache.status)  # None
     print(app.cache.logs)  # None
     print(app.cache.backup)  # None
+
+
+asyncio.run(example())
