@@ -11,4 +11,4 @@ async def example() -> None:
     print(app_status)
 
 
-asyncio.run(example)
+asyncio.run(example())
