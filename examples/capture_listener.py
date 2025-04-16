@@ -20,4 +20,4 @@ async def example() -> None:
     await app.logs()  # False
 
 
-asyncio.run(example)
+asyncio.run(example())
