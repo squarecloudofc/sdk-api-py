@@ -23,4 +23,4 @@ async def example() -> None:
     print(app.cache.backup)  # None
 
 
-asyncio.run(example)
+asyncio.run(example())
