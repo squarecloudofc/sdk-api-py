@@ -11,4 +11,4 @@ async def example() -> None:
     await app.delete_file(path='/file.txt')
 
 
-asyncio.run(example)
+asyncio.run(example())
