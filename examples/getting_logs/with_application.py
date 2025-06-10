@@ -13,4 +13,4 @@ async def example() -> None:
     print(logs.logs)  # 'Hello World'
 
 
-asyncio.run(example)
+asyncio.run(example())

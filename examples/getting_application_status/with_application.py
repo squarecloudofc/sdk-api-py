@@ -11,10 +11,9 @@ async def example() -> None:
 
     print(status.ram)  # '70MB'
     print(status.cpu)  # '5%'
-    print(status.requests)  # 0
     print(status.network)  # {'total': '0 KB ↑ 0 KB ↓', 'now': '0 KB ↑ 0 KB ↓'}
     print(status.running)  # True | False
     print(status.storage)  # '0MB'
 
 
-asyncio.run(example)
+asyncio.run(example())

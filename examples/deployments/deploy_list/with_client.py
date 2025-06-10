@@ -10,4 +10,4 @@ async def example() -> None:
     print(deploys)  # [[DeployData(...), DeployData(...), DeployData(...)]]
 
 
-asyncio.run(example)
+asyncio.run(example())

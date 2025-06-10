@@ -11,4 +11,4 @@ async def example() -> None:
     print(webhook_url)
 
 
-asyncio.run(example)
+asyncio.run(example())

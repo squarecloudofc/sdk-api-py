@@ -13,4 +13,4 @@ async def example() -> None:
     )
 
 
-asyncio.run(example)
+asyncio.run(example())

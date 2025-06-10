@@ -12,4 +12,4 @@ async def example() -> None:
     print(file_bytes)  # b'01101000 01101001'
 
 
-asyncio.run(example)
+asyncio.run(example())

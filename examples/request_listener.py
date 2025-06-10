@@ -3,7 +3,7 @@ import asyncio
 import squarecloud as square
 from squarecloud import Endpoint
 
-client = square.Client('API_KEY', debug=False)
+client = square.Client('API_KEY')
 
 
 @client.on_request(endpoint=Endpoint.logs())
@@ -22,4 +22,4 @@ async def example() -> None:
     await client.user(avoid_listener=True)  # the listener is not called
 
 
-asyncio.run(example)
+asyncio.run(example())
