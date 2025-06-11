@@ -9,4 +9,4 @@ async def example() -> None:
     await client.restart_app('application_id')
 
 
-asyncio.run(example)
+asyncio.run(example())

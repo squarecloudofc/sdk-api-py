@@ -10,4 +10,4 @@ async def example() -> None:
     await app.stop()
 
 
-asyncio.run(example)
+asyncio.run(example())

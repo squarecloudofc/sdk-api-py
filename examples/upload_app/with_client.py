@@ -10,4 +10,4 @@ async def example() -> None:
     await client.upload_app(file=file)
 
 
-asyncio.run(example)
+asyncio.run(example())

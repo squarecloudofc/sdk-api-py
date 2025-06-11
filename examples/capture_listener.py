@@ -3,7 +3,7 @@ import asyncio
 import squarecloud as square
 from squarecloud import Endpoint
 
-client = square.Client('API_KEY', debug=False)
+client = square.Client('API_KEY')
 
 
 async def example() -> None:

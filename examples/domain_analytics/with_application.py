@@ -11,4 +11,4 @@ async def example() -> None:
     print(analytics)  # DomainAnalytics(...)
 
 
-asyncio.run(example)
+asyncio.run(example())

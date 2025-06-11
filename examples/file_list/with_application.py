@@ -19,4 +19,4 @@ async def example() -> None:
         print(file.lastModified)  # 1677112835000
 
 
-asyncio.run(example)
+asyncio.run(example())

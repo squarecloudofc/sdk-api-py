@@ -10,4 +10,4 @@ async def example() -> None:
     print(apps)  # list[<Application tag='example' id='application_id'>]
 
 
-asyncio.run(example)
+asyncio.run(example())
