@@ -9,12 +9,12 @@ class Endpoint:
         'APP_DATA': {'METHOD': 'GET', 'PATH': '/apps/{app_id}'},
         'APP_STATUS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/status'},
         'ALL_APPS_STATUS': {'METHOD': 'GET', 'PATH': '/apps/status'},
-        'ALL_BACKUPS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/backups'},
+        'ALL_BACKUPS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/snapshots'},
         'LOGS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/logs'},
         'START': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/start'},
         'STOP': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/stop'},
         'RESTART': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/restart'},
-        'BACKUP': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/backups'},
+        'BACKUP': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/snapshots'},
         'COMMIT': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/commit'},
         'DELETE_APP': {'METHOD': 'DELETE', 'PATH': '/apps/{app_id}'},
         'UPLOAD_APP': {'METHOD': 'POST', 'PATH': '/apps'},
@@ -148,7 +148,7 @@ class Endpoint:
     def backup(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
-        /apps/{app_id}/backups endpoint.
+        /apps/{app_id}/snapshots endpoint.
         """
         return cls('BACKUP')
 
@@ -244,7 +244,7 @@ class Endpoint:
     def all_backups(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
-        /apps/{app_id}/backups endpoint.
+        /apps/{app_id}/snapshots endpoint.
         """
         return cls('ALL_BACKUPS')
 
