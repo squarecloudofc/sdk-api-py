@@ -163,7 +163,7 @@ class HTTPClient:
         """
         headers = {
             'Authorization': self.api_key,
-            'User-Agent': 'squarecloud-api/3.5.1',
+            'User-Agent': 'squarecloud-sdk-py/3.7.4',
         }
         extra_error_kwargs: dict[str, Any] = {}
 
