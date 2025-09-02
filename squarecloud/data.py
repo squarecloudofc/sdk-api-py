@@ -240,15 +240,17 @@ class UploadData(BaseDataClass):
     :ivar ram: Ram allocated for the uploaded application
     :ivar cpu: Cpu of the uploaded application
     :ivar description: Description of the uploaded application
-    :ivar subdomain: Subdomain of the uploaded application (only in websites)
+    :ivar domain: Subdomain of the uploaded application (only in websites)
+    :ivar cluster: Cluster where the application is hosted
 
     :type id: str
     :type name: str
     :type language: Language
     :type ram: confloat(ge=0)
     :type cpu: confloat(ge=0)
-    :type subdomain: str | None = None
+    :type domain: str | None = None
     :type description: str | None = None
+    :type cluster: str
     """
 
     id: str
@@ -256,6 +258,7 @@ class UploadData(BaseDataClass):
     language: Language
     ram: float
     cpu: float
+    cluster: str
     domain: str | None = None
     description: str | None = None
 
