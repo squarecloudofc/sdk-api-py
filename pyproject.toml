@@ -14,6 +14,12 @@ packages = [{ include = "squarecloud" }]
 python = '^3.13'
 typing-extensions = "^4.12.2"
 aiohttp = "^3.11.14"
+pydantic = "2.9.2"
+
+[tool.poetry.extras]
+pydantic = ["pydantic"]
+
+[tool.poetry.group.dev.dependencies]
 isort = "^6.0.1"
 pre-commit = "^4.2.0"
 pytest = "^8.3.5"
@@ -22,14 +28,8 @@ pytest-cov = "^6.0.0"
 pytest-rerunfailures = "^15.0"
 ruff = "^0.11.2"
 taskipy = "^1.14.1"
-pydantic = "2.9.2"
 bandit = {extras = ["toml"], version = "^1.8.3"}
 cz-conventional-gitmoji = "^0.7.0"
-
-[tool.poetry.extras]
-pydantic = ["pydantic"]
-
-[tool.poetry.group.dev.dependencies]
 memory-profiler = '^0.61.0'
 requests = '^2.31.0'
 python-dotenv = "^1.0.1"
@@ -37,7 +37,6 @@ safety = "^3.3.1"
 vulture = "^2.14"
 mypy-extensions = "^1.0.0"
 commitizen = "^4.5.1"
-bandit = "^1.8.3"
 
 [build-system]
 requires = ['poetry-core']
@@ -60,7 +59,7 @@ profile = 'black'
 line_length = 79
 
 [tool.taskipy.tasks]
-lint = 'isort . && blue . && ruff check .'
+lint = 'isort . && ruff check .'
 pre_test = 'task lint'
 test = 'pytest -vv -s --reruns 5 --only-rerun TooManyRequests --reruns-delay 90 -x --cov=tests tests'
 post_test = 'coverage html'
