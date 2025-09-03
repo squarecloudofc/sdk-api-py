@@ -36,66 +36,6 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-@deprecated(
-    "create_config_file is deprecated, "
-    "use squarecloud.utils.ConfigFile instead."
-)
-def create_config_file(
-    path: str,
-    display_name: str,
-    main: str,
-    memory: int,
-    version: Literal["recommended", "latest"] = "recommended",
-    description: str | None = None,
-    subdomain: str | None = None,
-    start: str | None = None,
-    auto_restart: bool = False,
-    **kwargs,
-) -> TextIO | str:
-    """
-    The create_config_file function creates a squarecloud.app file in the
-    specified path, with the given parameters.
-    The function takes in 8 arguments:
-
-    :param path: str: Specify the path to the folder where you want to create
-    your config file
-    :param display_name: str: Set the display name of your app
-    :param main: str: Specify the file that will be executed when the app
-    is started
-    :param memory: int: Set the memory of the app
-    :param version: Literal['recommended', 'latest']: Ensure that the version
-    is either 'recommended' or 'latest'.
-    :param description: str | None: Specify a description for the app
-    :param subdomain: str | None: Specify the subdomain of your app
-    :param start: str | None: Specify the command that should be run when the
-    application starts
-    :param auto_restart: bool | None: Determine if the app should restart
-    automatically after a crash
-    :return: File content
-    :rtype: str
-    """
-    content: str = ""
-    optionals: dict[str, Any] = {
-        "DISPLAY_NAME": display_name,
-        "MAIN": main,
-        "MEMORY": memory,
-        "VERSION": version,
-        "DESCRIPTION": description,
-        "SUBDOMAIN": subdomain,
-        "START": start,
-        "AUTORESTART": auto_restart,
-    }
-    for key, value in optionals.items():
-        if value:
-            string: str = f"{key}={value}\n"
-            content += string
-    if kwargs.get("save", True):
-        with open(f"./{path}/squarecloud.app", "w", encoding="utf-8") as file:
-            file.write(content)
-        return file
-    return content
-
-
 class Client(RequestListenerManager):
     """A client for interacting with the SquareCloud API."""
 
