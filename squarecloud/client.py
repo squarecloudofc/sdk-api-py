@@ -540,7 +540,7 @@ class Client(RequestListenerManager):
         if not response.response:
             return []
         return [
-            FileInfo(**data, app_id=app_id, path=path + f"/{data.get('name')}")
+            FileInfo(**data, app_id=app_id, path=path + f"{data.get('name')}")
             for data in response.response
         ]
 
