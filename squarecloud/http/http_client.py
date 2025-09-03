@@ -512,7 +512,7 @@ class HTTPClient:
         """
         route: Router = Router(Endpoint.files_create(), app_id=app_id)
         response: Response = await self.request(
-            route, json={'buffer': file, 'path': '/' + path}
+            route, json={'content': file, 'path': '/' + path}
         )
         return response
 
