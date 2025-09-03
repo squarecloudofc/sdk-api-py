@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import wraps
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar
+from typing_extensions import deprecated
 
 from squarecloud import errors
 
@@ -79,6 +80,7 @@ class AppCache:
         return self._logs
 
     @property
+    @deprecated("this property will be removed in future versions, use the 'snapshot' property instead")
     def backup(self) -> Backup:
         """
         The backup method is a property that returns the cached Backup of
@@ -459,6 +461,7 @@ class Application(CaptureListenerManager):
 
     @_update_cache
     @_notify_listener(Endpoint.backup())
+    @deprecated("this method will be removed in future versions, use the 'snapshot' method instead")
     async def backup(self, *_args, **_kwargs) -> Backup:
         """
         The backup function is used to create a backup of the application.

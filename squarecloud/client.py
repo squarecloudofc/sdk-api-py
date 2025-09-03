@@ -279,6 +279,7 @@ class Client(RequestListenerManager):
 
     @validate
     @_notify_listener(Endpoint.backup())
+    @deprecated("this method will be removed in future versions, use the 'snapshot' method instead")
     async def backup(self, app_id: str, **_kwargs) -> Backup:
         """
         The backup method is used to backup an application.
