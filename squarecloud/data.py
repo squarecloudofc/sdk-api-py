@@ -283,9 +283,9 @@ class FileInfo(BaseDataClass):
     app_id: str
     type: Literal['file', 'directory']
     name: str
-    lastModified: int | float | None  # noqa: N815: Ignore mixedCase naming convention
     path: str
     size: int = 0
+    lastModified: int | float | None = None # noqa: N815: Ignore mixedCase naming convention
 
 
 class DeployData(BaseDataClass):
