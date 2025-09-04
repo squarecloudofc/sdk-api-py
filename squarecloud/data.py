@@ -301,31 +301,47 @@ class AnalyticsTotal(BaseDataClass):
 
 
 class DomainAnalytics(BaseDataClass):
-    class Analytics(BaseDataClass):
-        total: list[AnalyticsTotal]
-        countries: list[Any]
-        methods: list[Any]
-        referers: list[Any]
-        browsers: list[Any]
-        deviceTypes: list[
-            Any
-        ]  # noqa: N815: Ignore mixedCase naming convention
-        operatingSystems: list[
-            Any
-        ]  # noqa: N815: Ignore mixedCase naming convention
-        agents: list[Any]
-        hosts: list[Any]
-        paths: list[Any]
-
-    class Domain(BaseDataClass):
-        hostname: str
-        analytics: DomainAnalytics.Analytics | None
-
-    class Custom(BaseDataClass):
-        analytics: DomainAnalytics.Analytics | None
-
-    domain: Domain
-    custom: Custom
+    class BaseAnalytics(BaseDataClass):
+        visits: int
+        requests: int
+        bytes: int
+        date: str
+        @property
+        def date_time(self) -> datetime:
+            "retrieves the date as a datetime object"
+            return datetime.fromisoformat(self.date)
+    class ExtraBaseAnalytics(BaseAnalytics):
+        type: str
+    class Visits(BaseAnalytics): 
+        pass
+    class Countries(ExtraBaseAnalytics): 
+        pass
+    class Devices(ExtraBaseAnalytics):
+        pass
+    class Os(ExtraBaseAnalytics): 
+        pass
+    class Browsers(ExtraBaseAnalytics):
+        pass
+    class Protocols(ExtraBaseAnalytics):
+        pass
+    class Methods(ExtraBaseAnalytics):
+        pass
+    class Paths(ExtraBaseAnalytics):
+        pass
+    class Referers(ExtraBaseAnalytics):
+        pass
+    class Providers(ExtraBaseAnalytics):
+        pass
+    visits: list[Visits]
+    countries: list[Countries]
+    devices: list[Devices]
+    os: list[Os]
+    browsers: list[Browsers]
+    protocols: list[Protocols]
+    methods: list[Methods]
+    paths: list[Paths]
+    referers: list[Referers]
+    providers: list[Providers]
 
 
 class DNSRecord(BaseDataClass):
