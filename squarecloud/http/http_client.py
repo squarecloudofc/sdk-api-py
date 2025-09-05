@@ -231,7 +231,7 @@ class HTTPClient:
                 return response
 
     @classmethod
-    async def fetch_backup_content(cls, url: str) -> bytes:
+    async def fetch_snapshot_content(cls, url: str) -> bytes:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 return await response.read()
@@ -348,7 +348,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def backup(self, app_id: str) -> Response:
+    async def snapshot(self, app_id: str) -> Response:
         """
         Backup a hosted application
 
@@ -363,7 +363,7 @@ class HTTPClient:
         :raises TooManyRequestsError: Raised when the request status
                 code is 429
         """
-        route: Router = Router(Endpoint.backup(), app_id=app_id)
+        route: Router = Router(Endpoint.snapshot(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -655,7 +655,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def get_all_app_backups(self, app_id: str) -> Response:
+    async def get_all_app_snapshots(self, app_id: str) -> Response:
         """
         Returns a list of all backups of the specified application
 
@@ -669,7 +669,7 @@ class HTTPClient:
         :raises TooManyRequestsError: Raised when the request status
                 code is 429
         """
-        route: Router = Router(Endpoint.all_backups(), app_id=app_id)
+        route: Router = Router(Endpoint.all_snapshots(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import wraps
 from io import BytesIO
-from typing import Any, Callable, Literal, ParamSpec, TextIO, TypeVar
+from typing import Any, Callable, Literal, ParamSpec, TypeVar
 
 from typing_extensions import deprecated
 
@@ -12,8 +12,8 @@ from ._internal.decorators import validate
 from .app import Application
 from .data import (
     AppData,
-    Backup,
-    BackupInfo,
+    Snapshot,
+    SnapshotInfo,
     DeployData,
     DNSRecord,
     DomainAnalytics,
@@ -278,16 +278,16 @@ class Client(RequestListenerManager):
         return await self._http.restart_application(app_id)
 
     @validate
-    @_notify_listener(Endpoint.backup())
+    @_notify_listener(Endpoint.snapshot())
     @deprecated("this method will be removed in future versions, use the 'snapshot' method instead")
-    async def backup(self, app_id: str, **_kwargs) -> Backup:
+    async def backup(self, app_id: str, **_kwargs) -> Snapshot:
         """
         The backup method is used to backup an application.
 
         :param app_id: Specify the application id
         :param _kwargs: Keyword arguments
-        :return: A Backup object
-        :rtype: Backup
+        :return: A Snapshot object
+        :rtype: Snapshot
 
         :raises NotFoundError: Raised when the request status code is 404
         :raises BadRequestError: Raised when the request status code is 400
@@ -296,9 +296,31 @@ class Client(RequestListenerManager):
         :raises TooManyRequestsError: Raised when the request status
                 code is 429
         """
-        response: Response = await self._http.backup(app_id)
+        response: Response = await self._http.snapshot(app_id)
         payload: dict[str, Any] = response.response
-        return Backup(**payload)
+        return Snapshot(**payload)
+    
+    @validate
+    @_notify_listener(Endpoint.snapshot())
+    async def snapshot(self, app_id: str, **_kwargs) -> Snapshot:
+        """
+        The snapshot method is used to save a snapshot of an application.
+
+        :param app_id: Specify the application id
+        :param _kwargs: Keyword arguments
+        :return: A Snapshot object
+        :rtype: Snapshot
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        """
+        response: Response = await self._http.snapshot(app_id)
+        payload: dict[str, Any] = response.response
+        return Snapshot(**payload)
 
     @validate
     @_notify_listener(Endpoint.delete_app())
@@ -674,18 +696,17 @@ class Client(RequestListenerManager):
         response: Response = await self._http.domain_analytics(
             app_id=app_id,
         )
-
         return DomainAnalytics(**response.response)
 
     @validate
-    @_notify_listener(Endpoint.all_backups())
+    @_notify_listener(Endpoint.all_snapshots())
     async def all_app_backups(
         self, app_id: str, **_kwargs
-    ) -> list[BackupInfo]:
-        response: Response = await self._http.get_all_app_backups(
+    ) -> list[SnapshotInfo]:
+        response: Response = await self._http.get_all_app_snapshots(
             app_id=app_id
         )
-        return [BackupInfo(**backup_data) for backup_data in response.response]
+        return [SnapshotInfo(**backup_data) for backup_data in response.response]
 
     @_notify_listener(Endpoint.all_apps_status())
     async def all_apps_status(self, **_kwargs) -> list[ResumedStatus]:

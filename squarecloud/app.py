@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import wraps
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar
+
 from typing_extensions import deprecated
 
 from squarecloud import errors
@@ -10,8 +11,8 @@ from squarecloud import errors
 from ._internal.decorators import validate
 from .data import (
     AppData,
-    Backup,
-    BackupInfo,
+    Snapshot,
+    SnapshotInfo,
     DeployData,
     DNSRecord,
     DomainAnalytics,
@@ -54,7 +55,7 @@ class AppCache:
         """
         self._status: StatusData | None = None
         self._logs: LogsData | None = None
-        self._backup: Backup | None = None
+        self._backup: Snapshot | None = None
         self._app_data: AppData | None = None
 
     @property
@@ -81,7 +82,7 @@ class AppCache:
 
     @property
     @deprecated("this property will be removed in future versions, use the 'snapshot' property instead")
-    def backup(self) -> Backup:
+    def backup(self) -> Snapshot:
         """
         The backup method is a property that returns the cached Backup of
         the application.
@@ -132,7 +133,7 @@ class AppCache:
                 self._status = arg
             elif isinstance(arg, LogsData):
                 self._logs = arg
-            elif isinstance(arg, Backup):
+            elif isinstance(arg, Snapshot):
                 self._backup = arg
             elif isinstance(arg, AppData):
                 self._app_data = arg
@@ -142,7 +143,7 @@ class AppCache:
                     for i in [
                         StatusData,
                         LogsData,
-                        Backup,
+                        Snapshot,
                         AppData,
                     ]
                 ]
@@ -460,9 +461,9 @@ class Application(CaptureListenerManager):
         return status
 
     @_update_cache
-    @_notify_listener(Endpoint.backup())
+    @_notify_listener(Endpoint.snapshot())
     @deprecated("this method will be removed in future versions, use the 'snapshot' method instead")
-    async def backup(self, *_args, **_kwargs) -> Backup:
+    async def backup(self, *_args, **_kwargs) -> Snapshot:
         """
         The backup function is used to create a backup of the application.
 
@@ -470,8 +471,21 @@ class Application(CaptureListenerManager):
         :return: A Backup object
         :rtype: Backup
         """
-        backup: Backup = await self.client.backup(self.id)
+        backup: Snapshot = await self.client.snapshot(self.id)
         return backup
+    
+    @_update_cache
+    @_notify_listener(Endpoint.snapshot())
+    async def snapshot(self, *_args, **_kwargs) -> Snapshot:
+        """
+        The Snapshot function is used to create a snapshot of the application.
+
+        :param self: Refer to the class instance
+        :return: A Snapshot object
+        :rtype: Snapshot
+        """
+        snapshot: Snapshot = await self.client.snapshot(self.id)
+        return snapshot
 
     async def start(self) -> Response:
         """
@@ -654,7 +668,7 @@ class Application(CaptureListenerManager):
 
     @deprecated("this method will be removed in future versions, use the 'all_snapshots' method instead")
     async def all_backups(self) -> Response:
-        backups: list[BackupInfo] = await self.client.all_app_backups(self.id)
+        backups: list[SnapshotInfo] = await self.client.all_app_backups(self.id)
         return backups
 
     @validate
