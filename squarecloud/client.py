@@ -700,7 +700,18 @@ class Client(RequestListenerManager):
 
     @validate
     @_notify_listener(Endpoint.all_snapshots())
+    @deprecated("this method will be removed in future versions, use the 'all_app_snapshots' method instead")
     async def all_app_backups(
+        self, app_id: str, **_kwargs
+    ) -> list[SnapshotInfo]:
+        response: Response = await self._http.get_all_app_snapshots(
+            app_id=app_id
+        )
+        return [SnapshotInfo(**backup_data) for backup_data in response.response]
+    
+    @validate
+    @_notify_listener(Endpoint.all_snapshots())
+    async def all_app_snapshots(
         self, app_id: str, **_kwargs
     ) -> list[SnapshotInfo]:
         response: Response = await self._http.get_all_app_snapshots(

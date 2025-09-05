@@ -667,9 +667,13 @@ class Application(CaptureListenerManager):
         return response
 
     @deprecated("this method will be removed in future versions, use the 'all_snapshots' method instead")
-    async def all_backups(self) -> Response:
-        backups: list[SnapshotInfo] = await self.client.all_app_backups(self.id)
+    async def all_backups(self) -> list[SnapshotInfo]:
+        backups: list[SnapshotInfo] = await self.client.all_app_snapshots(self.id)
         return backups
+    
+    async def all_snapshots(self) -> list[SnapshotInfo]:
+        snapshots: list[SnapshotInfo] = await self.client.all_app_snapshots(self.id)
+        return snapshots
 
     @validate
     async def move_file(self, origin: str, dest: str) -> Response:
