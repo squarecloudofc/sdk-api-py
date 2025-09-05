@@ -294,12 +294,6 @@ class DeployData(BaseDataClass):
     date: datetime
 
 
-class AnalyticsTotal(BaseDataClass):
-    visits: int
-    megabytes: float
-    bytes: int
-
-
 class DomainAnalytics(BaseDataClass):
     class BaseAnalytics(BaseDataClass):
         visits: int
