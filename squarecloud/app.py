@@ -655,12 +655,28 @@ class Application(CaptureListenerManager):
         return webhook
 
     async def domain_analytics(self) -> DomainAnalytics:
+        """
+        Retrieve analytics data for the application's domain.
+        
+        :param self: Refer to the instance of the class.
+        :returns: An instance of :class:`DomainAnalytics` containing analytics data for the domain.
+        :rtype: DomainAnalytics
+        :raises Exception: If the analytics data could not be retrieved.
+        """
         analytics: DomainAnalytics = await self.client.domain_analytics(
             self.id, avoid_listener=True
         )
-        return analytics  # TODO:
+        return analytics
 
     async def set_custom_domain(self, custom_domain: str) -> Response:
+        """
+        Sets a custom domain for the application.
+
+        :param custom_domain: The custom domain to be assigned to the application.
+        :type custom_domain: str
+        :return: The response from the domain assignment operation.
+        :rtype: Response
+        """
         response: Response = await self.client.set_custom_domain(
             self.id, custom_domain, avoid_listener=True
         )
@@ -672,11 +688,28 @@ class Application(CaptureListenerManager):
         return backups
     
     async def all_snapshots(self) -> list[SnapshotInfo]:
+        """
+        Retrieve all snapshots of the application.
+        
+        :return: A list of SnapshotInfo objects representing all snapshots of the application.
+        :rtype: list[SnapshotInfo]
+        """
         snapshots: list[SnapshotInfo] = await self.client.all_app_snapshots(self.id)
         return snapshots
 
     @validate
     async def move_file(self, origin: str, dest: str) -> Response:
+        """
+        Moves a file from the origin path to the destination path within the application.
+        
+        :param origin: The source path of the file to be moved.
+        :type origin: str
+        :param dest: The destination path where the file should be moved.
+        :type dest: str
+        :return: A Response object containing the result of the file move operation.
+        :rtype: Response
+        """
+        
         return await self.client.move_app_file(self.id, origin, dest)
 
     async def current_integration(self) -> Response:
@@ -684,16 +717,53 @@ class Application(CaptureListenerManager):
 
     @_notify_listener(Endpoint.dns_records())
     async def dns_records(self) -> list[DNSRecord]:
+        """
+        Retrieve the DNS records associated with the application.
+        
+        :returns: A list of DNSRecord objects representing the DNS records.
+        :rtype: list[DNSRecord]
+        """
+        
         return await self.client.dns_records(self.id)
     
     async def get_envs(self) -> dict[str, str]:
+        """
+        Get environment variables of the application.
+
+        :return: A dictionary of the environment variables that were set.
+        :rtype: dict[str, str]
+        """
         return await self.client.get_app_envs(self.id)
 
     async def set_envs(self, envs: dict[str, str]) -> dict[str,str]:
+        """
+        Set environment variables or edits for the application.
+
+        :param envs: A dictionary containing environment variable names and their corresponding values.
+        :type envs: dict[str, str]
+        :return: A dictionary of the environment variables that were set.
+        :rtype: dict[str, str]
+        """
         return await self.client.set_app_envs(self.id, envs)
     
     async def delete_envs(self, keys: list[str]) -> dict[str,str]:
+        """
+        Deletes environment variables from the application.
+
+        :param keys: A list of environment variable keys to be deleted.
+        :type keys: list[str]
+        :returns: A dictionary containing the remaining variables.
+        :rtype: dict[str, str]
+        """
         return await self.client.delete_app_envs(self.id, keys)
     
     async def overwrite_env(self, envs: dict[str, str]) -> dict[str,str]:
+        """
+        Overwrites the environment variables for the application.
+
+        :param envs: A dictionary containing the environment variables to set, where keys are variable names and values are their corresponding values.
+        :type envs: dict[str, str]
+        :return: A dictionary of the environment variables.
+        :rtype: dict[str, str]
+        """
         return await self.client.overwrite_app_envs(self.id, envs)

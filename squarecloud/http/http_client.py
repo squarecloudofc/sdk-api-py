@@ -759,21 +759,66 @@ class HTTPClient:
         return self._last_response
 
     async def get_environment_variables(self, app_id: str) -> Response:
+        """
+        Retrieve the environment variables for a specific application.
+
+        :param app_id: The unique identifier of the application.
+        :type app_id: str
+        :return: The response containing the environment variables.
+        :rtype: Response
+        """
         route: Router = Router(Endpoint.envs_get(), app_id=app_id)
         response: Response = await self.request(route)
         return response
     
     async def set_environment_variable(self, app_id: str, keys: dict[str, str]) -> Response:
+        """
+        Sets environment variables for a specific application.
+        This method sends a request to set the specified environment variables
+        for the application identified by the given `app_id`.
+        :param app_id: The ID of the application for which the environment 
+                       variables will be set.
+        :type app_id: str
+        :param keys: A dictionary containing the environment variable names 
+                     as keys and their corresponding values.
+        :type keys: dict[str, str]
+        :return: The response object containing the result of the operation.
+        :rtype: Response
+        """
+        
         route: Router = Router(Endpoint.envs_post(), app_id=app_id)
         response: Response = await self.request(route, json={"envs": keys})
         return response
     
     async def delete_environment_variable(self, app_id: str, keys: list[str]) -> Response:
+        """
+        Deletes one or more environment variables for a specific application.
+        :param app_id: The ID of the application whose environment variables are to be deleted.
+        :type app_id: str
+        :param keys: A list of environment variable keys to be deleted.
+        :type keys: list[str]
+        :return: The response object containing the result of the deletion operation.
+        :rtype: Response
+        """
         route: Router = Router(Endpoint.envs_delete(), app_id=app_id)
         response: Response = await self.request(route, json={"envs": keys})
         return response
     
     async def overwrite_environment_variables(self, app_id: str, keys: dict[str, str]) -> Response:
+        """
+        Overwrites the environment variables for a specific application.
+        This method sends a request to update the environment variables of the
+        specified application with the provided key-value pairs.
+        :param app_id: The ID of the application whose environment variables 
+                       are to be overwritten.
+        :type app_id: str
+        :param keys: A dictionary containing the environment variable keys and 
+                     their corresponding values to be set.
+        :type keys: dict[str, str]
+        :return: The response object containing the result of the operation.
+        :rtype: Response
+        """
+        
         route: Router = Router(Endpoint.envs_put(), app_id=app_id)
         response: Response = await self.request(route, json={"envs": keys})
         return response
