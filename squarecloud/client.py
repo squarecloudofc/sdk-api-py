@@ -751,3 +751,23 @@ class Client(RequestListenerManager):
             app_id
         )
         return response.response["webhook"]
+
+    async def get_app_envs(self, app_id: str) -> dict[str, str]:
+        response: Response = await self._http.get_environment_variables(app_id)
+        return response.response
+    
+    async def set_app_envs(self, app_id: str, envs: dict[str, str]) -> dict[str, str]:
+        response: Response = await self._http.set_environment_variable(app_id, envs)
+        return response.response
+    
+    async def delete_app_envs(self, app_id: str, keys: list[str]) -> dict[str, str]:
+        response: Response = await self._http.delete_environment_variable(app_id, keys)
+        return response.response
+    
+    async def overwrite_app_envs(self, app_id: str, envs: dict[str, str]) -> dict[str, str]:
+        response: Response = await self._http.overwrite_environment_variables(app_id, envs)
+        return response.response
+    
+    async def clear_app_envs(self, app_id: str) -> dict[str, str]:
+        response: Response = await self._http.overwrite_environment_variables(app_id, {})
+        return response.response

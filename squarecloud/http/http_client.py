@@ -757,3 +757,23 @@ class HTTPClient:
         :rtype: Response | None
         """
         return self._last_response
+
+    async def get_environment_variables(self, app_id: str) -> Response:
+        route: Router = Router(Endpoint.envs_get(), app_id=app_id)
+        response: Response = await self.request(route)
+        return response
+    
+    async def set_environment_variable(self, app_id: str, keys: dict[str, str]) -> Response:
+        route: Router = Router(Endpoint.envs_post(), app_id=app_id)
+        response: Response = await self.request(route, json={"envs": keys})
+        return response
+    
+    async def delete_environment_variable(self, app_id: str, keys: list[str]) -> Response:
+        route: Router = Router(Endpoint.envs_delete(), app_id=app_id)
+        response: Response = await self.request(route, json={"envs": keys})
+        return response
+    
+    async def overwrite_environment_variables(self, app_id: str, keys: dict[str, str]) -> Response:
+        route: Router = Router(Endpoint.envs_put(), app_id=app_id)
+        response: Response = await self.request(route, json={"envs": keys})
+        return response

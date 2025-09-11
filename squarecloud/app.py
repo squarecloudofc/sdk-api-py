@@ -685,3 +685,15 @@ class Application(CaptureListenerManager):
     @_notify_listener(Endpoint.dns_records())
     async def dns_records(self) -> list[DNSRecord]:
         return await self.client.dns_records(self.id)
+    
+    async def get_envs(self) -> dict[str, str]:
+        return await self.client.get_app_envs(self.id)
+
+    async def set_envs(self, envs: dict[str, str]) -> dict[str,str]:
+        return await self.client.set_app_envs(self.id, envs)
+    
+    async def delete_envs(self, keys: list[str]) -> dict[str,str]:
+        return await self.client.delete_app_envs(self.id, keys)
+    
+    async def overwrite_env(self, envs: dict[str, str]) -> dict[str,str]:
+        return await self.client.overwrite_app_envs(self.id, envs)
