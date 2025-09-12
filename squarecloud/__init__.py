@@ -5,8 +5,8 @@ from .app import Application
 from .client import Client
 from .data import (
     AppData,
-    Backup,
-    BackupInfo,
+    Snapshot,
+    SnapshotInfo,
     DeployData,
     DNSRecord,
     DomainAnalytics,
@@ -29,8 +29,8 @@ __all__ = [
     'Endpoint',
     'Response',
     'AppData',
-    'Backup',
-    'BackupInfo',
+    'Snapshot',
+    'SnapshotInfo',
     'DeployData',
     'DNSRecord',
     'DomainAnalytics',

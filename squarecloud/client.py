@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import wraps
 from io import BytesIO
-from typing import Any, Callable, Literal, ParamSpec, TextIO, TypeVar
+from typing import Any, Callable, Literal, ParamSpec, TypeVar
 
 from typing_extensions import deprecated
 
@@ -12,8 +12,8 @@ from ._internal.decorators import validate
 from .app import Application
 from .data import (
     AppData,
-    Backup,
-    BackupInfo,
+    Snapshot,
+    SnapshotInfo,
     DeployData,
     DNSRecord,
     DomainAnalytics,
@@ -34,66 +34,6 @@ from .logger import logger
 
 P = ParamSpec("P")
 R = TypeVar("R")
-
-
-@deprecated(
-    "create_config_file is deprecated, "
-    "use squarecloud.utils.ConfigFile instead."
-)
-def create_config_file(
-    path: str,
-    display_name: str,
-    main: str,
-    memory: int,
-    version: Literal["recommended", "latest"] = "recommended",
-    description: str | None = None,
-    subdomain: str | None = None,
-    start: str | None = None,
-    auto_restart: bool = False,
-    **kwargs,
-) -> TextIO | str:
-    """
-    The create_config_file function creates a squarecloud.app file in the
-    specified path, with the given parameters.
-    The function takes in 8 arguments:
-
-    :param path: str: Specify the path to the folder where you want to create
-    your config file
-    :param display_name: str: Set the display name of your app
-    :param main: str: Specify the file that will be executed when the app
-    is started
-    :param memory: int: Set the memory of the app
-    :param version: Literal['recommended', 'latest']: Ensure that the version
-    is either 'recommended' or 'latest'.
-    :param description: str | None: Specify a description for the app
-    :param subdomain: str | None: Specify the subdomain of your app
-    :param start: str | None: Specify the command that should be run when the
-    application starts
-    :param auto_restart: bool | None: Determine if the app should restart
-    automatically after a crash
-    :return: File content
-    :rtype: str
-    """
-    content: str = ""
-    optionals: dict[str, Any] = {
-        "DISPLAY_NAME": display_name,
-        "MAIN": main,
-        "MEMORY": memory,
-        "VERSION": version,
-        "DESCRIPTION": description,
-        "SUBDOMAIN": subdomain,
-        "START": start,
-        "AUTORESTART": auto_restart,
-    }
-    for key, value in optionals.items():
-        if value:
-            string: str = f"{key}={value}\n"
-            content += string
-    if kwargs.get("save", True):
-        with open(f"./{path}/squarecloud.app", "w", encoding="utf-8") as file:
-            file.write(content)
-        return file
-    return content
 
 
 class Client(RequestListenerManager):
@@ -338,15 +278,16 @@ class Client(RequestListenerManager):
         return await self._http.restart_application(app_id)
 
     @validate
-    @_notify_listener(Endpoint.backup())
-    async def backup(self, app_id: str, **_kwargs) -> Backup:
+    @_notify_listener(Endpoint.snapshot())
+    @deprecated("this method will be removed in future versions, use the 'snapshot' method instead")
+    async def backup(self, app_id: str, **_kwargs) -> Snapshot:
         """
         The backup method is used to backup an application.
 
         :param app_id: Specify the application id
         :param _kwargs: Keyword arguments
-        :return: A Backup object
-        :rtype: Backup
+        :return: A Snapshot object
+        :rtype: Snapshot
 
         :raises NotFoundError: Raised when the request status code is 404
         :raises BadRequestError: Raised when the request status code is 400
@@ -355,9 +296,31 @@ class Client(RequestListenerManager):
         :raises TooManyRequestsError: Raised when the request status
                 code is 429
         """
-        response: Response = await self._http.backup(app_id)
+        response: Response = await self._http.snapshot(app_id)
         payload: dict[str, Any] = response.response
-        return Backup(**payload)
+        return Snapshot(**payload)
+    
+    @validate
+    @_notify_listener(Endpoint.snapshot())
+    async def snapshot(self, app_id: str, **_kwargs) -> Snapshot:
+        """
+        The snapshot method is used to save a snapshot of an application.
+
+        :param app_id: Specify the application id
+        :param _kwargs: Keyword arguments
+        :return: A Snapshot object
+        :rtype: Snapshot
+
+        :raises NotFoundError: Raised when the request status code is 404
+        :raises BadRequestError: Raised when the request status code is 400
+        :raises AuthenticationFailure: Raised when the request status
+                code is 401
+        :raises TooManyRequestsError: Raised when the request status
+                code is 429
+        """
+        response: Response = await self._http.snapshot(app_id)
+        payload: dict[str, Any] = response.response
+        return Snapshot(**payload)
 
     @validate
     @_notify_listener(Endpoint.delete_app())
@@ -540,7 +503,7 @@ class Client(RequestListenerManager):
         if not response.response:
             return []
         return [
-            FileInfo(**data, app_id=app_id, path=path + f"/{data.get('name')}")
+            FileInfo(**data, app_id=app_id, path=path + f"{data.get('name')}")
             for data in response.response
         ]
 
@@ -733,21 +696,54 @@ class Client(RequestListenerManager):
         response: Response = await self._http.domain_analytics(
             app_id=app_id,
         )
-
         return DomainAnalytics(**response.response)
 
     @validate
-    @_notify_listener(Endpoint.all_backups())
+    @_notify_listener(Endpoint.all_snapshots())
+    @deprecated("this method will be removed in future versions, use the 'all_app_snapshots' method instead")
     async def all_app_backups(
         self, app_id: str, **_kwargs
-    ) -> list[BackupInfo]:
-        response: Response = await self._http.get_all_app_backups(
+    ) -> list[SnapshotInfo]:
+        response: Response = await self._http.get_all_app_snapshots(
             app_id=app_id
         )
-        return [BackupInfo(**backup_data) for backup_data in response.response]
+        return [SnapshotInfo(**backup_data) for backup_data in response.response]
+    
+    @validate
+    @_notify_listener(Endpoint.all_snapshots())
+    async def all_app_snapshots(
+        self, app_id: str, **_kwargs
+    ) -> list[SnapshotInfo]:
+        """
+        Retrieve all snapshots for a specific application.
+        This method fetches a list of snapshots associated with the 
+        given application ID and returns them as a list of `SnapshotInfo` objects.
+        :param app_id: Specify the application by id.
+        :type app_id: str
+        :param _kwargs: Additional keyword arguments.
+        :type _kwargs: dict
+        :return: A list of `SnapshotInfo` objects representing the snapshots of 
+                 the specified application.
+        :rtype: list[SnapshotInfo]
+        """
+        response: Response = await self._http.get_all_app_snapshots(
+            app_id=app_id
+        )
+        return [SnapshotInfo(**snapshot_data) for snapshot_data in response.response]
 
     @_notify_listener(Endpoint.all_apps_status())
     async def all_apps_status(self, **_kwargs) -> list[ResumedStatus]:
+        """
+        Retrieve the status of all applications.
+        This method fetches the status of all applications
+        and returns a list of `ResumedStatus` objects for applications
+        that are currently running.
+        :param _kwargs: Additional keyword arguments.
+        :type _kwargs: dict
+        :return: A list of `ResumedStatus` objects representing the status
+                 of running applications.
+        :rtype: list[ResumedStatus]
+        """
         response: Response = await self._http.all_apps_status()
         all_status = []
         for status in response.response:
@@ -760,6 +756,19 @@ class Client(RequestListenerManager):
     async def move_app_file(
         self, app_id: str, origin: str, dest: str, **_kwargs
     ) -> Response:
+        """
+        Moves a file within an application from the origin path to the destination path.
+        :param app_id: Specify the application by id.
+        :type app_id: str
+        :param origin: The current path of the file to be moved.
+        :type origin: str
+        :param dest: The target path where the file should be moved.
+        :type dest: str
+        :param _kwargs: Additional keyword arguments.
+        :type _kwargs: dict
+        :return: The response object containing the result of the move operation.
+        :rtype: Response
+        """
         response: Response = await self._http.move_app_file(
             app_id=app_id, origin=origin, dest=dest
         )
@@ -768,6 +777,14 @@ class Client(RequestListenerManager):
     @validate
     @_notify_listener(Endpoint.dns_records())
     async def dns_records(self, app_id: str) -> list[DNSRecord]:
+        """
+        Retrieve DNS records for a specific application.
+        :param app_id: Specify the application by id.
+        :type app_id: str
+        :return: A list of DNSRecord objects representing the DNS records of the application.
+        :rtype: list[DNSRecord]
+        """
+        
         response: Response = await self._http.dns_records(app_id)
         return [DNSRecord(**data) for data in response.response]
 
@@ -778,3 +795,76 @@ class Client(RequestListenerManager):
             app_id
         )
         return response.response["webhook"]
+
+    async def get_app_envs(self, app_id: str) -> dict[str, str]:
+        """
+        Retrieve the environment variables of a specific application.
+        :param app_id: Specify the application by id.
+        :type app_id: str
+        :return: A dictionary containing the environment variables as key-value pairs.
+        :rtype: dict[str, str]
+        """
+        response: Response = await self._http.get_environment_variables(app_id)
+        return response.response
+    
+    async def set_app_envs(self, app_id: str, envs: dict[str, str]) -> dict[str, str]:
+        """
+        Sets or edits environment variables for a specific application.
+        This method sends a request to update the environment variables of the
+        specified application with the provided key-value pairs.
+        :param app_id: Specify the application by id.
+        :type app_id: str
+        :param envs: A dictionary containing the environment variables to set,
+                     where the keys are variable names and the values are their
+                     corresponding values.
+        :type envs: dict[str, str]
+        :return: A dictionary containing the updated environment with all variables.
+        :rtype: dict[str, str]
+        :raises HTTPException: If the HTTP request fails or returns an error response.
+        """
+        
+        response: Response = await self._http.set_environment_variable(app_id, envs)
+        return response.response
+    
+    async def delete_app_envs(self, app_id: str, keys: list[str]) -> dict[str, str]:
+        """
+        Deletes specified environment variables for a given application.
+        :param app_id: Specify the application by id.
+        :type app_id: str
+        :param keys: A list of keys representing the environment variables to be deleted.
+        :type keys: list[str]
+        :return: A dictionary containing the remaining variables.
+        :rtype: dict[str, str]
+        """
+        response: Response = await self._http.delete_environment_variable(app_id, keys)
+        return response.response
+    
+    async def overwrite_app_envs(self, app_id: str, envs: dict[str, str]) -> dict[str, str]:
+        """
+        Overwrite the environment variables of a specific application.
+        This method sets the dictionary provided as the new environment for the application.
+        :param app_id: Specify the application by id.
+        :type app_id: str
+        :param envs: A dictionary containing the new environment variables to set
+                     for the application. Keys and values must both be strings.
+        :type envs: dict[str, str]
+        :return: A dictionary containing the new environment after overwriting the
+                 environment variables.
+        :rtype: dict[str, str]
+        """
+        response: Response = await self._http.overwrite_environment_variables(app_id, envs)
+        return response.response
+    
+    async def clear_app_envs(self, app_id: str) -> dict[str, str]:
+        """
+        Clears all environment variables for the specified application.
+        This method overwrites the application's environment variables with an empty dictionary,
+        effectively removing all existing environment variables.
+        
+        :param app_id: Specify the application by id.
+        :type app_id: str
+        :return: A dictionary containing the response from the server.
+        :rtype: dict[str, str]
+        """
+        response: Response = await self._http.overwrite_environment_variables(app_id, {})
+        return response.response

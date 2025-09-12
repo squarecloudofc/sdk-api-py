@@ -9,12 +9,12 @@ class Endpoint:
         'APP_DATA': {'METHOD': 'GET', 'PATH': '/apps/{app_id}'},
         'APP_STATUS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/status'},
         'ALL_APPS_STATUS': {'METHOD': 'GET', 'PATH': '/apps/status'},
-        'ALL_BACKUPS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/snapshots'},
+        'ALL_SNAPSHOTS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/snapshots'},
         'LOGS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/logs'},
         'START': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/start'},
         'STOP': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/stop'},
         'RESTART': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/restart'},
-        'BACKUP': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/snapshots'},
+        'SNAPSHOT': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/snapshots'},
         'COMMIT': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/commit'},
         'DELETE_APP': {'METHOD': 'DELETE', 'PATH': '/apps/{app_id}'},
         'UPLOAD_APP': {'METHOD': 'POST', 'PATH': '/apps'},
@@ -56,6 +56,10 @@ class Endpoint:
             'PATH': '/apps/{app_id}/network/analytics',
         },
         'DNSRECORDS': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/network/dns'},
+        'ENVS_GET': {'METHOD': 'GET', 'PATH': '/apps/{app_id}/envs'},
+        'ENVS_PUT': {'METHOD': 'PUT', 'PATH': '/apps/{app_id}/envs'},
+        'ENVS_POST': {'METHOD': 'POST', 'PATH': '/apps/{app_id}/envs'},
+        'ENVS_DELETE': {'METHOD': 'DELETE', 'PATH': '/apps/{app_id}/envs'},
     }
 
     def __init__(self, name: str) -> None:
@@ -145,12 +149,12 @@ class Endpoint:
         return cls('RESTART')
 
     @classmethod
-    def backup(cls) -> Endpoint:
+    def snapshot(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
         /apps/{app_id}/snapshots endpoint.
         """
-        return cls('BACKUP')
+        return cls('SNAPSHOT')
 
     @classmethod
     def commit(cls) -> Endpoint:
@@ -241,12 +245,12 @@ class Endpoint:
         return cls('CUSTOM_DOMAIN')
 
     @classmethod
-    def all_backups(cls) -> Endpoint:
+    def all_snapshots(cls) -> Endpoint:
         """
         Returns an Endpoint object that represents the
         /apps/{app_id}/snapshots endpoint.
         """
-        return cls('ALL_BACKUPS')
+        return cls('ALL_SNAPSHOTS')
 
     @classmethod
     def all_apps_status(cls) -> Endpoint:
@@ -279,6 +283,38 @@ class Endpoint:
         /apps/{app_id}/network/dns
         """
         return cls('DNSRECORDS')
+    
+    @classmethod
+    def envs_get(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/envs GET endpoint.
+        """
+        return cls('ENVS_GET')
+
+    @classmethod
+    def envs_put(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/envs PUT endpoint.
+        """
+        return cls('ENVS_PUT')
+
+    @classmethod
+    def envs_post(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/envs POST endpoint.
+        """
+        return cls('ENVS_POST')
+
+    @classmethod
+    def envs_delete(cls) -> Endpoint:
+        """
+        Returns an Endpoint object that represents the
+        /apps/{app_id}/envs DELETE endpoint.
+        """
+        return cls('ENVS_DELETE')
 
 
 # pylint: disable=too-few-public-methods

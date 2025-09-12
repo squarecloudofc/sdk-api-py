@@ -195,19 +195,19 @@ class LogsData(BaseDataClass):
         return isinstance(other, LogsData) and self.logs == other.logs
 
 
-class BackupInfo(BaseDataClass):
+class SnapshotInfo(BaseDataClass):
     name: str
     size: int
     modified: datetime
     key: str
 
 
-class Backup:
+class Snapshot:
     """
-    Backup data class
+    Snapshot data class
 
-    :ivar url: Url for download your backup
-    :ivar key: The backup's key
+    :ivar url: Url for download your Snapshot
+    :ivar key: The Snapshot's key
 
     :type url: str
     :type key: str
@@ -219,12 +219,12 @@ class Backup:
         self.url = url
         self.key = key
 
-    def to_dict(self) -> None:
+    def to_dict(self) -> dict[str, str]:
         return {'url': self.url, 'key': self.key}
 
     async def download(self, path: str = './') -> zipfile.ZipFile:
         file_name = os.path.basename(self.url.split('?')[0])
-        content = await HTTPClient.fetch_backup_content(self.url)
+        content = await HTTPClient.fetch_snapshot_content(self.url)
         with zipfile.ZipFile(f'{path}/{file_name}', 'w') as zip_file:
             zip_file.writestr(f'{path}/{file_name}', content)
             return zip_file
@@ -283,9 +283,9 @@ class FileInfo(BaseDataClass):
     app_id: str
     type: Literal['file', 'directory']
     name: str
-    lastModified: int | float | None  # noqa: N815: Ignore mixedCase naming convention
     path: str
     size: int = 0
+    lastModified: int | float | None = None # noqa: N815: Ignore mixedCase naming convention
 
 
 class DeployData(BaseDataClass):
@@ -294,38 +294,48 @@ class DeployData(BaseDataClass):
     date: datetime
 
 
-class AnalyticsTotal(BaseDataClass):
-    visits: int
-    megabytes: float
-    bytes: int
-
-
 class DomainAnalytics(BaseDataClass):
-    class Analytics(BaseDataClass):
-        total: list[AnalyticsTotal]
-        countries: list[Any]
-        methods: list[Any]
-        referers: list[Any]
-        browsers: list[Any]
-        deviceTypes: list[
-            Any
-        ]  # noqa: N815: Ignore mixedCase naming convention
-        operatingSystems: list[
-            Any
-        ]  # noqa: N815: Ignore mixedCase naming convention
-        agents: list[Any]
-        hosts: list[Any]
-        paths: list[Any]
-
-    class Domain(BaseDataClass):
-        hostname: str
-        analytics: DomainAnalytics.Analytics | None
-
-    class Custom(BaseDataClass):
-        analytics: DomainAnalytics.Analytics | None
-
-    domain: Domain
-    custom: Custom
+    class BaseAnalytics(BaseDataClass):
+        visits: int
+        requests: int
+        bytes: int
+        date: str
+        @property
+        def date_time(self) -> datetime:
+            "retrieves the date as a datetime object"
+            return datetime.fromisoformat(self.date)
+    class ExtraBaseAnalytics(BaseAnalytics):
+        type: str
+    class Visits(BaseAnalytics): 
+        pass
+    class Countries(ExtraBaseAnalytics): 
+        pass
+    class Devices(ExtraBaseAnalytics):
+        pass
+    class Os(ExtraBaseAnalytics): 
+        pass
+    class Browsers(ExtraBaseAnalytics):
+        pass
+    class Protocols(ExtraBaseAnalytics):
+        pass
+    class Methods(ExtraBaseAnalytics):
+        pass
+    class Paths(ExtraBaseAnalytics):
+        pass
+    class Referers(ExtraBaseAnalytics):
+        pass
+    class Providers(ExtraBaseAnalytics):
+        pass
+    visits: list[Visits]
+    countries: list[Countries]
+    devices: list[Devices]
+    os: list[Os]
+    browsers: list[Browsers]
+    protocols: list[Protocols]
+    methods: list[Methods]
+    paths: list[Paths]
+    referers: list[Referers]
+    providers: list[Providers]
 
 
 class DNSRecord(BaseDataClass):

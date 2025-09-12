@@ -4,13 +4,15 @@ from functools import wraps
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar
 
+from typing_extensions import deprecated
+
 from squarecloud import errors
 
 from ._internal.decorators import validate
 from .data import (
     AppData,
-    Backup,
-    BackupInfo,
+    Snapshot,
+    SnapshotInfo,
     DeployData,
     DNSRecord,
     DomainAnalytics,
@@ -53,7 +55,7 @@ class AppCache:
         """
         self._status: StatusData | None = None
         self._logs: LogsData | None = None
-        self._backup: Backup | None = None
+        self._backup: Snapshot | None = None
         self._app_data: AppData | None = None
 
     @property
@@ -79,7 +81,8 @@ class AppCache:
         return self._logs
 
     @property
-    def backup(self) -> Backup:
+    @deprecated("this property will be removed in future versions, use the 'snapshot' property instead")
+    def backup(self) -> Snapshot:
         """
         The backup method is a property that returns the cached Backup of
         the application.
@@ -130,7 +133,7 @@ class AppCache:
                 self._status = arg
             elif isinstance(arg, LogsData):
                 self._logs = arg
-            elif isinstance(arg, Backup):
+            elif isinstance(arg, Snapshot):
                 self._backup = arg
             elif isinstance(arg, AppData):
                 self._app_data = arg
@@ -140,7 +143,7 @@ class AppCache:
                     for i in [
                         StatusData,
                         LogsData,
-                        Backup,
+                        Snapshot,
                         AppData,
                     ]
                 ]
@@ -458,8 +461,9 @@ class Application(CaptureListenerManager):
         return status
 
     @_update_cache
-    @_notify_listener(Endpoint.backup())
-    async def backup(self, *_args, **_kwargs) -> Backup:
+    @_notify_listener(Endpoint.snapshot())
+    @deprecated("this method will be removed in future versions, use the 'snapshot' method instead")
+    async def backup(self, *_args, **_kwargs) -> Snapshot:
         """
         The backup function is used to create a backup of the application.
 
@@ -467,8 +471,21 @@ class Application(CaptureListenerManager):
         :return: A Backup object
         :rtype: Backup
         """
-        backup: Backup = await self.client.backup(self.id)
+        backup: Snapshot = await self.client.snapshot(self.id)
         return backup
+    
+    @_update_cache
+    @_notify_listener(Endpoint.snapshot())
+    async def snapshot(self, *_args, **_kwargs) -> Snapshot:
+        """
+        The Snapshot function is used to create a snapshot of the application.
+
+        :param self: Refer to the class instance
+        :return: A Snapshot object
+        :rtype: Snapshot
+        """
+        snapshot: Snapshot = await self.client.snapshot(self.id)
+        return snapshot
 
     async def start(self) -> Response:
         """
@@ -638,23 +655,61 @@ class Application(CaptureListenerManager):
         return webhook
 
     async def domain_analytics(self) -> DomainAnalytics:
+        """
+        Retrieve analytics data for the application's domain.
+        
+        :param self: Refer to the instance of the class.
+        :returns: An instance of :class:`DomainAnalytics` containing analytics data for the domain.
+        :rtype: DomainAnalytics
+        :raises Exception: If the analytics data could not be retrieved.
+        """
         analytics: DomainAnalytics = await self.client.domain_analytics(
             self.id, avoid_listener=True
         )
-        return analytics  # TODO:
+        return analytics
 
     async def set_custom_domain(self, custom_domain: str) -> Response:
+        """
+        Sets a custom domain for the application.
+
+        :param custom_domain: The custom domain to be assigned to the application.
+        :type custom_domain: str
+        :return: The response from the domain assignment operation.
+        :rtype: Response
+        """
         response: Response = await self.client.set_custom_domain(
             self.id, custom_domain, avoid_listener=True
         )
         return response
 
-    async def all_backups(self) -> Response:
-        backups: list[BackupInfo] = await self.client.all_app_backups(self.id)
+    @deprecated("this method will be removed in future versions, use the 'all_snapshots' method instead")
+    async def all_backups(self) -> list[SnapshotInfo]:
+        backups: list[SnapshotInfo] = await self.client.all_app_snapshots(self.id)
         return backups
+    
+    async def all_snapshots(self) -> list[SnapshotInfo]:
+        """
+        Retrieve all snapshots of the application.
+        
+        :return: A list of SnapshotInfo objects representing all snapshots of the application.
+        :rtype: list[SnapshotInfo]
+        """
+        snapshots: list[SnapshotInfo] = await self.client.all_app_snapshots(self.id)
+        return snapshots
 
     @validate
     async def move_file(self, origin: str, dest: str) -> Response:
+        """
+        Moves a file from the origin path to the destination path within the application.
+        
+        :param origin: The source path of the file to be moved.
+        :type origin: str
+        :param dest: The destination path where the file should be moved.
+        :type dest: str
+        :return: A Response object containing the result of the file move operation.
+        :rtype: Response
+        """
+        
         return await self.client.move_app_file(self.id, origin, dest)
 
     async def current_integration(self) -> Response:
@@ -662,4 +717,53 @@ class Application(CaptureListenerManager):
 
     @_notify_listener(Endpoint.dns_records())
     async def dns_records(self) -> list[DNSRecord]:
+        """
+        Retrieve the DNS records associated with the application.
+        
+        :returns: A list of DNSRecord objects representing the DNS records.
+        :rtype: list[DNSRecord]
+        """
+        
         return await self.client.dns_records(self.id)
+    
+    async def get_envs(self) -> dict[str, str]:
+        """
+        Get environment variables of the application.
+
+        :return: A dictionary of the environment variables that were set.
+        :rtype: dict[str, str]
+        """
+        return await self.client.get_app_envs(self.id)
+
+    async def set_envs(self, envs: dict[str, str]) -> dict[str,str]:
+        """
+        Set environment variables or edits for the application.
+
+        :param envs: A dictionary containing environment variable names and their corresponding values.
+        :type envs: dict[str, str]
+        :return: A dictionary of the environment variables that were set.
+        :rtype: dict[str, str]
+        """
+        return await self.client.set_app_envs(self.id, envs)
+    
+    async def delete_envs(self, keys: list[str]) -> dict[str,str]:
+        """
+        Deletes environment variables from the application.
+
+        :param keys: A list of environment variable keys to be deleted.
+        :type keys: list[str]
+        :returns: A dictionary containing the remaining variables.
+        :rtype: dict[str, str]
+        """
+        return await self.client.delete_app_envs(self.id, keys)
+    
+    async def overwrite_env(self, envs: dict[str, str]) -> dict[str,str]:
+        """
+        Overwrites the environment variables for the application.
+
+        :param envs: A dictionary containing the environment variables to set, where keys are variable names and values are their corresponding values.
+        :type envs: dict[str, str]
+        :return: A dictionary of the environment variables.
+        :rtype: dict[str, str]
+        """
+        return await self.client.overwrite_app_envs(self.id, envs)

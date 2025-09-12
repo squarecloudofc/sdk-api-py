@@ -15,7 +15,7 @@ ListenerDataTypes = Union[
     data.AppData,
     data.StatusData,
     data.LogsData,
-    data.Backup,
+    data.Snapshot,
 ]
 
 
@@ -38,7 +38,7 @@ class CaptureListenerManager(ListenerManager):
         allowed_endpoints: tuple[Endpoint, Endpoint, Endpoint, Endpoint] = (
             Endpoint.logs(),
             Endpoint.app_status(),
-            Endpoint.backup(),
+            Endpoint.snapshot(),
             Endpoint.app_data(),
         )
 

@@ -231,7 +231,7 @@ class HTTPClient:
                 return response
 
     @classmethod
-    async def fetch_backup_content(cls, url: str) -> bytes:
+    async def fetch_snapshot_content(cls, url: str) -> bytes:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 return await response.read()
@@ -348,7 +348,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def backup(self, app_id: str) -> Response:
+    async def snapshot(self, app_id: str) -> Response:
         """
         Backup a hosted application
 
@@ -363,7 +363,7 @@ class HTTPClient:
         :raises TooManyRequestsError: Raised when the request status
                 code is 429
         """
-        route: Router = Router(Endpoint.backup(), app_id=app_id)
+        route: Router = Router(Endpoint.snapshot(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -512,7 +512,7 @@ class HTTPClient:
         """
         route: Router = Router(Endpoint.files_create(), app_id=app_id)
         response: Response = await self.request(
-            route, json={'buffer': file, 'path': '/' + path}
+            route, json={'content': file, 'path': '/' + path}
         )
         return response
 
@@ -655,7 +655,7 @@ class HTTPClient:
         response: Response = await self.request(route)
         return response
 
-    async def get_all_app_backups(self, app_id: str) -> Response:
+    async def get_all_app_snapshots(self, app_id: str) -> Response:
         """
         Returns a list of all backups of the specified application
 
@@ -669,7 +669,7 @@ class HTTPClient:
         :raises TooManyRequestsError: Raised when the request status
                 code is 429
         """
-        route: Router = Router(Endpoint.all_backups(), app_id=app_id)
+        route: Router = Router(Endpoint.all_snapshots(), app_id=app_id)
         response: Response = await self.request(route)
         return response
 
@@ -757,3 +757,68 @@ class HTTPClient:
         :rtype: Response | None
         """
         return self._last_response
+
+    async def get_environment_variables(self, app_id: str) -> Response:
+        """
+        Retrieve the environment variables for a specific application.
+
+        :param app_id: The unique identifier of the application.
+        :type app_id: str
+        :return: The response containing the environment variables.
+        :rtype: Response
+        """
+        route: Router = Router(Endpoint.envs_get(), app_id=app_id)
+        response: Response = await self.request(route)
+        return response
+    
+    async def set_environment_variable(self, app_id: str, keys: dict[str, str]) -> Response:
+        """
+        Sets environment variables for a specific application.
+        This method sends a request to set the specified environment variables
+        for the application identified by the given `app_id`.
+        :param app_id: The ID of the application for which the environment 
+                       variables will be set.
+        :type app_id: str
+        :param keys: A dictionary containing the environment variable names 
+                     as keys and their corresponding values.
+        :type keys: dict[str, str]
+        :return: The response object containing the result of the operation.
+        :rtype: Response
+        """
+        
+        route: Router = Router(Endpoint.envs_post(), app_id=app_id)
+        response: Response = await self.request(route, json={"envs": keys})
+        return response
+    
+    async def delete_environment_variable(self, app_id: str, keys: list[str]) -> Response:
+        """
+        Deletes one or more environment variables for a specific application.
+        :param app_id: The ID of the application whose environment variables are to be deleted.
+        :type app_id: str
+        :param keys: A list of environment variable keys to be deleted.
+        :type keys: list[str]
+        :return: The response object containing the result of the deletion operation.
+        :rtype: Response
+        """
+        route: Router = Router(Endpoint.envs_delete(), app_id=app_id)
+        response: Response = await self.request(route, json={"envs": keys})
+        return response
+    
+    async def overwrite_environment_variables(self, app_id: str, keys: dict[str, str]) -> Response:
+        """
+        Overwrites the environment variables for a specific application.
+        This method sends a request to update the environment variables of the
+        specified application with the provided key-value pairs.
+        :param app_id: The ID of the application whose environment variables 
+                       are to be overwritten.
+        :type app_id: str
+        :param keys: A dictionary containing the environment variable keys and 
+                     their corresponding values to be set.
+        :type keys: dict[str, str]
+        :return: The response object containing the result of the operation.
+        :rtype: Response
+        """
+        
+        route: Router = Router(Endpoint.envs_put(), app_id=app_id)
+        response: Response = await self.request(route, json={"envs": keys})
+        return response
