@@ -40,7 +40,7 @@ class PlanData(BaseDataClass):
 
     name: str
     memory: dict[str, Any]
-    duration: dict[str, Any] | None
+    duration: int | None
 
 
 class Language(BaseDataClass):
@@ -139,6 +139,7 @@ class UserData(BaseDataClass):
     name: str
     plan: PlanData
     email: str | None = None
+    locale: str | None = None
 
 
 class LogsData(BaseDataClass):
@@ -306,13 +307,13 @@ class DomainAnalytics(BaseDataClass):
             return datetime.fromisoformat(self.date)
     class ExtraBaseAnalytics(BaseAnalytics):
         type: str
-    class Visits(BaseAnalytics): 
+    class Visits(BaseAnalytics):
         pass
-    class Countries(ExtraBaseAnalytics): 
+    class Countries(ExtraBaseAnalytics):
         pass
     class Devices(ExtraBaseAnalytics):
         pass
-    class Os(ExtraBaseAnalytics): 
+    class Os(ExtraBaseAnalytics):
         pass
     class Browsers(ExtraBaseAnalytics):
         pass
