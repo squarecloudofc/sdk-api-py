@@ -42,6 +42,7 @@ class AppCache:
         '_logs',
         '_backup',
         '_app_data',
+        '_snapshot'
     )
 
     def __init__(self) -> None:
@@ -56,6 +57,7 @@ class AppCache:
         self._status: StatusData | None = None
         self._logs: LogsData | None = None
         self._backup: Snapshot | None = None
+        self._snapshot: Snapshot | None = None
         self._app_data: AppData | None = None
 
     @property
@@ -91,6 +93,17 @@ class AppCache:
         :rtype: Backup
         """
         return self._backup
+
+    @property
+    def snapshot(self) -> Snapshot:
+        """
+        The snapshot method is a property that returns the cached Snapshot of
+        the application.
+
+        :return: The value of the _snapshot attribute
+        :rtype: Snapshot
+        """
+        return self._snapshot
 
     @property
     def app_data(self) -> AppData:
@@ -135,6 +148,7 @@ class AppCache:
                 self._logs = arg
             elif isinstance(arg, Snapshot):
                 self._backup = arg
+                self._snapshot = arg
             elif isinstance(arg, AppData):
                 self._app_data = arg
             else:
@@ -473,7 +487,7 @@ class Application(CaptureListenerManager):
         """
         backup: Snapshot = await self.client.snapshot(self.id)
         return backup
-    
+
     @_update_cache
     @_notify_listener(Endpoint.snapshot())
     async def snapshot(self, *_args, **_kwargs) -> Snapshot:
@@ -657,7 +671,7 @@ class Application(CaptureListenerManager):
     async def domain_analytics(self) -> DomainAnalytics:
         """
         Retrieve analytics data for the application's domain.
-        
+
         :param self: Refer to the instance of the class.
         :returns: An instance of :class:`DomainAnalytics` containing analytics data for the domain.
         :rtype: DomainAnalytics
@@ -686,11 +700,11 @@ class Application(CaptureListenerManager):
     async def all_backups(self) -> list[SnapshotInfo]:
         backups: list[SnapshotInfo] = await self.client.all_app_snapshots(self.id)
         return backups
-    
+
     async def all_snapshots(self) -> list[SnapshotInfo]:
         """
         Retrieve all snapshots of the application.
-        
+
         :return: A list of SnapshotInfo objects representing all snapshots of the application.
         :rtype: list[SnapshotInfo]
         """
@@ -701,7 +715,7 @@ class Application(CaptureListenerManager):
     async def move_file(self, origin: str, dest: str) -> Response:
         """
         Moves a file from the origin path to the destination path within the application.
-        
+
         :param origin: The source path of the file to be moved.
         :type origin: str
         :param dest: The destination path where the file should be moved.
@@ -709,7 +723,7 @@ class Application(CaptureListenerManager):
         :return: A Response object containing the result of the file move operation.
         :rtype: Response
         """
-        
+
         return await self.client.move_app_file(self.id, origin, dest)
 
     async def current_integration(self) -> Response:
@@ -719,13 +733,13 @@ class Application(CaptureListenerManager):
     async def dns_records(self) -> list[DNSRecord]:
         """
         Retrieve the DNS records associated with the application.
-        
+
         :returns: A list of DNSRecord objects representing the DNS records.
         :rtype: list[DNSRecord]
         """
-        
+
         return await self.client.dns_records(self.id)
-    
+
     async def get_envs(self) -> dict[str, str]:
         """
         Get environment variables of the application.
@@ -745,7 +759,7 @@ class Application(CaptureListenerManager):
         :rtype: dict[str, str]
         """
         return await self.client.set_app_envs(self.id, envs)
-    
+
     async def delete_envs(self, keys: list[str]) -> dict[str,str]:
         """
         Deletes environment variables from the application.
@@ -756,7 +770,7 @@ class Application(CaptureListenerManager):
         :rtype: dict[str, str]
         """
         return await self.client.delete_app_envs(self.id, keys)
-    
+
     async def overwrite_env(self, envs: dict[str, str]) -> dict[str,str]:
         """
         Overwrites the environment variables for the application.
