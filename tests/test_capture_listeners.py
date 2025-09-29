@@ -7,7 +7,7 @@ if using_pydantic := find_spec("pydantic"):
 
 from squarecloud import Endpoint, errors
 from squarecloud.app import Application
-from squarecloud.data import Backup, LogsData, StatusData
+from squarecloud.data import Snapshot, LogsData, StatusData
 from squarecloud.listeners import Listener
 
 
@@ -36,14 +36,14 @@ class TestGeneralUse:
 
         await app.status()
 
-    @_clear_listener_on_rerun(Endpoint.backup())
-    async def test_capture_backup(self, app: Application):
-        @app.capture(Endpoint.backup(), force_raise=True)
-        async def capture_backup(before, after):
+    @_clear_listener_on_rerun(Endpoint.snapshot())
+    async def test_capture_snapshot(self, app: Application):
+        @app.capture(Endpoint.snapshot(), force_raise=True)
+        async def capture_snapshot(before, after):
             assert before is None
-            assert isinstance(after, Backup)
+            assert isinstance(after, Snapshot)
 
-        await app.backup()
+        await app.snapshot()
 
     @_clear_listener_on_rerun(Endpoint.logs())
     async def test_capture_logs(self, app: Application):
