@@ -217,6 +217,15 @@ class InvalidDomain(RequestError):
         self.message = f'"{domain}" is a invalid custom domain'
 
 
+class InvalidSubdomain(RequestError):
+    """
+    raised when an invalid subdomain is provided
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.message = 'The provided subdomain is invalid or already in use.'
+
 class InvalidStart(InvalidConfig):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

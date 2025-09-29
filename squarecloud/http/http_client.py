@@ -28,6 +28,7 @@ from ..errors import (
     NotFoundError,
     RequestError,
     TooManyRequests,
+    InvalidSubdomain
 )
 from ..logger import logger
 from .endpoints import Endpoint, Router
@@ -82,7 +83,7 @@ def _get_error(code: str) -> type[RequestError] | None:
         'FEW_MEMORY': FewMemory,
         'BAD_MEMORY': BadMemory,
         'MISSING_CONFIG': MissingConfigFile,
-        'MISSING_DEPENDENCIES_FILE': MissingDependenciesFile,
+        'INVALID_DEPENDENCY': MissingDependenciesFile,
         'MISSING_MAIN': MissingMainFile,
         'INVALID_MAIN': InvalidMain,
         'INVALID_DISPLAY_NAME': InvalidDisplayName,
@@ -94,11 +95,10 @@ def _get_error(code: str) -> type[RequestError] | None:
         'INVALID_ACCESS_TOKEN': InvalidAccessToken,
         'REGEX_VALIDATION': InvalidDomain,
         'INVALID_START': InvalidStart,
+        'INVALID_SUBDOMAIN': InvalidSubdomain
     }
-    error_class = errors.get(code, None)
-    if error_class is None:
-        return None
-    return error_class
+    return errors.get(code, None)
+
 
 
 class HTTPClient:
