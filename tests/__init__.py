@@ -21,7 +21,7 @@ def create_zip(config: ConfigFile | str):
     with zipfile.ZipFile(buffer, 'w') as zip_file:
         zip_file.writestr('requirements.txt', 'discord.py')
 
-        zip_file.writestr('main.py', "print('ok')")
+        zip_file.writestr('main.py', "print('ok')\nwhile True:pass")
 
         zip_file.writestr('squarecloud.app', config)
 

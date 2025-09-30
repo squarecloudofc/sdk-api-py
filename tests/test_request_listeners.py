@@ -85,21 +85,6 @@ class TestRequestListeners:
         assert isinstance(expected_result, Snapshot)
         assert isinstance(expected_response, Response)
 
-    @_clear_listener_on_rerun(Endpoint.start())
-    async def test_request_start_app(self, client: Client, app: Application):
-        endpoint: Endpoint = Endpoint.start()
-        expected_result: Response | None
-        expected_response: Response | None = None
-
-        @client.on_request(endpoint)
-        async def test_listener(response: Response):
-            nonlocal expected_response
-            expected_response = response
-
-        expected_result = await client.start_app(app.id)
-        assert isinstance(expected_result, Response)
-        assert isinstance(expected_response, Response)
-
     @_clear_listener_on_rerun(Endpoint.stop())
     async def test_request_stop_app(self, client: Client, app: Application):
         endpoint: Endpoint = Endpoint.stop()
@@ -112,6 +97,21 @@ class TestRequestListeners:
             expected_response = response
 
         expected_result = await client.stop_app(app.id)
+        assert isinstance(expected_result, Response)
+        assert isinstance(expected_response, Response)
+
+    @_clear_listener_on_rerun(Endpoint.start())
+    async def test_request_start_app(self, client: Client, app: Application):
+        endpoint: Endpoint = Endpoint.start()
+        expected_result: Response | None
+        expected_response: Response | None = None
+
+        @client.on_request(endpoint)
+        async def test_listener(response: Response):
+            nonlocal expected_response
+            expected_response = response
+
+        expected_result = await client.start_app(app.id)
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
