@@ -128,6 +128,7 @@ class AppCache:
         self._logs = None
         self._backup = None
         self._app_data = None
+        self._snapshot = None
 
     def update(self, *args) -> None:
         """
