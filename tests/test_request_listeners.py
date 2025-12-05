@@ -9,8 +9,8 @@ if using_pydantic := bool(find_spec('pydantic')):
 from squarecloud import Client, Endpoint, File
 from squarecloud.app import Application
 from squarecloud.data import (
-    Backup,
-    BackupInfo,
+    Snapshot,
+    SnapshotInfo,
     DeployData,
     DomainAnalytics,
     FileInfo,
@@ -70,34 +70,19 @@ class TestRequestListeners:
         assert isinstance(expected_result, StatusData)
         assert isinstance(expected_response, Response)
 
-    @_clear_listener_on_rerun(Endpoint.backup())
-    async def test_request_backup(self, client: Client, app: Application):
-        endpoint: Endpoint = Endpoint.backup()
-        expected_result: Backup | None
-        expected_response: Backup | None = None
+    @_clear_listener_on_rerun(Endpoint.snapshot())
+    async def test_request_snapshot(self, client: Client, app: Application):
+        endpoint: Endpoint = Endpoint.snapshot()
+        expected_result: Snapshot | None
+        expected_response: Snapshot | None = None
 
         @client.on_request(endpoint)
         async def test_listener(response: Response):
             nonlocal expected_response
             expected_response = response
 
-        expected_result = await client.backup(app.id)
-        assert isinstance(expected_result, Backup)
-        assert isinstance(expected_response, Response)
-
-    @_clear_listener_on_rerun(Endpoint.start())
-    async def test_request_start_app(self, client: Client, app: Application):
-        endpoint: Endpoint = Endpoint.start()
-        expected_result: Response | None
-        expected_response: Response | None = None
-
-        @client.on_request(endpoint)
-        async def test_listener(response: Response):
-            nonlocal expected_response
-            expected_response = response
-
-        expected_result = await client.start_app(app.id)
-        assert isinstance(expected_result, Response)
+        expected_result = await client.snapshot(app.id)
+        assert isinstance(expected_result, Snapshot)
         assert isinstance(expected_response, Response)
 
     @_clear_listener_on_rerun(Endpoint.stop())
@@ -112,6 +97,21 @@ class TestRequestListeners:
             expected_response = response
 
         expected_result = await client.stop_app(app.id)
+        assert isinstance(expected_result, Response)
+        assert isinstance(expected_response, Response)
+
+    @_clear_listener_on_rerun(Endpoint.start())
+    async def test_request_start_app(self, client: Client, app: Application):
+        endpoint: Endpoint = Endpoint.start()
+        expected_result: Response | None
+        expected_response: Response | None = None
+
+        @client.on_request(endpoint)
+        async def test_listener(response: Response):
+            nonlocal expected_response
+            expected_response = response
+
+        expected_result = await client.start_app(app.id)
         assert isinstance(expected_result, Response)
         assert isinstance(expected_response, Response)
 
@@ -297,10 +297,10 @@ class TestRequestListeners:
         assert isinstance(expected_result, str)
         assert isinstance(expected_response, Response)
 
-    @_clear_listener_on_rerun(Endpoint.all_backups())
-    async def test_all_backups(self, client: Client, app: Application):
-        endpoint: Endpoint = Endpoint.all_backups()
-        expected_result: list[BackupInfo] | None
+    @_clear_listener_on_rerun(Endpoint.all_snapshots())
+    async def test_all_snapshots(self, client: Client, app: Application):
+        endpoint: Endpoint = Endpoint.all_snapshots()
+        expected_result: list[SnapshotInfo] | None
         expected_response: Response | None = None
 
         @client.on_request(endpoint)
@@ -308,9 +308,9 @@ class TestRequestListeners:
             nonlocal expected_response
             expected_response = response
 
-        expected_result = await client.all_app_backups(app.id)
+        expected_result = await client.all_app_snapshots(app.id)
         assert isinstance(expected_result, list)
-        assert isinstance(expected_result[0], BackupInfo)
+        assert isinstance(expected_result[0], SnapshotInfo)
         assert isinstance(expected_response, Response)
 
     @_clear_listener_on_rerun(Endpoint.all_apps_status())

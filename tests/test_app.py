@@ -3,7 +3,7 @@ from zipfile import ZipFile
 import pytest
 
 import squarecloud
-from squarecloud import BackupInfo
+from squarecloud import SnapshotInfo
 from squarecloud.app import Application
 from squarecloud.http import Response
 from tests import GITHUB_ACCESS_TOKEN
@@ -24,12 +24,12 @@ class TestApp:
     async def test_app_logs(self, app: Application):
         assert isinstance(await app.logs(), squarecloud.LogsData)
 
-    async def test_app_backup(self, app: Application):
-        assert isinstance(await app.backup(), squarecloud.Backup)
+    async def test_app_snapshot(self, app: Application):
+        assert isinstance(await app.snapshot(), squarecloud.Snapshot)
 
-    async def test_download_backup(self, app: Application):
-        backup = await app.backup()
-        zip_file = await backup.download()
+    async def test_download_snapshot(self, app: Application):
+        snapshot = await app.snapshot()
+        zip_file = await snapshot.download()
         assert isinstance(zip_file, ZipFile)
 
     async def test_app_github_integration(self, app: Application):
@@ -49,10 +49,10 @@ class TestApp:
     async def test_set_custom_domain(self, app: Application):
         assert isinstance(await app.set_custom_domain('test.com.br'), str)
 
-    async def test_get_all_backups(self, app: Application):
-        backups = await app.all_backups()
-        assert isinstance(backups, list)
-        assert isinstance(backups[0], BackupInfo)
+    async def test_get_all_snapshots(self, app: Application):
+        snapshots = await app.all_snapshots()
+        assert isinstance(snapshots, list)
+        assert isinstance(snapshots[0], SnapshotInfo)
 
     async def test_move_file(self, app: Application):
         response = await app.move_file('main.py', 'test.py')

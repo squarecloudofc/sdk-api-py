@@ -64,6 +64,10 @@ class Client(RequestListenerManager):
         """
         self.log_level = log_level
         self._api_key = api_key
+
+        if not isinstance(self._api_key, str):
+            raise TypeError("api_key must be str")
+
         self._http = HTTPClient(api_key=api_key)
         self.logger = logger
         logger.setLevel(log_level)
