@@ -12,14 +12,14 @@ from ._internal.decorators import validate
 from .app import Application
 from .data import (
     AppData,
-    Snapshot,
-    SnapshotInfo,
     DeployData,
     DNSRecord,
     DomainAnalytics,
     FileInfo,
     LogsData,
     ResumedStatus,
+    Snapshot,
+    SnapshotInfo,
     StatusData,
     UploadData,
     UserData,

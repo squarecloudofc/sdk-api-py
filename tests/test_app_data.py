@@ -3,7 +3,7 @@ from time import sleep
 import pytest
 
 from squarecloud.app import Application
-from squarecloud.data import Snapshot, LogsData, StatusData
+from squarecloud.data import LogsData, Snapshot, StatusData
 
 
 @pytest.mark.asyncio(scope='session')

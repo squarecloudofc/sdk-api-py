@@ -18,6 +18,7 @@ from ..errors import (
     InvalidMain,
     InvalidMemory,
     InvalidStart,
+    InvalidSubdomain,
     InvalidVersion,
     MissingConfigFile,
     MissingDependenciesFile,
@@ -28,7 +29,6 @@ from ..errors import (
     NotFoundError,
     RequestError,
     TooManyRequests,
-    InvalidSubdomain
 )
 from ..logger import logger
 from .endpoints import Endpoint, Router

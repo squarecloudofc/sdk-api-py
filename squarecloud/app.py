@@ -11,13 +11,13 @@ from squarecloud import errors
 from ._internal.decorators import validate
 from .data import (
     AppData,
-    Snapshot,
-    SnapshotInfo,
     DeployData,
     DNSRecord,
     DomainAnalytics,
     FileInfo,
     LogsData,
+    Snapshot,
+    SnapshotInfo,
     StatusData,
 )
 from .file import File

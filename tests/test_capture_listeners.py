@@ -7,7 +7,7 @@ if using_pydantic := find_spec("pydantic"):
 
 from squarecloud import Endpoint, errors
 from squarecloud.app import Application
-from squarecloud.data import Snapshot, LogsData, StatusData
+from squarecloud.data import LogsData, Snapshot, StatusData
 from squarecloud.listeners import Listener
 
 
