@@ -401,7 +401,7 @@ class Client(RequestListenerManager):
         return Application(client=self, http=self._http, **app_data)
 
     # @_notify_listener(Endpoint.user())
-    async def all_apps(self, **_kwargs) -> list[int]:
+    async def all_apps(self, **_kwargs) -> list[Application]:
         """
         The all_apps method returns a list of all applications that the user
         has access to.

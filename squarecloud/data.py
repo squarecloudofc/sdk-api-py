@@ -98,12 +98,16 @@ class AppData(BaseDataClass):
     :ivar cluster: The cluster that the app is hosted on
     :ivar ram: The amount of RAM that application is using
     :ivar language The programming language of the app.:
+    :ivar domain: The domain of the application
+    :ivar custom: The custom domain of the application
+    :ivar desc: The description of the application
+    :ivar created_at: The date when the application was created
 
     :type id: str
     :type name: str
     :type cluster: str
     :type ram: confloat(ge=0);
-    :type lang: Language
+    :type lang: str | None
     :type domain: str | None = None
     :type custom: str | None = None
     :type desc: str | None = None
@@ -113,8 +117,9 @@ class AppData(BaseDataClass):
     name: str
     cluster: str
     ram: float
-    lang: str | None
     cluster: str
+    created_at: datetime
+    lang: str | None
     domain: str | None = None
     custom: str | None = None
     desc: str | None = None
