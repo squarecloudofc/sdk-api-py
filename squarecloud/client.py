@@ -581,7 +581,7 @@ class Client(RequestListenerManager):
         """
         The delete_app_file method deletes a file in the specified directory.
 
-        :param app_id: Specify the application byd id
+        :param app_id: Specify the application by id
         :param path: Specify the directory where the file should be
         deleted
         :param _kwargs: Keyword arguments
