@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from functools import wraps
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar
@@ -11,13 +12,13 @@ from squarecloud import errors
 from ._internal.decorators import validate
 from .data import (
     AppData,
-    Snapshot,
-    SnapshotInfo,
     DeployData,
     DNSRecord,
     DomainAnalytics,
     FileInfo,
     LogsData,
+    Snapshot,
+    SnapshotInfo,
     StatusData,
 )
 from .file import File
@@ -185,6 +186,7 @@ class Application(CaptureListenerManager):
         '_lang',
         '_cluster',
         'always_avoid_listeners',
+        '_created_at'
     ]
 
     def __init__(
@@ -196,9 +198,10 @@ class Application(CaptureListenerManager):
         ram: int,
         lang: str,
         cluster: str,
+        created_at: datetime,
         domain: str | None,
         custom: str | None,
-        desc: str | None = None,
+        desc: str | None = None
     ) -> None:
         """
         The `__init__` method is called when the class is instantiated.
@@ -234,6 +237,8 @@ class Application(CaptureListenerManager):
         self._listener: CaptureListenerManager = CaptureListenerManager()
         self.cache: AppCache = AppCache()
         self.always_avoid_listeners: bool = False
+        self._created_at: datetime = created_at
+
         super().__init__()
 
     def __repr__(self) -> str:
@@ -350,6 +355,17 @@ class Application(CaptureListenerManager):
         :rtype: str | None
         """
         return self._custom
+
+    @property
+    def created_at(self) -> datetime:
+        """
+        The created_at function is a property that returns the date and time
+        when the application was created.
+
+        :return: The created_at attribute of the application
+        :rtype: datetime
+        """
+        return self._created_at
 
     @staticmethod
     def _notify_listener(

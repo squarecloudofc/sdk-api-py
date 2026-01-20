@@ -5,8 +5,6 @@ from .app import Application
 from .client import Client
 from .data import (
     AppData,
-    Snapshot,
-    SnapshotInfo,
     DeployData,
     DNSRecord,
     DomainAnalytics,
@@ -14,6 +12,8 @@ from .data import (
     LogsData,
     PlanData,
     ResumedStatus,
+    Snapshot,
+    SnapshotInfo,
     StatusData,
     UploadData,
     UserData,
@@ -45,4 +45,4 @@ __all__ = [
     'utils',
 ]
 
-__version__ = '3.7.4'
+__version__ = '3.8.1'

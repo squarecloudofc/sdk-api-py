@@ -12,14 +12,14 @@ from ._internal.decorators import validate
 from .app import Application
 from .data import (
     AppData,
-    Snapshot,
-    SnapshotInfo,
     DeployData,
     DNSRecord,
     DomainAnalytics,
     FileInfo,
     LogsData,
     ResumedStatus,
+    Snapshot,
+    SnapshotInfo,
     StatusData,
     UploadData,
     UserData,
@@ -401,7 +401,7 @@ class Client(RequestListenerManager):
         return Application(client=self, http=self._http, **app_data)
 
     # @_notify_listener(Endpoint.user())
-    async def all_apps(self, **_kwargs) -> list[int]:
+    async def all_apps(self, **_kwargs) -> list[Application]:
         """
         The all_apps method returns a list of all applications that the user
         has access to.
@@ -581,7 +581,7 @@ class Client(RequestListenerManager):
         """
         The delete_app_file method deletes a file in the specified directory.
 
-        :param app_id: Specify the application byd id
+        :param app_id: Specify the application by id
         :param path: Specify the directory where the file should be
         deleted
         :param _kwargs: Keyword arguments

@@ -9,13 +9,13 @@ if using_pydantic := bool(find_spec('pydantic')):
 from squarecloud import Client, Endpoint, File
 from squarecloud.app import Application
 from squarecloud.data import (
-    Snapshot,
-    SnapshotInfo,
     DeployData,
     DomainAnalytics,
     FileInfo,
     LogsData,
     ResumedStatus,
+    Snapshot,
+    SnapshotInfo,
     StatusData,
     UserData,
 )
