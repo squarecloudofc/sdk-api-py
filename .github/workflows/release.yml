@@ -1,0 +1,36 @@
+name: Publish Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish to PyPI
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # PyPI trusted publishing
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+      - name: Check the tag matches the version
+        run: test -f "dist/squarecloud_api-${GITHUB_REF_NAME#v}-py3-none-any.whl"
+      # Trusted publishing first; the token only until the PyPI trusted publisher is configured.
+      # --check-url skips files a failed first attempt already uploaded.
+      - name: Publish
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: >-
+          uv publish --trusted-publishing always ||
+          UV_PUBLISH_TOKEN="$PYPI_API_TOKEN" uv publish --trusted-publishing never
+          --check-url https://pypi.org/simple/

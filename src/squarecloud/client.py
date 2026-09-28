@@ -1,1412 +1,1532 @@
-"""This module is a wrapper for using the SquareCloud API"""
+"""Square Cloud API client: stdlib only (``http.client`` + ``json``).
+
+Every ``app_id`` may be the composite ``'<appId>-<workspaceId>'`` to act on
+an application shared with you through a workspace.
+"""
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
-from datetime import datetime
-from functools import wraps
-from io import BytesIO
-from typing import Any, Callable, Literal, ParamSpec, TypeVar, cast
-
-from typing_extensions import deprecated
-
-from .app import Application
-from .data import (
-    AppData,
-    Certificate,
-    Database,
-    DatabaseInfo,
-    DeployData,
-    DNSRecord,
-    DomainAnalytics,
-    FileInfo,
-    LogsData,
-    ResumedStatus,
-    Snapshot,
-    SnapshotInfo,
-    StatusData,
-    UploadData,
-    UserData,
-    Workspace,
+import base64
+import builtins
+import contextlib
+import functools
+import http.client
+import io
+import json
+import logging
+import os
+import random
+import select
+import socket
+import ssl
+import sys
+import threading
+import time
+import weakref
+import zlib
+from collections.abc import (
+    AsyncIterator,
+    Callable,
+    Coroutine,
+    Generator,
+    Iterable,
+    Iterator,
 )
-from .errors import ApplicationNotFound, InvalidFile, SquareException
-from .file import File
-from .http import HTTPClient, Response
-from .http.endpoints import Endpoint
-from .listeners import Listener, ListenerConfig
-from .listeners.request_listener import RequestListenerManager
-from .logger import logger
+from datetime import UTC, datetime
+from types import TracebackType
+from typing import (
+    IO,
+    Any,
+    Concatenate,
+    Generic,
+    Literal,
+    ParamSpec,
+    Protocol,
+    TypeVar,
+    Unpack,
+    cast,
+)
+from urllib.parse import quote, urlencode, urlsplit
 
-P = ParamSpec("P")
-R = TypeVar("R")
+from . import types as t
+from .errors import SquareCloudAPIError
+
+# The single version source: pyproject.toml reads it (tool.hatch.version).
+__version__ = '5.0.0'
+
+BASE_URL = 'https://api.squarecloud.app/v2'
+USER_AGENT = f'squarecloud-sdk-py/{__version__}'
+MAX_UPLOAD_BYTES = 100 * 1024 * 1024  # zip limit of POST /apps and commit
+MAX_FILE_BYTES = 10 * 1024 * 1024  # content limit of PUT files
+_NO_TIMEOUT_BYTES = 1024 * 1024  # a larger files.write is sent like an upload
+_CHUNK = 64 * 1024
+_JSON = {'Content-Type': 'application/json'}
+# Calls the server holds open before its first byte: start/stop/restart and
+# database create/start/stop take up to 95 s, a snapshot answers 202 at ~90 s.
+_SLOW = 120.0
+_AI = 120.0  # the AI gateway answers within its 90 s deadline
+_BUSY = frozenset({'UPLOAD_BUSY', 'ANALYTICS_BUSY'})
+
+log = logging.getLogger('squarecloud')
+log.addHandler(logging.NullHandler())
 
 
-def _to_iso(value: str | datetime) -> str:
-    return value.isoformat() if isinstance(value, datetime) else value
+def _sleep(seconds: float, stop: threading.Event | None = None) -> None:
+    """Waits ``seconds``, or less when ``stop`` is set. Patched by the tests."""
+    if stop is None:
+        time.sleep(seconds)
+    else:
+        stop.wait(seconds)
 
 
-class Client(RequestListenerManager):
-    """A client for interacting with the SquareCloud API."""
+Body = bytes | Iterable[bytes] | None
+UploadFile = str | os.PathLike[str] | bytes | IO[bytes]
+Time = str | datetime
+
+
+# Transport ------------------------------------------------------------------
+
+
+class Response(Protocol):
+    """What a transport returns. ``http.client.HTTPResponse`` fits."""
+
+    status: int
+
+    def read(self, amt: int | None = None, /) -> bytes: ...
+
+    def readline(self, limit: int = -1, /) -> bytes: ...
+
+    def close(self) -> None: ...
+
+
+class Transport(Protocol):
+    """Pluggable transport: ``transport(method, url, headers, body, timeout,
+    stream) -> Response``. ``body`` is ``bytes``, an iterable of ``bytes``
+    chunks (``Content-Length`` is already in ``headers``) or ``None``.
+    ``timeout`` is ``None`` for uploads and the realtime stream. ``stream``
+    means the caller reads the body incrementally and may call ``close()``
+    from another thread to abort it."""
+
+    def __call__(
+        self,
+        method: str,
+        url: str,
+        headers: dict[str, str],
+        body: Body,
+        timeout: float | None,
+        stream: bool,
+        /,
+    ) -> Response: ...
+
+
+class _Buffered(io.BytesIO):
+    """A response read to the end, so its pooled connection is reusable."""
+
+    def __init__(self, status: int, data: bytes) -> None:
+        super().__init__(data)
+        self.status = status
+
+
+class _Stream:
+    """A streamed response on its own connection. ``close()`` is safe from
+    any thread: it shuts the socket down, which unblocks a pending read."""
+
+    def __init__(
+        self,
+        conn: http.client.HTTPConnection,
+        resp: http.client.HTTPResponse,
+        sock: socket.socket,
+    ) -> None:
+        self.status = resp.status
+        self.read = resp.read
+        self.readline = resp.readline
+        self._conn = conn
+        self._sock = sock
+
+    def close(self) -> None:
+        with contextlib.suppress(OSError):
+            self._sock.shutdown(socket.SHUT_RDWR)
+        if os.name == 'nt':
+            # Windows wakes a blocked recv only when the handle is closed, and
+            # the makefile() reference defers socket.close(): close it for real.
+            # POSIX skips this: shutdown() already wakes the reader, and an
+            # early close would let the fd number be reused under it.
+            with contextlib.suppress(OSError):
+                super(socket.socket, self._sock).close()
+        self._conn.close()
+
+
+def _dropped(sock: socket.socket) -> bool:
+    # An idle keep-alive socket that is readable was closed by the server.
+    try:
+        if sys.platform != 'win32':  # select() fails on fds >= 1024
+            poller = select.poll()
+            poller.register(sock, select.POLLIN)
+            return bool(poller.poll(0))
+        return bool(select.select([sock], [], [], 0)[0])
+    except (OSError, ValueError):
+        return True
+
+
+@functools.cache
+def _ssl_context() -> ssl.SSLContext:
+    return ssl.create_default_context()  # loads the CA store: ~10 ms, once
+
+
+class HTTPTransport:
+    """Default transport: one keep-alive connection per thread and host.
+
+    ``timeout`` bounds the connect (and a stream's wait for its response
+    headers) of the calls that have no timeout of their own: uploads and
+    streams. ``None`` waits forever (never pass ``0``: it makes the socket
+    non-blocking). Other calls respond gzip-compressed when the server
+    supports it.
+    """
+
+    def __init__(self, timeout: float | None = 30.0) -> None:
+        self.timeout = timeout
+        self._local = threading.local()
+        self._conns: weakref.WeakSet[http.client.HTTPConnection] = weakref.WeakSet()
+
+    def _connect(self, scheme: str, host: str) -> http.client.HTTPConnection:
+        conn = (
+            http.client.HTTPSConnection(host, context=_ssl_context())
+            if scheme == 'https'
+            else http.client.HTTPConnection(host)
+        )
+        self._conns.add(conn)
+        return conn
+
+    def __call__(
+        self,
+        method: str,
+        url: str,
+        headers: dict[str, str],
+        body: Body,
+        timeout: float | None,
+        stream: bool,
+    ) -> Response:
+        u = urlsplit(url)
+        target = (u.path or '/') + (f'?{u.query}' if u.query else '')
+        if stream:
+            conn = self._connect(u.scheme, u.netloc)
+        else:
+            pool: dict[str, http.client.HTTPConnection]
+            pool = self._local.__dict__.setdefault('pool', {})
+            key = f'{u.scheme}://{u.netloc}'
+            pooled = pool.get(key)
+            if pooled is None:
+                pooled = pool[key] = self._connect(u.scheme, u.netloc)
+            elif pooled.sock is not None and _dropped(pooled.sock):
+                pooled.close()  # reconnected below
+            conn = pooled
+            headers = {**headers, 'Accept-Encoding': 'gzip'}
+        try:
+            if conn.sock is None:
+                conn.timeout = self.timeout if timeout is None else timeout
+                conn.connect()
+            sock: socket.socket = conn.sock
+            if not stream:
+                sock.settimeout(timeout)  # None: an upload waits for its reply
+            conn.request(method, target, body=body, headers=headers)
+            resp = conn.getresponse()
+            if stream:
+                sock.settimeout(timeout)  # headers are in: the body may idle
+                return _Stream(conn, resp, sock)
+            # Read it all here: a partial read must not leave unread bytes on
+            # a pooled socket, or the next request would parse them.
+            data = resp.read()
+            if resp.getheader('Content-Encoding') == 'gzip':
+                try:
+                    data = zlib.decompress(data, 47)
+                except zlib.error as exc:
+                    raise http.client.HTTPException(f'bad gzip body: {exc}') from exc
+            return _Buffered(resp.status, data)
+        except BaseException:
+            conn.close()
+            raise
+
+    def close(self) -> None:
+        for conn in list(self._conns):
+            conn.close()
+
+
+# Helpers --------------------------------------------------------------------
+
+
+def _q(value: str) -> str:
+    return quote(str(value), safe='')
+
+
+def _json(value: Any) -> bytes:
+    return json.dumps(value, ensure_ascii=False, separators=(',', ':')).encode()
+
+
+def _iso(value: Time) -> str:
+    """RFC 3339 in UTC. A naive datetime is local time, as in the stdlib."""
+    if isinstance(value, datetime):
+        return value.astimezone(UTC).isoformat().replace('+00:00', 'Z')
+    return value
+
+
+def _delay(attempt: int) -> float:
+    return min(8.0, 0.5 * 2**attempt) * random.uniform(0.5, 1.0)
+
+
+def _network_error(exc: BaseException, method: str, path: str) -> SquareCloudAPIError:
+    code = 'TIMEOUT' if isinstance(exc, TimeoutError) else 'NETWORK_ERROR'
+    return SquareCloudAPIError(0, code, str(exc) or type(exc).__name__, method, path)
+
+
+def _api_error(status: int, data: Any, method: str, path: str) -> SquareCloudAPIError:
+    """The error of a decoded body: the server's message, else ``''`` when
+    there is a code, else ``HTTP <status>``."""
+    code = message = None
+    if isinstance(data, dict):
+        inner = data.get('error')
+        if isinstance(inner, dict):  # OpenAI dialect of POST /ai/...
+            data = {**inner, 'code': inner.get('code') or inner.get('type')}
+        code, message = data.get('code'), data.get('message')
+    return SquareCloudAPIError(
+        status,
+        str(code or 'UNKNOWN_ERROR'),
+        str(message or ('' if code else f'HTTP {status}')),
+        method,
+        path,
+    )
+
+
+def _failed(data: Any) -> bool:
+    return isinstance(data, dict) and data.get('status') == 'error'
+
+
+def _too_large(what: str, method: str, path: str) -> SquareCloudAPIError:
+    return SquareCloudAPIError(0, 'FILE_TOO_LARGE', what, method, path)
+
+
+class _LocalError(Exception):
+    """Carries an ``OSError`` of the upload file out of the transport, so it
+    is not reported as a network error."""
+
+
+def _exactly(f: IO[bytes], size: int) -> Iterator[bytes]:
+    """``size`` bytes of ``f``: a file that shrank mid-upload must fail
+    rather than leave the server waiting for the declared length."""
+    try:
+        while size > 0:
+            chunk = f.read(min(_CHUNK, size))
+            if not chunk:
+                raise OSError('the upload file shrank while it was being sent')
+            size -= len(chunk)
+            yield chunk
+    except OSError as exc:
+        raise _LocalError(exc) from exc
+
+
+def _multipart(
+    file: UploadFile, path: str, filename: str | None = None, default: str = 'app.zip'
+) -> tuple[Callable[[], Iterable[bytes]], dict[str, str]]:
+    """Streams ``file`` as the single ``file`` part of a multipart body with
+    a precomputed Content-Length. The factory is called once per attempt.
+    A missing or unreadable path raises ``OSError`` here, before sending."""
+    content: Callable[[], Iterable[bytes]]
+    name: str | None = None
+    if isinstance(file, (bytes, bytearray, memoryview)):
+        data = bytes(file)
+        size = len(data)
+
+        def content() -> Iterable[bytes]:
+            return (data,)
+    elif isinstance(file, (str, os.PathLike)):
+        fspath = os.fspath(file)
+        with open(fspath, 'rb') as f:  # fails now for a missing path or a dir
+            size = os.fstat(f.fileno()).st_size
+        name = os.path.basename(fspath)
+
+        def content() -> Iterator[bytes]:
+            try:
+                f = open(fspath, 'rb')  # noqa: SIM115
+            except OSError as exc:
+                raise _LocalError(exc) from exc
+            with f:
+                yield from _exactly(f, size)
+    else:
+        fobj = file
+        raw_name = getattr(fobj, 'name', None)
+        name = os.path.basename(raw_name) if isinstance(raw_name, str) else None
+        if fobj.seekable():
+            start = fobj.tell()
+            size = fobj.seek(0, os.SEEK_END) - start
+            fobj.seek(start)
+
+            def content() -> Iterator[bytes]:
+                fobj.seek(start)
+                yield from _exactly(fobj, size)
+        else:
+            # ponytail: a pipe has no size, so it is buffered once (at most
+            # the limit plus one byte, enough to reject it).
+            data = fobj.read(MAX_UPLOAD_BYTES + 1)
+            size = len(data)
+
+            def content() -> Iterable[bytes]:
+                return (data,)
+
+    if size > MAX_UPLOAD_BYTES:
+        raise _too_large('Uploads are limited to 100 MB', 'POST', path)
+    boundary = os.urandom(16).hex()
+    safe = (filename or name or default).translate({34: '%22', 10: None, 13: None})
+    head = (
+        f'--{boundary}\r\nContent-Disposition: form-data; name="file"; '
+        f'filename="{safe}"\r\nContent-Type: application/octet-stream\r\n\r\n'
+    ).encode()
+    tail = f'\r\n--{boundary}--\r\n'.encode()
+
+    def body() -> Iterator[bytes]:
+        yield head
+        yield from content()
+        yield tail
+
+    return body, {
+        'Content-Type': f'multipart/form-data; boundary={boundary}',
+        'Content-Length': str(len(head) + size + len(tail)),
+    }
+
+
+def _sse(resp: Response) -> Iterator[tuple[str, str, str | None]]:
+    """Minimal text/event-stream parser: yields ``(event, data, id)``. An
+    unterminated frame at the end of the stream is discarded."""
+    event, data, last_id = 'message', list[str](), None
+    for raw in iter(resp.readline, b''):
+        line = raw.decode('utf-8', 'replace').removesuffix('\n').removesuffix('\r')
+        if not line:
+            if data:
+                yield event or 'message', '\n'.join(data), last_id
+            event, data = 'message', []
+            continue
+        field, _, value = line.partition(':')
+        if value[:1] == ' ':
+            value = value[1:]
+        if field == 'event':
+            event = value
+        elif field == 'data':
+            data.append(value)
+        elif field == 'id' and '\0' not in value:
+            last_id = value
+
+
+# Client ---------------------------------------------------------------------
+
+
+class SquareCloud:
+    """Synchronous client. Thread-safe: each thread reuses its own
+    keep-alive connection.
+
+    >>> client = SquareCloud('API_KEY')
+    >>> client.apps.status('0123456789abcdef0123456789abcdef')
+    """
 
     def __init__(
         self,
         api_key: str,
-        log_level: Literal[
-            "DEBUG",
-            "INFO",
-            "WARNING",
-            "ERROR",
-            "CRITICAL",
-        ] = "INFO",
-    ) -> None:
-        """
-        The __init__ function is called when the class is instantiated.
-        It sets up the instance of the class, and defines all of its
-        attributes.
-
-
-        :param self: Refer to the class instance
-        :param api_key: str: Your API key, get in:
-         https://squarecloud.app/dashboard/me
-        :param debug: bool: Set the logging level to debug
-        :return: None
-        """
-        self.log_level = log_level
-        self._api_key = api_key
-
-        if not isinstance(self._api_key, str):
-            raise TypeError("api_key must be str")
-
-        self._http = HTTPClient(api_key=api_key)
-        self.logger = logger
-        logger.setLevel(log_level)
-        super().__init__()
-
-    @property
-    def api_key(self) -> str:
-        """
-        Returns the api key for the client.
-
-        :return: The api key
-        :rtype: str
-        """
-        return self._api_key
-
-    def on_request(self, endpoint: Endpoint, **kwargs) -> Callable:
-        """
-        The on_request function is a decorator that allows you to register a
-        function as an endpoint listener.
-
-        :param endpoint: Endpoint: Specify the endpoint that will be used to
-            capture the request
-        :return: A wrapper function
-        """
-
-        def wrapper(func: Callable) -> None:
-            """
-            The wrapper function is a decorator that wraps the function passed
-            to it.
-            It takes in a function, and returns another function. The wrapper
-            will call
-            the wrapped function with all of its arguments, and then do
-            something extra
-            with the result.
-
-            :param func: Callable: Specify the type of the parameter
-            :return: The function itself, if the endpoint is not already
-                    registered
-            :raises SquarecloudException: Raised if the endpoint is already
-                    registered
-            """
-            for key, value in kwargs.items():
-                if key not in ListenerConfig.__annotations__:
-                    raise ValueError(
-                        f'Invalid listener configuration: "{key}={value}"'
-                    )
-            config = ListenerConfig(**kwargs)
-            listener = Listener(
-                endpoint=endpoint, callback=func, client=self, config=config
-            )
-            self.include_listener(listener)
-
-        return wrapper
-
-    @staticmethod
-    def _notify_listener(endpoint: Endpoint) -> Callable:
-        """
-        The _notify_listener function is a decorator that call a listener after
-        the decorated coroutine is called
-
-        :param endpoint: the endpoint for witch the listener will fetch
-        :return: a callable
-        """
-
-        def wrapper(func: Callable[P, R]) -> Callable[P, R]:
-            @wraps(func)
-            async def decorator(
-                self: Client, *args: P.args, **kwargs: P.kwargs
-            ) -> R:
-                # result: Any
-                response: Response
-                result = await func(self, *args, **kwargs)
-                response = self._http.last_response
-                if kwargs.get("avoid_listener", False):
-                    return result
-                await self.notify(
-                    endpoint=endpoint,
-                    response=response,
-                    extra_value=kwargs.get("extra"),
-                )
-                return result
-
-            return decorator
-
-        return wrapper
-
-    @_notify_listener(Endpoint.user())
-    async def user(self, **_kwargs) -> UserData:
-        """
-        This method is used to get your information.
-
-        :param _kwargs: Keyword arguments
-        :return: A UserData object
-        :rtype: UserData
-
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.fetch_user_info()
-        payload: dict[str, Any] = response.response
-        return UserData(**payload["user"])
-
-    @_notify_listener(Endpoint.logs())
-    async def get_logs(self, app_id: str, **_kwargs) -> LogsData:
-        """
-        The get_logs method is used to get logs for an application.
-
-        :param app_id: Specify the application by id
-        :param _kwargs: Keyword arguments
-        :return: A LogsData object
-        :rtype: LogsData
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.fetch_logs(app_id)
-        payload: dict[str, Any] | None = response.response
-        if not payload:
-            logs_data: LogsData = LogsData()
-        else:
-            logs_data: LogsData = LogsData(**payload)
-
-        return logs_data
-
-    
-    @_notify_listener(Endpoint.app_status())
-    async def app_status(self, app_id: str, **_kwargs) -> StatusData:
-        """
-        The app_status method is used to get the status of an application.
-
-        :param app_id: Specify the application by id
-        :param _kwargs: Keyword arguments
-        :return: A StatusData object
-        :rtype: StatusData
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.fetch_app_status(app_id)
-        payload: dict[str, Any] = response.response
-        return StatusData(**payload)
-
-    
-    @_notify_listener(Endpoint.start())
-    async def start_app(self, app_id: str, **_kwargs) -> Response:
-        """
-        The start_app method starts an application.
-
-        :param app_id: Specify the application by id
-        :param _kwargs: Keyword arguments
-        :return: A Response object
-        :rtype: Response
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        return await self._http.start_application(app_id)
-
-    
-    @_notify_listener(Endpoint.stop())
-    async def stop_app(self, app_id: str, **_kwargs) -> Response:
-        """
-        The stop_app method stops an application.
-
-        :param app_id: Specify the application by id
-        :param _kwargs: Keyword arguments
-        :return: A Response object
-        :rtype: Response
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        return await self._http.stop_application(app_id)
-
-    
-    @_notify_listener(Endpoint.restart())
-    async def restart_app(self, app_id: str, **_kwargs) -> Response:
-        """
-        The restart_app method is restarts an application.
-
-        :param app_id: Specify the application id
-        :param _kwargs: Keyword arguments
-        :return: A Response object
-        :rtype: Response
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        return await self._http.restart_application(app_id)    
-    
-    @_notify_listener(Endpoint.snapshot())
-    async def snapshot(self, app_id: str, **_kwargs) -> Snapshot:
-        """
-        The snapshot method is used to save a snapshot of an application.
-
-        :param app_id: Specify the application id
-        :param _kwargs: Keyword arguments
-        :return: A Snapshot object
-        :rtype: Snapshot
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.snapshot(app_id)
-        payload: dict[str, Any] = response.response
-        return Snapshot(**payload)
-
-    
-    async def restore_snapshot(self, application_type: Literal["app", "database"], app_id: str, snapshot_id:str, version_id:str, **_kwargs) -> Response:
-        """
-        The restore_snapshot method is used to restore a snapshot of an application.
-
-        :param application_type: Specify the type of the application, it can be "app" or "database"
-        :param app_id: Specify the application id
-        :param snapshot_id: Specify the snapshot id
-        :param version_id: Specify the snapshot version id
-
-        :return: A Response object
-        :rtype: Response
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-
-        if application_type not in ["app", "database"]:
-            raise ValueError("application_type must be 'app' or 'database'")
-        
-
-        return await self._http.restore_snapshot(app_type=application_type, app_id=app_id, snapshot_id=snapshot_id, version_id=version_id)
-
-    
-    @_notify_listener(Endpoint.delete_app())
-    async def delete_app(self, app_id: str, **_kwargs) -> Response:
-        """
-        The delete_app method deletes an application.
-
-        :param app_id: The application id
-        :param _kwargs: Keyword arguments
-        :return: A Response object
-        :rtype: Response
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        return await self._http.delete_application(app_id)
-
-    
-    @_notify_listener(Endpoint.commit())
-    async def commit(self, app_id: str, file: File, **_kwargs) -> Response:
-        """
-        The commit method is used to commit an application.
-
-        :param app_id: Specify the application by id
-        :param file: File: Specify the File object to be committed
-        :param _kwargs: Keyword arguments
-        :return: A Response object
-        :rtype: Response
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        return await self._http.commit(app_id, file)
-
-    
-    @_notify_listener(Endpoint.user())
-    async def app(self, app_id: str, **_kwargs) -> Application:
-        """
-        The app method returns an Application object.
-
-        :param app_id: Specify the application by id
-        :param _kwargs: Keyword arguments
-        :return: An Application object
-        :rtype: Application
-
-        :raises ApplicationNotFound: Raised when is not found an application
-                with the specified id
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.fetch_user_info()
-        payload = response.response
-        app_data = list(
-            filter(
-                lambda application: application["id"] == app_id,
-                payload["applications"],
-            )
-        )
-        if not app_data:
-            raise ApplicationNotFound(app_id=app_id)
-        app_data = app_data.pop()
-        app_data = AppData(**app_data).to_dict()
-        return Application(client=self, http=self._http, **app_data)
-
-    # @_notify_listener(Endpoint.user())
-    async def all_apps(self, **_kwargs) -> list[Application]:
-        """
-        The all_apps method returns a list of all applications that the user
-        has access to.
-
-        :param _kwargs: Keyword arguments
-        :return: A list of Application objects
-        :rtype: list[Application]
-
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.fetch_user_info()
-        payload = response.response
-        apps_data: list = payload["applications"]
-        apps: list[Application] = []
-        for data in apps_data:
-            data = AppData(**data).to_dict()
-            apps.append(Application(client=self, http=self._http, **data))
-        return apps
-
-    
-    @_notify_listener(Endpoint.upload())
-    async def upload_app(self, file: File, **_kwargs) -> UploadData:
-        """
-        The upload_app method uploads an application to the server.
-
-        :param file: Upload a file
-        :param _kwargs: Keyword arguments
-        :return: An UploadData object
-        :rtype: UploadData
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        :raises FewMemory: Raised when user memory reached the maximum
-                amount of memory
-        :raises BadMemory: Raised when the memory in configuration file is
-                invalid
-        :raises MissingConfigFile: Raised when the .zip file is missing the
-                config file (squarecloud.app/squarecloud.config)
-        :raises MissingDependenciesFile: Raised when the .zip file is missing
-                the dependencies file (requirements.txt, package.json, ...)
-        :raises MissingMainFile: Raised when the .zip file is missing the main
-                file (main.py, index.js, ...)
-        :raises InvalidMain: Raised when the field MAIN in config file is
-                invalid or when the main file is corrupted
-        :raises InvalidDisplayName: Raised when the field DISPLAY_NAME
-                in config file is invalid
-        :raises MissingDisplayName: Raised when the DISPLAY_NAME field is
-                missing in the config file
-        :raises InvalidMemory: Raised when the MEMORY field is invalid
-        :raises MissingMemory: Raised when the MEMORY field is missing in
-                the config file
-        :raises InvalidVersion: Raised when the VERSION field is invalid,
-                the value accepted is "recommended" or "latest"
-        :raises MissingVersion: Raised when the VERSION field is missing in
-                the config file
-        :raises InvalidAccessToken: Raised when a GitHub access token
-                provided is invalid
-        :raises InvalidDomain: Raised when a domain provided is invalid
-        """
-        if not isinstance(file, File):
-            raise InvalidFile(f"you need provide an {File.__name__} object")
-
-        if (file.filename is not None) and (
-            file.filename.split(".")[-1] != "zip"
-        ):
-            raise InvalidFile("the file must be a .zip file")
-        response: Response = await self._http.upload(file)
-        payload: dict[str, Any] = response.response
-        return UploadData(**payload)
-
-    
-    @_notify_listener(Endpoint.files_list())
-    async def app_files_list(
-        self, app_id: str, path: str, **_kwargs
-    ) -> list[FileInfo]:
-        """
-        The app_files_list method returns a list of your application files.
-
-        :param app_id: Specify the application by id
-        :param path: Specify the path to the file
-        :param _kwargs: Keyword arguments
-        :return: A list of FileInfo objects
-        :rtype: list[FileInfo]
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.fetch_app_files_list(
-            app_id, path
-        )
-        if not response.response:
-            return []
-        return [
-            FileInfo(**data, app_id=app_id, path=path + f"{data.get('name')}")
-            for data in response.response
-        ]
-
-    
-    @_notify_listener(Endpoint.files_read())
-    async def read_app_file(
-        self, app_id: str, path: str, **_kwargs
-    ) -> BytesIO | None:
-        """
-        The read_app_file method reads a file from the specified path and
-        returns a BytesIO representation.
-
-        :param app_id: Specify the application by id
-        :param path: str: Specify the path of the file to be read
-        :param _kwargs: Keyword arguments
-        :return: A BytesIO representation of the file
-        :rtype: BytesIO | None
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.read_app_file(app_id, path)
-        if response.response:
-            return BytesIO(bytes(response.response.get("data")))
-        return None
-
-    
-    @_notify_listener(Endpoint.files_create())
-    async def create_app_file(
-        self, app_id: str, file: File, path: str, **_kwargs
-    ) -> Response:
-        """
-        The create_app_file method creates a new file in the specified
-        directory.
-
-        :param app_id: Specify the application by id
-        :param file: Pass the file to be created
-        :param path: Specify the directory to create the file in
-        :param _kwargs: Keyword arguments
-        :return: A Response object
-        :rtype: Response
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        if not isinstance(file, File):
-            raise SquareException(
-                "the file must be an string or a squarecloud.File object"
-            )
-        file_bytes = list(file.bytes.read())
-        response: Response = await self._http.create_app_file(
-            app_id, file_bytes, path=path
-        )
-        file.bytes.close()
-
-        return response
-
-    
-    @_notify_listener(Endpoint.files_delete())
-    async def delete_app_file(
-        self, app_id: str, path: str, **_kwargs
-    ) -> Response:
-        """
-        The delete_app_file method deletes a file in the specified directory.
-
-        :param app_id: Specify the application by id
-        :param path: Specify the directory where the file should be
-        deleted
-        :param _kwargs: Keyword arguments
-        :return: A Response object
-        :rtype: Response
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        return await self._http.file_delete(app_id, path)
-
-    
-    @_notify_listener(Endpoint.last_deploys())
-    async def last_deploys(
-        self, app_id: str, **_kwargs
-    ) -> list[list[DeployData]]:
-        """
-        The last_deploys method returns a list of DeployData objects.
-
-        :param self: Represent the instance of a class
-        :param app_id: str: Specify the application by id
-        :param _kwargs: Keyword arguments
-        :return: A list of DeployData objects
-        :rtype: list[list[DeployData]]
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.get_last_deploys(app_id)
-        data = response.response
-        return [[DeployData(**deploy) for deploy in _] for _ in data]
-
-    
-    @_notify_listener(Endpoint.github_integration())
-    async def github_integration(
-        self, app_id: str, access_token: str, **_kwargs
-    ) -> str:
-        """
-        The github_integration method returns a GitHub Webhook url to integrate
-        with your GitHub repository
-
-        :param app_id: Specify the application by id
-        :param access_token: your GitHub access token
-        :param _kwargs: Keyword arguments
-        :return: A GitHub Webhook url
-
-        :raises InvalidAccessToken: Raised when a GitHub access token
-                provided is invalid
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        response: Response = await self._http.create_github_integration(
-            app_id=app_id, github_access_token=access_token
-        )
-        data = response.response
-        return data.get("webhook")
-
-    
-    @_notify_listener(Endpoint.custom_domain())
-    async def set_custom_domain(
-        self, app_id: str, custom_domain: str, **_kwargs
-    ) -> Response:
-        """
-        The set_custom_domain method sets a custom domain to your website
-
-        :param app_id: Specify the application by id
-        :param custom_domain: Specify the custom domain to use for your website
-        :param _kwargs: Keyword arguments
-        :return: A Response object
-        :rtype: Response
-
-        :raises InvalidDomain: Raised when a domain provided is invalid
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        return await self._http.update_custom_domain(
-            app_id=app_id, custom_domain=custom_domain
-        )
-
-    
-    @_notify_listener(Endpoint.domain_analytics())
-    async def domain_analytics(
-        self,
-        app_id: str,
         *,
-        start: str | datetime | None = None,
-        end: str | datetime | None = None,
-        country: str | None = None,
-        ip: str | None = None,
-        path: str | None = None,
-        status: str | None = None,
-        os: str | None = None,
-        browser: str | None = None,
-        protocol: str | None = None,
-        referer: str | None = None,
-        provider: str | None = None,
-        content_type: str | None = None,
-        bot: str | None = None,
-        **_kwargs,
-    ) -> DomainAnalytics:
-        """
-        The domain_analytics method return a DomainAnalytics object.
-        Maximum retention window is 7 days. The optional drill-down filters
-        apply to every breakdown at once.
-
-        :param app_id: Specify the application by id
-        :param start: ISO 8601 start timestamp (or datetime)
-        :param end: ISO 8601 end timestamp (or datetime)
-        :param country: Filter to one client country (2-char code, e.g. BR)
-        :param ip: Filter to one client IP (exact match)
-        :param path: Filter to request paths starting with this prefix
-        :param status: Filter to one edge response status code
-        :param os: Filter to one client OS
-        :param browser: Filter to one client browser
-        :param protocol: Filter to one HTTP protocol
-        :param referer: Filter to one referer host ("Direct" = no referer)
-        :param provider: Filter to one client network
-        :param content_type: Filter to one response content type
-        :param bot: Filter to one verified-bot category
-        :param _kwargs: Keyword arguments
-        :return: A DomainAnalytics object
-        :rtype: DomainAnalytics
-
-        :raises NotFoundError: Raised when the request status code is 404
-        :raises BadRequestError: Raised when the request status code is 400
-        :raises AuthenticationFailure: Raised when the request status
-                code is 401
-        :raises TooManyRequestsError: Raised when the request status
-                code is 429
-        """
-        params = {
-            'start': _to_iso(start) if start else None,
-            'end': _to_iso(end) if end else None,
-            'country': country,
-            'ip': ip,
-            'path': path,
-            'status': status,
-            'os': os,
-            'browser': browser,
-            'protocol': protocol,
-            'referer': referer,
-            'provider': provider,
-            'content_type': content_type,
-            'bot': bot,
+        base_url: str = BASE_URL,
+        timeout: float = 30.0,
+        max_retries: int = 2,
+        transport: Transport | None = None,
+        user_agent: str = USER_AGENT,
+    ) -> None:
+        """``timeout`` (seconds, per socket operation) ``<= 0`` disables
+        every timeout, the floors of held and AI calls included."""
+        if not isinstance(api_key, str) or not api_key.strip():
+            raise ValueError('api_key must be a non-empty string')
+        self._base_url = base_url.rstrip('/')
+        self._base_path = urlsplit(self._base_url).path  # '/v2': error paths
+        self._timeout = timeout
+        self._max_retries = max_retries
+        self._transport: Transport = transport or HTTPTransport(
+            timeout if timeout > 0 else None
+        )
+        self._user_agent = user_agent
+        self._headers = {
+            'Authorization': api_key,
+            'User-Agent': user_agent,
+            'Accept': 'application/json',
         }
-        params = {key: value for key, value in params.items() if value}
-        response: Response = await self._http.domain_analytics(
-            app_id=app_id, params=params
+        self.account = Account(self)
+        self.service = Service(self)
+        self.ai = AI(self)
+        self.apps = Apps(self)
+        self.databases = Databases(self)
+        self.workspaces = Workspaces(self)
+
+    def __enter__(self) -> SquareCloud:
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.close()
+
+    def close(self) -> None:
+        """Closes the pooled connections (only of the default transport)."""
+        close = getattr(self._transport, 'close', None)
+        if close is not None:
+            close()
+
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        query: dict[str, Any] | None = None,
+        json_body: Any = None,
+        body: bytes | Callable[[], Iterable[bytes]] | None = None,
+        headers: dict[str, str] | None = None,
+        no_timeout: bool = False,
+        min_timeout: float = 0.0,
+        raw: bool = False,
+        stream: bool = False,
+        url: str | None = None,
+        stop: threading.Event | None = None,
+    ) -> Any:
+        """Sends one call under the retry policy: network errors (not
+        timeouts) retry only on GET, 503 UPLOAD_BUSY/ANALYTICS_BUSY retry on
+        any method, 503 DATABASE_UNAVAILABLE only on GET (it can fire after a
+        mutation was applied), 429 never.
+        ``min_timeout`` raises the timeout of a call the server holds open.
+        A 2xx ``{status: 'error'}`` body raises unless ``raw`` (routes
+        without the envelope) or 202 (pending). Returns the decoded JSON
+        body, or the open 2xx response when ``stream``. A set ``stop`` ends
+        a retry wait at once and raises its error."""
+        max_retries = self._max_retries
+        if url is None:
+            if any(s in ('', '.', '..') for s in path.split('/')[1:]):
+                raise SquareCloudAPIError(
+                    0,
+                    'INVALID_ID',
+                    'Empty, "." and ".." are not valid ids',
+                    method,
+                    self._base_path + path,
+                )
+            # Absent, '' and False are dropped; True is sent as 'true'.
+            params = {
+                k: 'true' if v is True else v
+                for k, v in (query or {}).items()
+                if v is not None and v is not False and v != ''
+            }
+            url = self._base_url + path + (f'?{urlencode(params)}' if params else '')
+            hdrs = dict(self._headers)
+        else:  # a foreign host (snapshot download): never send the key
+            hdrs = {'User-Agent': self._user_agent}
+        if json_body is not None:
+            body = _json(json_body)
+            hdrs.update(_JSON)
+        if headers:
+            hdrs.update(headers)
+        timeout = (
+            None
+            if no_timeout or self._timeout <= 0
+            else max(self._timeout, min_timeout)
         )
-        return DomainAnalytics(**response.response)
-    
-    @_notify_listener(Endpoint.all_snapshots())
-    async def all_app_snapshots(
-        self, app_id: str, **_kwargs
-    ) -> list[SnapshotInfo]:
-        """
-        Retrieve all snapshots for a specific application.
-        This method fetches a list of snapshots associated with the 
-        given application ID and returns them as a list of `SnapshotInfo` objects.
-        :param app_id: Specify the application by id.
-        :type app_id: str
-        :param _kwargs: Additional keyword arguments.
-        :type _kwargs: dict
-        :return: A list of `SnapshotInfo` objects representing the snapshots of 
-                 the specified application.
-        :rtype: list[SnapshotInfo]
-        """
-        response: Response = await self._http.get_all_app_snapshots(
-            app_id=app_id
+        path = urlsplit(url).path  # errors report the full path, e.g. /v2/...
+        attempt = 0
+        while True:
+            payload = body() if callable(body) else body
+            try:
+                resp = self._transport(method, url, hdrs, payload, timeout, stream)
+                if stream and resp.status < 300:
+                    return resp
+                try:
+                    body_raw = resp.read()
+                finally:
+                    resp.close()
+            except _LocalError as exc:
+                raise exc.args[0] from None
+            except (OSError, http.client.HTTPException) as exc:
+                if (
+                    method != 'GET'
+                    or attempt >= max_retries
+                    or isinstance(exc, TimeoutError)  # never waits twice
+                ):
+                    raise _network_error(exc, method, path) from exc
+                log.debug('%s %s: %r, retrying', method, path, exc)
+                _sleep(_delay(attempt), stop)
+                if stop is not None and stop.is_set():
+                    raise _network_error(exc, method, path) from exc
+                attempt += 1
+                continue
+            finally:
+                # A failed send leaves the upload generator (and the file it
+                # holds open) referenced by the error's traceback: close it.
+                if isinstance(payload, Generator):
+                    payload.close()
+            status = resp.status
+            log.debug('%s %s -> %d', method, path, status)
+            try:
+                data = json.loads(body_raw) if body_raw else {}
+            except ValueError as exc:  # HTML from a proxy, S3 XML...
+                ok = status < 300
+                raise SquareCloudAPIError(
+                    status,
+                    'UNKNOWN_ERROR',
+                    f'Invalid JSON in HTTP {status} response'
+                    if ok
+                    else f'HTTP {status}',
+                    method,
+                    path,
+                ) from (exc if ok else None)
+            if status < 300 and (
+                # safety net: a 2xx {status: 'error'} is still a failure
+                raw or status == 202 or not _failed(data)
+            ):
+                return data
+            error = _api_error(status, data, method, path)
+            if (
+                status == 503
+                and attempt < max_retries
+                and (
+                    error.code in _BUSY
+                    or (method == 'GET' and error.code == 'DATABASE_UNAVAILABLE')
+                )
+            ):
+                _sleep(_delay(attempt), stop)
+                if stop is None or not stop.is_set():
+                    attempt += 1
+                    continue
+            raise error
+
+    def _r(self, method: str, path: str, **kwargs: Any) -> Any:
+        """``_request`` unwrapped from the ``{status, response}`` envelope."""
+        data = self._request(method, path, **kwargs)
+        return data.get('response') if isinstance(data, dict) else data
+
+    def download_snapshot(self, url: str, dest: str | os.PathLike[str]) -> str:
+        """Streams a snapshot ``url`` (from ``snapshots.create``) to ``dest``
+        (a file path, or a directory to keep the remote file name; a path
+        ending in a separator is created as a directory). Returns the written
+        path. The file appears only once complete, so a failed download
+        never clobbers an earlier one. The API key is never sent to the
+        snapshot host. Local file errors raise ``OSError``."""
+        target = os.fspath(dest)
+        remote = urlsplit(url).path
+        if target.endswith(('/', os.sep)):
+            os.makedirs(target, exist_ok=True)
+        if os.path.isdir(target):
+            name = os.path.basename(remote) or 'snapshot.zip'
+            target = os.path.join(target, name)
+        resp: Response = self._request('GET', remote, url=url, stream=True)
+        part = target + '.part'
+        try:
+            with open(part, 'wb') as f:
+                while True:
+                    try:
+                        chunk = resp.read(_CHUNK)
+                    except (OSError, http.client.HTTPException) as exc:
+                        raise _network_error(exc, 'GET', remote) from exc
+                    if not chunk:
+                        break
+                    f.write(chunk)
+            os.replace(part, target)
+        except BaseException:
+            with contextlib.suppress(OSError):
+                os.remove(part)
+            raise
+        finally:
+            resp.close()
+        return target
+
+
+class _Group:
+    def __init__(self, client: SquareCloud) -> None:
+        self._c = client
+
+
+class Account(_Group):
+    def me(self) -> t.Account:
+        """``GET /users/me``: the user plus their apps and databases."""
+        return self._c._r('GET', '/users/me')
+
+    def snapshots(self, *, scope: t.SnapshotScope | None = None) -> list[t.Snapshot]:
+        """``GET /users/snapshots``: every snapshot of the account. Each item
+        carries ``version_id`` and a signed download ``url``."""
+        return self._c._r('GET', '/users/snapshots', query={'scope': scope})
+
+
+class Service(_Group):
+    def status(self) -> t.ServiceStatus:
+        """``GET /service/status`` (public; not enveloped)."""
+        return self._c._request('GET', '/service/status', raw=True)
+
+
+class AI(_Group):
+    def chat(self, request: t.ChatRequest | dict[str, Any]) -> t.ChatCompletion:
+        """``POST /ai/chat/completions`` (OpenAI-compatible, no streaming).
+        ``request`` is sent as the body, so any OpenAI parameter passes
+        through. The gateway has one 90 s deadline for the whole request
+        and answers 503 ``server_overloaded`` past it: safe to retry, but the
+        SDK does not (the timeout floor is 120 s). Errors of both dialects
+        become :class:`SquareCloudAPIError`."""
+        return self._c._request(
+            'POST', '/ai/chat/completions', json_body=request, raw=True, min_timeout=_AI
         )
-        return [SnapshotInfo(**snapshot_data) for snapshot_data in response.response]
 
-    @_notify_listener(Endpoint.all_apps_status())
-    async def all_apps_status(self, **_kwargs) -> list[ResumedStatus]:
-        """
-        Retrieve the status of all applications.
-        This method fetches the status of all applications
-        and returns a list of `ResumedStatus` objects for applications
-        that are currently running.
-        :param _kwargs: Additional keyword arguments.
-        :type _kwargs: dict
-        :return: A list of `ResumedStatus` objects representing the status
-                 of running applications.
-        :rtype: list[ResumedStatus]
-        """
-        response: Response = await self._http.all_apps_status()
-        all_status = []
-        for status in response.response:
-            if status["running"] is True:
-                all_status.append(ResumedStatus(**status))
-        return all_status
 
-    
-    @_notify_listener(Endpoint.move_file())
-    async def move_app_file(
-        self, app_id: str, origin: str, dest: str, **_kwargs
-    ) -> Response:
-        """
-        Moves a file within an application from the origin path to the destination path.
-        :param app_id: Specify the application by id.
-        :type app_id: str
-        :param origin: The current path of the file to be moved.
-        :type origin: str
-        :param dest: The target path where the file should be moved.
-        :type dest: str
-        :param _kwargs: Additional keyword arguments.
-        :type _kwargs: dict
-        :return: The response object containing the result of the move operation.
-        :rtype: Response
-        """
-        response: Response = await self._http.move_app_file(
-            app_id=app_id, origin=origin, dest=dest
+class Apps(_Group):
+    """Applications. ``app_id`` may be ``'<appId>-<workspaceId>'``."""
+
+    def __init__(self, client: SquareCloud) -> None:
+        super().__init__(client)
+        self.deploys = Deploys(client)
+        self.envs = Envs(client)
+        self.files = Files(client)
+        self.snapshots = Snapshots(client, '/apps')
+        self.network = Network(client)
+
+    def create(self, file: UploadFile) -> t.AppCreated:
+        """``POST /apps``: uploads a zip (path, bytes or binary file),
+        streamed from disk."""
+        body, headers = _multipart(file, self._c._base_path + '/apps')
+        return self._c._r('POST', '/apps', body=body, headers=headers, no_timeout=True)
+
+    def get(self, app_id: str) -> t.App:
+        return self._c._r('GET', f'/apps/{_q(app_id)}')
+
+    def delete(self, app_id: str) -> None:
+        self._c._request('DELETE', f'/apps/{_q(app_id)}')
+
+    def status_all(self, *, workspace_id: str | None = None) -> list[t.StatusListItem]:
+        """``GET /apps/status``, including stopped apps."""
+        return self._c._r('GET', '/apps/status', query={'workspaceId': workspace_id})
+
+    def status(self, app_id: str, *, raw: bool = False) -> t.RuntimeStats:
+        """Formatted strings (``ram`` e.g. ``'120.4MB'``); ``raw=True``
+        returns numbers instead."""
+        return self._c._r(
+            'GET',
+            f'/apps/{_q(app_id)}/status',
+            query={'rawData': 'true' if raw else None},
         )
-        return response
 
-    
-    @_notify_listener(Endpoint.dns_records())
-    async def dns_records(self, app_id: str) -> list[DNSRecord]:
-        """
-        Retrieve DNS records for a specific application.
-        :param app_id: Specify the application by id.
-        :type app_id: str
-        :return: A list of DNSRecord objects representing the DNS records of the application.
-        :rtype: list[DNSRecord]
-        """
-        
-        response: Response = await self._http.dns_records(app_id)
-        return [DNSRecord(**data) for data in response.response]
+    def start(self, app_id: str) -> None:
+        """Starts the app. A refusal is 409 with a code and no message:
+        ``CONTAINER_ALREADY_STARTED``, ``CONTAINER_ALREADY_STOPPED``,
+        ``CONTAINER_TEMPORARILY_SUSPENDED``, ``CONTAINER_NOT_FOUND``,
+        ``CONTAINER_INSUFFICIENT_DISK_SPACE``, ``CONTAINER_NETWORK_CONFLICT``
+        or ``ACTION_FAILED``. The same holds for ``stop`` and ``restart``."""
+        self._c._request('POST', f'/apps/{_q(app_id)}/start', min_timeout=_SLOW)
 
-    
-    @_notify_listener(Endpoint.current_integration())
-    async def current_app_integration(self, app_id: str) -> str | None:
-        response: Response = await self._http.get_app_current_integration(
-            app_id
+    def stop(self, app_id: str) -> None:
+        """Stops the app; 409 refusals as in :meth:`start`."""
+        self._c._request('POST', f'/apps/{_q(app_id)}/stop', min_timeout=_SLOW)
+
+    def restart(self, app_id: str) -> None:
+        """Restarts the app; 409 refusals as in :meth:`start`."""
+        self._c._request('POST', f'/apps/{_q(app_id)}/restart', min_timeout=_SLOW)
+
+    def logs(self, app_id: str) -> str:
+        """The latest logs as one string."""
+        return str(
+            (self._c._r('GET', f'/apps/{_q(app_id)}/logs') or {}).get('logs') or ''
         )
-        return response.response["webhook"]
 
-    async def get_app_envs(self, app_id: str) -> dict[str, str]:
-        """
-        Retrieve the environment variables of a specific application.
-        :param app_id: Specify the application by id.
-        :type app_id: str
-        :return: A dictionary containing the environment variables as key-value pairs.
-        :rtype: dict[str, str]
-        """
-        response: Response = await self._http.get_environment_variables(app_id)
-        return response.response
-    
-    async def set_app_envs(self, app_id: str, envs: dict[str, str]) -> dict[str, str]:
-        """
-        Sets or edits environment variables for a specific application.
-        This method sends a request to update the environment variables of the
-        specified application with the provided key-value pairs.
-        :param app_id: Specify the application by id.
-        :type app_id: str
-        :param envs: A dictionary containing the environment variables to set,
-                     where the keys are variable names and the values are their
-                     corresponding values.
-        :type envs: dict[str, str]
-        :return: A dictionary containing the updated environment with all variables.
-        :rtype: dict[str, str]
-        :raises HTTPException: If the HTTP request fails or returns an error response.
-        """
-        
-        response: Response = await self._http.set_environment_variable(app_id, envs)
-        return response.response
-    
-    async def delete_app_envs(self, app_id: str, keys: list[str]) -> dict[str, str]:
-        """
-        Deletes specified environment variables for a given application.
-        :param app_id: Specify the application by id.
-        :type app_id: str
-        :param keys: A list of keys representing the environment variables to be deleted.
-        :type keys: list[str]
-        :return: A dictionary containing the remaining variables.
-        :rtype: dict[str, str]
-        """
-        response: Response = await self._http.delete_environment_variable(app_id, keys)
-        return response.response
-    
-    async def overwrite_app_envs(self, app_id: str, envs: dict[str, str]) -> dict[str, str]:
-        """
-        Overwrite the environment variables of a specific application.
-        This method sets the dictionary provided as the new environment for the application.
-        :param app_id: Specify the application by id.
-        :type app_id: str
-        :param envs: A dictionary containing the new environment variables to set
-                     for the application. Keys and values must both be strings.
-        :type envs: dict[str, str]
-        :return: A dictionary containing the new environment after overwriting the
-                 environment variables.
-        :rtype: dict[str, str]
-        """
-        response: Response = await self._http.overwrite_environment_variables(app_id, envs)
-        return response.response
-    
-    async def clear_app_envs(self, app_id: str) -> dict[str, str]:
-        """
-        Clears all environment variables for the specified application.
-        This method overwrites the application's environment variables with an empty dictionary,
-        effectively removing all existing environment variables.
-        
-        :param app_id: Specify the application by id.
-        :type app_id: str
-        :return: A dictionary containing the response from the server.
-        :rtype: dict[str, str]
-        """
-        response: Response = await self._http.overwrite_environment_variables(app_id, {})
-        return response.response
-    
-    @_notify_listener(Endpoint.create_database())
-    async def create_database(
-            self,
-            name: str,
-            memory: int,
-            type: Literal["redis", "mongo", "mysql", "postgres"],
-            *,
-            version: str | None = None,
-        ) -> Database:
-        """
-        Create a new database.
+    def metrics(self, app_id: str) -> list[t.MetricPoint]:
+        """Up to 24 h of 5-minute points, newest first."""
+        return self._c._r('GET', f'/apps/{_q(app_id)}/metrics')
 
-        :param name: Name of the database to be created.
-        :param memory: Memory in MB allocated to the database.
-        :param type: Database type ("redis", "mongo", "mysql", "postgres").
-        :param version: Database version.
-        :return: Database instance representing the created database.
-        """
-        versions = {
-            "redis": "7.4.5",
-            "mongo": "8.0.11",
-            "postgres": "17.6",
-            "mysql": "9.5",
-        }
-        version = version if version else versions.get(type)
+    def realtime(self, app_id: str) -> Realtime:
+        """``GET /apps/{appId}/realtime`` as an iterator of
+        :class:`~squarecloud.types.RealtimeEvent`. Call ``close()`` (from
+        any thread) or leave the ``with`` block to stop."""
+        return Realtime(self._c, f'/apps/{_q(app_id)}/realtime')
 
-        response: Response = await self._http.create_database(name=name, memory=memory, type=type, version=version)
+    def domains(self) -> list[t.AppDomain]:
+        return self._c._r('GET', '/apps/domains')
 
-        response.response.update({"certificate": Certificate(response.response['certificate'])})
+    def load_balancers(self) -> t.LoadBalancers:
+        return self._c._r('GET', '/apps/load-balancers')
 
-        return Database(**response.response)
-    
-    @_notify_listener(Endpoint.get_database_info())
-    async def get_database_info(self, database_id: str) -> DatabaseInfo:
-        """
-        Retrieve information about a specific database.
-
-        :param database_id: ID of the database to retrieve information for.
-        :return: DatabaseInfo instance containing details about the specified database.
-        """
-        response: Response = await self._http.get_database_information(database_id)
-        return DatabaseInfo(**response.response)
-
-    @_notify_listener(Endpoint.start_database())
-    async def start_database(self, database_id: str) -> Response:
-        """
-        Start a specific database.
-
-        :param database_id: ID of the database to be started.
-        :return: Response object containing the result of the start operation.
-        """
-        return await self._http.start_database(database_id)
-
-    @_notify_listener(Endpoint.stop_database())
-    async def stop_database(self, database_id: str) -> Response:
-        """
-        Stop a specific database.
-
-        :param database_id: ID of the database to be stopped.
-        :return: Response object containing the result of the stop operation.
-        """
-        return await self._http.stop_database(database_id)
-
-    @_notify_listener(Endpoint.edit_database())
-    async def edit_database(self, database_id: str, name: str | None = None, memory: int | None = None) -> Response:
-        """
-        Edit the configuration of a specific database.
-
-        :param database_id: ID of the database to be edited.
-        :param name: New name for the database (optional).
-        :param memory: New memory allocation in MB for the database (optional).
-        :return: Response object containing the result of the edit operation.
-        """
-        return await self._http.edit_database(database_id, name=name, memory=memory)
-
-    @_notify_listener(Endpoint.delete_database())
-    async def delete_database(self, database_id: str) -> Response:
-        """
-        Delete a specific database.
-
-        :param database_id: ID of the database to be deleted.
-        :return: Response object containing the result of the delete operation.
-        """
-        return await self._http.delete_database(database_id)
-    
-    @_notify_listener(Endpoint.all_databases_status())
-    async def all_databases_status(self) -> list[ResumedStatus]:
-        """
-        Retrieve the status of all databases.
-        This method fetches the status of all databases
-        and returns a list of `ResumedStatus` objects
-        """
-
-        response = await self._http.all_databases_status()
-        return [ResumedStatus(**status) for status in response.response]
-
-    @_notify_listener(Endpoint.database_status())
-    async def get_database_status(self, database_id: str) -> StatusData:
-        """
-        Obtains the status of a specific database and returns a StatusData object.
-
-        :param database_id: ID of the database
-        :return: A StatusData object containing the status of the specified database.   
-        """
-
-        response = await self._http.get_database_status(database_id)
-        return StatusData(**response.response)
-
-    @_notify_listener(Endpoint.get_database_certificate())
-    async def get_database_certificate(self, database_id: str) -> Certificate:
-        """
-        Retrieve the database TLS certificate.
-
-        :param database_id: Database identifier.
-        :return: Certificate instance.
-        """
-
-        response: Response = await self._http.get_database_certificate(database_id)
-
-        return Certificate(response.response['certificate'])
-
-    @_notify_listener(Endpoint.reset_database_credentials())
-    async def reset_database_password(self, database_id: str) -> str:
-        """
-        Reset database password credentials.
-
-        :param database_id: Database identifier.
-        :return: Newly generated password.
-        """
-
-        response: Response = await self._http.reset_database_credentials(database_id, "password")
-
-        return response.response["password"]
-    
-    @_notify_listener(Endpoint.reset_database_credentials())
-    async def reset_database_certificate(self, database_id: str) -> Response:
-        """
-        Regenerate the database certificate.
-
-        :param database_id: Database identifier.
-        :return: API response.
-        """
-        response: Response = await self._http.reset_database_credentials(database_id, "certificate")
-        return response
-
-    async def create_workspace(self, name: str) -> Workspace:
-        """Create a new workspace.
-
-        :param name: Name of the workspace to create.
-        :type name: str
-        :return: Workspace object containing the created workspace data.
-        :rtype: Workspace
-        """
-        create_workspace: Response = await self._http.create_workspace(name)
-        get_workspace: Response = await self._http.fetch_workspace(create_workspace.response["id"])
-        return Workspace(**get_workspace.response)
-
-    async def get_workspace(self, workspace_id: str) -> Workspace:
-        """Retrieve a workspace by its identifier.
-
-        :param workspace_id: ID of the workspace to fetch.
-        :type workspace_id: str
-        :return: Workspace object containing workspace details.
-        :rtype: Workspace
-        """
-        get_workspace: Response = await self._http.fetch_workspace(workspace_id)
-        get_workspace.response["applications"] = list(
-            map(lambda app: app | {"id": f'{app["id"]}-{get_workspace.response["id"]}'}, get_workspace.response["applications"])
-        )
-        return Workspace(**get_workspace.response)
-
-    async def delete_workspace(self, workspace_id: str) -> Response:
-        """Delete a workspace by its identifier.
-
-        :param workspace_id: ID of the workspace to delete.
-        :type workspace_id: str
-        :return: Response object returned by the API.
-        :rtype: Response
-        """
-        return await self._http.delete_workspace(workspace_id)
-
-    async def leave_workspace(self, workspace_id: str) -> Response:
-        """Leave a workspace.
-
-        :param workspace_id: ID of the workspace to leave.
-        :type workspace_id: str
-        :return: Response object returned by the API.
-        :rtype: Response
-        """
-        return await self._http.leave_workspace(workspace_id)
-
-    async def all_workspaces(self) -> list[Workspace]:
-        """Retrieve all workspaces available to the current user.
-
-        :return: List of Workspace objects representing all accessible workspaces.
-        :rtype: list[Workspace]
-        """
-        response: Response = await self._http.fetch_all_workspaces()
-        for workspace in response.response:
-            workspace["applications"] = list(
-                map(lambda app: app | {"id": f'{app["id"]}-{workspace["id"]}'}, workspace["applications"])
-            )
-        return [Workspace(**workspace) for workspace in response.response]
-
-    async def add_member_to_workspace(
-        self, workspace_id: str, invite_code: str, permissions: Literal["admin", "maintain", "manager", "view"]
-        ) -> Response:
-        """Add a member to a workspace using an invite code.
-
-        :param workspace_id: ID of the workspace.
-        :type workspace_id: str
-        :param invite_code: Invite code used to join the workspace.
-        :type invite_code: str
-        :param permissions: Permission level for the added member.
-        :type permissions: Literal["admin", "maintain", "manager", "view"]
-        :return: Response object returned by the API.
-        :rtype: Response
-        """
-        return await self._http.add_member_to_workspace(workspace_id, invite_code, permissions)
-
-    async def remove_member_from_workspace(self, workspace_id: str, user_id: str) -> Response:
-        """Remove a member from a workspace.
-
-        :param workspace_id: ID of the workspace.
-        :type workspace_id: str
-        :param user_id: ID of the member to remove.
-        :type user_id: str
-        :return: Response object returned by the API.
-        :rtype: Response
-        """
-        return await self._http.remove_member_from_workspace(workspace_id, user_id)
-
-    async def add_app_to_workspace(self, workspace_id: str, app_id: str) -> Response:
-        """Add an application to a workspace.
-
-        :param workspace_id: ID of the workspace.
-        :type workspace_id: str
-        :param app_id: ID of the application to add.
-        :type app_id: str
-        :return: Response object returned by the API.
-        :rtype: Response
-        """
-        return await self._http.add_app_to_workspace(workspace_id, app_id)
-
-    async def remove_app_from_workspace(self, workspace_id: str, app_id: str) -> Response:
-        """Remove an application from a workspace.
-
-        :param workspace_id: ID of the workspace.
-        :type workspace_id: str
-        :param app_id: ID of the application to remove.
-        :type app_id: str
-        :return: Response object returned by the API.
-        :rtype: Response
-        """
-        return await self._http.remove_app_from_workspace(workspace_id, app_id)
-
-    async def modify_member_permissions(
-        self, workspace_id: str, user_id: str, permissions: Literal["admin", "maintain", "manager", "view"]
-    ) -> Response:
-        """Change a workspace member's permissions.
-
-        :param workspace_id: ID of the workspace.
-        :type workspace_id: str
-        :param user_id: ID of the member whose permissions will be changed.
-        :type user_id: str
-        :param permissions: New permission level for the member.
-        :type permissions: Literal["admin", "maintain", "manager", "view"]
-        :return: Response object returned by the API.
-        :rtype: Response
-        """
-        return await self._http.change_workspace_member_permission(workspace_id, user_id, permissions)
-
-    async def get_invite_code(self) -> str:
-        """Retrieve the workspace invite code for the current user.
-
-        :return: Invite code string.
-        :rtype: str
-        """
-        response: Response = await self._http.get_workspace_member_code()
-        return cast(str, response.response.get("code", ""))
-
-    async def service_status(self) -> dict[str, Any]:
-        """Get the aggregate platform status (mirrors the public status page).
-
-        Note: this endpoint does not use the usual {status, response}
-        envelope — the raw payload ({status, message}) is returned.
-
-        :return: The raw status payload.
-        :rtype: dict[str, Any]
-        """
-        response: Response = await self._http.fetch_service_status()
-        return response.data
-
-    async def user_snapshots(
-        self, scope: Literal["applications", "databases"] = "applications"
-    ) -> list[dict[str, Any]]:
-        """List the authenticated user's snapshots.
-        Requires an active paid plan (402 UPGRADE_REQUIRED otherwise).
-
-        :param scope: Snapshot scope (default "applications").
-        :return: The raw list of snapshots.
-        :rtype: list[dict[str, Any]]
-        """
-        response: Response = await self._http.fetch_user_snapshots(scope)
-        return response.response
-
-    async def all_domains(self) -> list[dict[str, Any]]:
-        """List every domain configured across your applications — the
-        default subdomain and any attached custom domain.
-        Rate limited to 20 requests per 60s.
-
-        :return: The raw list of domains.
-        :rtype: list[dict[str, Any]]
-        """
-        response: Response = await self._http.fetch_all_domains()
-        return response.response
-
-    async def load_balancers(self) -> dict[str, Any]:
-        """List your custom-domain load balancers — applications grouped by
-        attached custom domain. Rate limited to 20 requests per 60s.
-
-        :return: The raw load balancers payload.
-        :rtype: dict[str, Any]
-        """
-        response: Response = await self._http.fetch_load_balancers()
-        return response.response
-
-    async def app_metrics(self, app_id: str) -> dict[str, Any]:
-        """Get the last 24h of metrics for an application
-        (288 points, sampled every 5 minutes).
-        Available only for apps with at least 512 MB of RAM.
-
-        :param app_id: Specify the application by id.
-        :return: The raw metrics payload.
-        :rtype: dict[str, Any]
-        """
-        response: Response = await self._http.fetch_app_metrics(app_id)
-        return response.response
-
-    async def database_metrics(self, database_id: str) -> dict[str, Any]:
-        """Get the last 24h of metrics for a database
-        (288 points, sampled every 5 minutes).
-
-        :param database_id: Specify the database by id.
-        :return: The raw metrics payload.
-        :rtype: dict[str, Any]
-        """
-        response: Response = await self._http.fetch_database_metrics(
-            database_id
-        )
-        return response.response
-
-    async def link_github_app(
-        self, app_id: str, repository_name: str, repository_branch: str
-    ) -> dict[str, Any]:
-        """Link a GitHub repository via the Square Cloud GitHub App.
-        Requires a session token (JWT); API keys are not accepted.
-
-        :param app_id: Specify the application by id.
-        :param repository_name: Full repository name (e.g. octocat/hello-world).
-        :param repository_branch: Repository branch (max 256 chars).
-        :return: The linked repository information.
-        :rtype: dict[str, Any]
-        """
-        response: Response = await self._http.link_github_app(
-            app_id, repository_name, repository_branch
-        )
-        return response.response.get("repository", {})
-
-    async def unlink_github_app(self, app_id: str) -> Response:
-        """Unlink the GitHub App repository from an application.
-        Requires a session token (JWT); API keys are not accepted.
-
-        :param app_id: Specify the application by id.
-        :return: Response object returned by the API.
-        :rtype: Response
-        """
-        return await self._http.unlink_github_app(app_id)
-
-    async def network_errors(
+    def commit(
         self,
         app_id: str,
-        start: str | datetime,
-        end: str | datetime,
-        include_4xx: bool = False,
-    ) -> dict[str, Any]:
-        """Get the aggregated edge error breakdown (4xx/5xx) for an
-        application's domains. Defaults to 5xx only.
-
-        :param app_id: Specify the application by id.
-        :param start: ISO 8601 start timestamp (or datetime).
-        :param end: ISO 8601 end timestamp (or datetime).
-        :param include_4xx: Include 4xx alongside 5xx.
-        :return: The raw errors payload.
-        :rtype: dict[str, Any]
-        """
-        response: Response = await self._http.network_errors(
-            app_id, _to_iso(start), _to_iso(end), include_4xx
+        file: UploadFile,
+        *,
+        path: str | None = None,
+        filename: str | None = None,
+    ) -> None:
+        """``POST /apps/{appId}/commit``: a ``.zip`` is unpacked into
+        ``path`` (the app root by default); any other file is placed at
+        ``path/<filename>``. ``filename`` defaults to the file's own name,
+        or ``'commit.zip'`` for ``bytes`` and unnamed streams."""
+        endpoint = f'/apps/{_q(app_id)}/commit'
+        body, headers = _multipart(
+            file, self._c._base_path + endpoint, filename, 'commit.zip'
         )
-        return response.response
-
-    async def network_logs(
-        self, app_id: str, start: str | datetime, end: str | datetime
-    ) -> dict[str, Any]:
-        """Get the per-request edge logs for an application's domains.
-        Requires Pro plan or higher.
-
-        :param app_id: Specify the application by id.
-        :param start: ISO 8601 start timestamp (or datetime).
-        :param end: ISO 8601 end timestamp (or datetime).
-        :return: The raw logs payload.
-        :rtype: dict[str, Any]
-        """
-        response: Response = await self._http.network_logs(
-            app_id, _to_iso(start), _to_iso(end)
+        self._c._request(
+            'POST',
+            endpoint,
+            query={'path': path},
+            body=body,
+            headers=headers,
+            no_timeout=True,
         )
-        return response.response
 
-    async def network_performance(
-        self, app_id: str, start: str | datetime, end: str | datetime
-    ) -> dict[str, Any]:
-        """Get edge and origin latency percentiles (p50/p95/p99) for an
-        application's domains. Requires Pro plan or higher.
 
-        :param app_id: Specify the application by id.
-        :param start: ISO 8601 start timestamp (or datetime).
-        :param end: ISO 8601 end timestamp (or datetime).
-        :return: The raw performance payload.
-        :rtype: dict[str, Any]
-        """
-        response: Response = await self._http.network_performance(
-            app_id, _to_iso(start), _to_iso(end)
+class Deploys(_Group):
+    def set_webhook(self, app_id: str, access_token: str) -> str:
+        """Configures the Git webhook; returns its URL."""
+        r = self._c._r(
+            'POST',
+            f'/apps/{_q(app_id)}/deploy/webhook',
+            json_body={'access_token': access_token},
         )
-        return response.response
+        return str((r or {}).get('webhook') or '')
 
-    async def purge_cache(self, app_id: str) -> Response:
-        """Purge the entire edge cache for an application's domains.
-
-        :param app_id: Specify the application by id.
-        :return: Response object returned by the API.
-        :rtype: Response
-        """
-        return await self._http.purge_cache(app_id)
-
-    async def all_database_snapshots(
-        self, database_id: str
-    ) -> list[SnapshotInfo]:
-        """Retrieve all snapshots of a database.
-
-        :param database_id: Specify the database by id.
-        :return: A list of SnapshotInfo objects.
-        :rtype: list[SnapshotInfo]
-        """
-        response: Response = await self._http.get_all_database_snapshots(
-            database_id
+    def link_github_app(
+        self, app_id: str, repository: str, branch: str
+    ) -> t.LinkedRepository:
+        """Links ``repository`` (``'owner/name'``) at ``branch`` through the
+        Square Cloud GitHub App (scope ``apps:deploy``; 3 calls per 60 s).
+        A linked app must be unlinked before it can be linked again (400
+        ``GIT_ALREADY_CONFIGURED``). 403 ``GITHUB_NOT_CONNECTED``: your
+        account has no GitHub App installation; 403
+        ``REPOSITORY_NOT_AVAILABLE``: no
+        GitHub App installation of your account covers the repository; 403
+        ``REPOSITORY_PERMISSION_REQUIRED``: no write access to it; 502
+        ``FAILED_TO_FETCH``: GitHub did not confirm the branch (safe to
+        retry); 409 ``REPOSITORY_BRANCH_ALREADY_CONFIGURED``: another app, of
+        any account, links the same repository and branch (its id appears
+        only in ``message``, and only when that app is yours)."""
+        r = self._c._r(
+            'POST',
+            f'/apps/{_q(app_id)}/deploy/github-app',
+            json_body={'repositoryName': repository, 'repositoryBranch': branch},
         )
-        return [
-            SnapshotInfo(**snapshot_data)
-            for snapshot_data in response.response
-        ]
+        # ponytail: a 2xx without it (a relayed auth-service body) gives {},
+        # like GO's zero value, never a KeyError.
+        return cast(t.LinkedRepository, (r or {}).get('repository') or {})
 
-    async def database_snapshot(self, database_id: str) -> Snapshot:
-        """Create a snapshot of a database.
+    def unlink_github_app(self, app_id: str) -> None:
+        """Removes the GitHub App link (400 ``GIT_NOT_CONFIGURED`` if none)."""
+        self._c._request('DELETE', f'/apps/{_q(app_id)}/deploy/github-app')
 
-        :param database_id: Specify the database by id.
-        :return: A Snapshot object.
-        :rtype: Snapshot
-        """
-        response: Response = await self._http.create_database_snapshot(
-            database_id
+    def list(self, app_id: str) -> builtins.list[builtins.list[t.DeployEvent]]:
+        """The latest deploys, each one a list of state events. A failed
+        deploy ends with ``state='error'`` and carries ``code`` and
+        ``message``."""
+        return self._c._r('GET', f'/apps/{_q(app_id)}/deployments')
+
+    def current(self, app_id: str) -> t.DeployCurrent:
+        path = f'/apps/{_q(app_id)}/deployments/current'
+        return self._c._r('GET', path) or t.DeployCurrent()
+
+
+class Envs(_Group):
+    def get(self, app_id: str) -> t.EnvVars:
+        return self._c._r('GET', f'/apps/{_q(app_id)}/envs')
+
+    def set(self, app_id: str, envs: t.EnvVars) -> t.EnvVars:
+        """Adds or updates the given variables; returns all of them."""
+        return self._c._r('POST', f'/apps/{_q(app_id)}/envs', json_body={'envs': envs})
+
+    def replace(self, app_id: str, envs: t.EnvVars) -> t.EnvVars:
+        """Replaces every variable (``{}`` clears them)."""
+        return self._c._r('PUT', f'/apps/{_q(app_id)}/envs', json_body={'envs': envs})
+
+    def delete(self, app_id: str, keys: str | Iterable[str]) -> t.EnvVars:
+        """Removes one variable or several; returns the remaining ones."""
+        names = [keys] if isinstance(keys, str) else list(keys)
+        return self._c._r(
+            'DELETE', f'/apps/{_q(app_id)}/envs', json_body={'envs': names}
         )
-        return Snapshot(**response.response)
 
-    def realtime(
-        self, app_id: str
-    ) -> AsyncGenerator[dict[str, Any] | str, None]:
-        """Stream realtime status events (SSE) for an application.
-        Max 5 concurrent connections per user; connections live for up to
-        10 minutes.
 
-        Usage::
+class Files(_Group):
+    def list(self, app_id: str, path: str | None = None) -> builtins.list[t.FileEntry]:
+        """Lists a directory (the app root by default). A missing directory
+        is 404 ``FILE_NOT_FOUND``, a blocked one 403 ``BLOCKED_PATH``. Paths
+        are at most 256 characters."""
+        return self._c._r('GET', f'/apps/{_q(app_id)}/files', query={'path': path})
 
-            async for event in client.realtime(app_id):
-                print(event)
+    def read(self, app_id: str, path: str) -> bytes:
+        """The file's bytes (at most 10 MB, else 413 ``FILE_TOO_LARGE``),
+        fetched base64-encoded."""
+        r = self._c._r(
+            'GET',
+            f'/apps/{_q(app_id)}/files/content',
+            query={'path': path, 'encoding': 'base64'},
+        )
+        return base64.b64decode((r or {}).get('data') or '')
 
-        :param app_id: Specify the application by id.
-        :return: An async generator of decoded events.
-        :rtype: AsyncGenerator[dict[str, Any] | str, None]
-        """
-        return self._http.realtime(app_id)
+    def write(self, app_id: str, path: str, content: str | bytes) -> None:
+        """Creates or overwrites a file (at most 10 MB). A ``str`` travels as
+        text, ``bytes`` base64-encoded. Empty content writes an empty file.
+        Content over 1 MiB is sent without a timeout, like an upload."""
+        endpoint = f'/apps/{_q(app_id)}/files'
+        # A char is at least one byte: big text is rejected before encoding.
+        too_large = len(content) > MAX_FILE_BYTES
+        if not too_large:
+            data = content.encode() if isinstance(content, str) else bytes(content)
+            too_large = len(data) > MAX_FILE_BYTES
+        if too_large:
+            raise _too_large(
+                'File content is limited to 10 MB', 'PUT', self._c._base_path + endpoint
+            )
+        body = (
+            {'path': path, 'content': content}
+            if isinstance(content, str)
+            else {
+                'path': path,
+                'content': base64.b64encode(data).decode(),
+                'encoding': 'base64',
+            }
+        )
+        self._c._request(
+            'PUT',
+            endpoint,
+            json_body=body,
+            no_timeout=len(data) > _NO_TIMEOUT_BYTES,  # sent like an upload
+        )
+
+    def move(self, app_id: str, path: str, to: str) -> None:
+        """Moves or renames ``path`` to ``to``."""
+        self._c._request(
+            'PATCH',
+            f'/apps/{_q(app_id)}/files',
+            json_body={'path': path, 'to': to},
+        )
+
+    def delete(self, app_id: str, path: str) -> None:
+        self._c._request(
+            'DELETE', f'/apps/{_q(app_id)}/files', json_body={'path': path}
+        )
+
+
+class Snapshots(_Group):
+    """Snapshots of an app (``apps.snapshots``) or a database
+    (``databases.snapshots``)."""
+
+    def __init__(self, client: SquareCloud, prefix: str) -> None:
+        super().__init__(client)
+        self._prefix = prefix
+
+    def list(self, resource_id: str) -> builtins.list[t.Snapshot]:
+        """Each item carries ``version_id`` (for ``restore``) and a signed
+        download ``url``, as the API sends them."""
+        return self._c._r('GET', f'{self._prefix}/{_q(resource_id)}/snapshots')
+
+    def create(self, resource_id: str) -> t.SnapshotCreated:
+        """Returns ``{'pending': False, 'url', 'key'}``, or
+        ``{'pending': True}`` (HTTP 202 ``SNAPSHOT_PROCESSING``) when the
+        snapshot is still being generated: it then appears in ``list`` on its
+        own, usually within 2 minutes. Poll ``list``, never call ``create``
+        again: it is limited to one per 180 s and counts against the plan's
+        daily snapshot quota."""
+        r = self._c._r(
+            'POST', f'{self._prefix}/{_q(resource_id)}/snapshots', min_timeout=_SLOW
+        )
+        return cast(
+            t.SnapshotCreated, {'pending': False, **r} if r else {'pending': True}
+        )
+
+    def restore(self, resource_id: str, name: str, version_id: str) -> None:
+        """Restores the snapshot ``name`` at ``version_id`` (both from
+        ``list``)."""
+        self._c._request(
+            'POST',
+            f'{self._prefix}/{_q(resource_id)}/snapshots/restore',
+            json_body={'snapshotId': name, 'versionId': version_id},
+            min_timeout=_SLOW,
+        )
+
+
+class Network(_Group):
+    def analytics(
+        self,
+        app_id: str,
+        start: Time,
+        end: Time,
+        **filters: Unpack[t.AnalyticsFilters],
+    ) -> t.NetworkAnalytics | None:
+        """``None`` when the window has no data. ``filters`` are keyword-only
+        (``country='BR'``, ``status='404'``, ``provider='GOOGLE (15169)'``:
+        the ``type`` of a ``providers`` item); an invalid one is 400
+        ``INVALID_FILTER``."""
+        query = {'start': _iso(start), 'end': _iso(end), **filters}
+        endpoint = f'/apps/{_q(app_id)}/network/analytics'
+        return self._c._r('GET', endpoint, query=query) or None
+
+    def errors(
+        self, app_id: str, start: Time, end: Time, *, include_4xx: bool = False
+    ) -> t.NetworkErrors | None:
+        """``None`` when the window has no data."""
+        query = {
+            'start': _iso(start),
+            'end': _iso(end),
+            'include_4xx': 'true' if include_4xx else None,
+        }
+        endpoint = f'/apps/{_q(app_id)}/network/errors'
+        return self._c._r('GET', endpoint, query=query) or None
+
+    def logs(self, app_id: str, start: Time, end: Time) -> list[t.NetworkLog]:
+        return self._c._r(
+            'GET',
+            f'/apps/{_q(app_id)}/network/logs',
+            query={'start': _iso(start), 'end': _iso(end)},
+        )
+
+    def performance(
+        self, app_id: str, start: Time, end: Time
+    ) -> t.NetworkPerformance | None:
+        """``None`` when the window has no data."""
+        return (
+            self._c._r(
+                'GET',
+                f'/apps/{_q(app_id)}/network/performance',
+                query={'start': _iso(start), 'end': _iso(end)},
+            )
+            or None
+        )
+
+    def dns(self, app_id: str) -> list[t.DNSRecord]:
+        return self._c._r('GET', f'/apps/{_q(app_id)}/network/dns')
+
+    def set_domain(self, app_id: str, domain: str) -> None:
+        """Sets the custom domain of a website."""
+        self._c._request(
+            'POST',
+            f'/apps/{_q(app_id)}/network/custom',
+            json_body={'custom': domain},
+        )
+
+    def purge_cache(self, app_id: str) -> None:
+        self._c._request('POST', f'/apps/{_q(app_id)}/network/purge_cache')
+
+
+class Databases(_Group):
+    def __init__(self, client: SquareCloud) -> None:
+        super().__init__(client)
+        self.snapshots = Snapshots(client, '/databases')
+
+    def create(
+        self, name: str, *, type: t.DatabaseType, version: str, memory: int
+    ) -> t.DatabaseCreated:
+        """``version`` may be a major prefix such as ``'8'``. ``memory`` is
+        an ``int`` in MB (a float or a string gets 400 ``INVALID_MEMORY``).
+        The returned ``password`` and ``certificate`` are shown only
+        once."""
+        return self._c._r(
+            'POST',
+            '/databases',
+            json_body={
+                'name': name,
+                'type': type,
+                'version': version,
+                'memory': memory,
+            },
+            min_timeout=_SLOW,
+        )
+
+    def get(self, database_id: str) -> t.Database:
+        return self._c._r('GET', f'/databases/{_q(database_id)}')
+
+    def update(
+        self,
+        database_id: str,
+        *,
+        name: str | None = None,
+        ram: int | None = None,
+    ) -> None:
+        body = {'name': name, 'ram': ram}
+        self._c._request(
+            'PATCH',
+            f'/databases/{_q(database_id)}',
+            json_body={k: v for k, v in body.items() if v is not None},
+        )
+
+    def delete(self, database_id: str) -> None:
+        self._c._request('DELETE', f'/databases/{_q(database_id)}')
+
+    def start(self, database_id: str) -> None:
+        """Starts the database. A refusal is 409 with a code:
+        ``CONTAINER_ALREADY_STARTED``, ``CONTAINER_ALREADY_STOPPED``,
+        ``CONTAINER_NOT_FOUND``, ``CONTAINER_INSUFFICIENT_DISK_SPACE``,
+        ``CONTAINER_NETWORK_CONFLICT`` or ``ACTION_FAILED``. The same holds
+        for ``stop``."""
+        self._c._request(
+            'POST', f'/databases/{_q(database_id)}/start', min_timeout=_SLOW
+        )
+
+    def stop(self, database_id: str) -> None:
+        """Stops the database; 409 refusals as in :meth:`start`."""
+        self._c._request(
+            'POST', f'/databases/{_q(database_id)}/stop', min_timeout=_SLOW
+        )
+
+    def status(self, database_id: str, *, raw: bool = False) -> t.RuntimeStats:
+        return self._c._r(
+            'GET',
+            f'/databases/{_q(database_id)}/status',
+            query={'rawData': 'true' if raw else None},
+        )
+
+    def metrics(self, database_id: str) -> list[t.MetricPoint]:
+        """Up to 24 h of 5-minute points, newest first."""
+        return self._c._r('GET', f'/databases/{_q(database_id)}/metrics')
+
+    def status_all(self) -> list[t.StatusListItem]:
+        return self._c._r('GET', '/databases/status')
+
+    def certificate(self, database_id: str) -> str:
+        """The certificate bundle as base64 (``base64.b64decode`` gives
+        the PEM)."""
+        r = self._c._r('GET', f'/databases/{_q(database_id)}/credentials/certificate')
+        return str((r or {}).get('certificate') or '')
+
+    def reset_credentials(
+        self, database_id: str, reset: Literal['password', 'certificate']
+    ) -> str:
+        """Returns the new password (``''`` for a certificate reset)."""
+        r = self._c._r(
+            'POST',
+            f'/databases/{_q(database_id)}/credentials/reset',
+            json_body={'reset': reset},
+        )
+        return str((r or {}).get('password') or '')
+
+
+class Workspaces(_Group):
+    def __init__(self, client: SquareCloud) -> None:
+        super().__init__(client)
+        self.members = Members(client)
+        self.apps = WorkspaceApps(client)
+
+    def create(self, name: str) -> t.WorkspaceCreated:
+        return self._c._r('POST', '/workspaces', json_body={'name': name})
+
+    def list(self) -> builtins.list[t.Workspace]:
+        return self._c._r('GET', '/workspaces')
+
+    def get(self, workspace_id: str) -> t.Workspace:
+        return self._c._r('GET', f'/workspaces/{_q(workspace_id)}')
+
+    def delete(self, workspace_id: str) -> None:
+        self._c._request(
+            'DELETE', '/workspaces', json_body={'workspaceId': workspace_id}
+        )
+
+    def leave(self, workspace_id: str) -> None:
+        self._c._request(
+            'DELETE', '/workspaces/leave', json_body={'workspaceId': workspace_id}
+        )
+
+
+class Members(_Group):
+    def add(self, workspace_id: str, code: str, group: t.WorkspaceGroup) -> None:
+        """Adds the user behind invite ``code`` with ``group``."""
+        self._c._request(
+            'POST',
+            '/workspaces/members',
+            json_body={'workspaceId': workspace_id, 'code': code, 'group': group},
+        )
+
+    def update(
+        self, workspace_id: str, member_id: str, group: t.WorkspaceGroup
+    ) -> None:
+        self._c._request(
+            'PATCH',
+            '/workspaces/members',
+            json_body={
+                'workspaceId': workspace_id,
+                'memberId': member_id,
+                'group': group,
+            },
+        )
+
+    def remove(self, workspace_id: str, member_id: str) -> None:
+        self._c._request(
+            'DELETE',
+            '/workspaces/members',
+            json_body={'workspaceId': workspace_id, 'memberId': member_id},
+        )
+
+    def invite_code(self) -> str:
+        """Your own invite code, to share with a workspace owner."""
+        return str(
+            (self._c._r('GET', '/workspaces/members/code') or {}).get('code') or ''
+        )
+
+
+class WorkspaceApps(_Group):
+    def add(self, workspace_id: str, app_id: str) -> None:
+        self._c._request(
+            'POST',
+            '/workspaces/applications',
+            json_body={'workspaceId': workspace_id, 'appId': app_id},
+        )
+
+    def remove(self, workspace_id: str, app_id: str) -> None:
+        self._c._request(
+            'DELETE',
+            '/workspaces/applications',
+            json_body={'workspaceId': workspace_id, 'appId': app_id},
+        )
+
+
+# Realtime -------------------------------------------------------------------
+
+
+# The API admits one realtime open per (user, app) every 5 s; 0.5 s for skew.
+_REOPEN_GAP = 5.5
+
+
+class Realtime:
+    """Iterator over the realtime SSE feed of an app.
+
+    ``data`` is always the raw frame text. Log events add ``stream`` (from
+    the ``\\u0001``/``\\u0002`` prefix) and ``line``; status events add
+    ``status``, the lean frames merged onto the last full one. A dropped
+    connection, or a ``REALTIME_RECONNECT`` from the server, is reopened up
+    to 3 times in a row (a log or status event resets the count), at most
+    once per 5.5 s (the API's pace). Every open is a GET under
+    ``max_retries``; an open that still fails raises. The iteration ends on
+    a clean end of stream or on ``REALTIME_DISCONNECTED``. The stream has no
+    read timeout: a half-open connection (a laptop resuming from sleep)
+    blocks until ``close()``.
+    """
+
+    def __init__(self, client: SquareCloud, path: str) -> None:
+        self._c = client
+        self._path = path
+        self._resp: Response | None = None
+        self._stop = threading.Event()
+
+    def __enter__(self) -> Realtime:
+        return self
+
+    def __exit__(
+        self,
+        _type: type[BaseException] | None,
+        _value: BaseException | None,
+        _tb: TracebackType | None,
+    ) -> None:
+        self.close()
+
+    def close(self) -> None:
+        """Stops the stream, even mid-wait; safe to call from another thread."""
+        self._stop.set()
+        if self._resp is not None:
+            self._resp.close()
+
+    def __iter__(self) -> Iterator[t.RealtimeEvent]:
+        failures = 0  # consecutive: a log or status event resets it
+        state: dict[str, Any] = {}
+        opened: float | None = None
+        stop = self._stop
+        while not stop.is_set():
+            if opened is not None:  # a reopen: back off, at the API's pace
+                since = time.monotonic() - opened
+                _sleep(max(_delay(failures - 1), _REOPEN_GAP - since), stop)
+                if stop.is_set():
+                    return
+            opened = time.monotonic()
+            try:
+                resp: Response = self._c._request(
+                    'GET',
+                    self._path,
+                    headers={'Accept': 'text/event-stream'},
+                    no_timeout=True,
+                    stream=True,
+                    stop=stop,
+                )
+            except SquareCloudAPIError:
+                if stop.is_set():  # closed during a retry wait
+                    return
+                raise
+            self._resp = resp
+            if stop.is_set():  # closed while connecting
+                resp.close()
+                return
+            reconnect = False
+            try:
+                for event, text, event_id in _sse(resp):
+                    item: dict[str, Any] = {
+                        'event': event,
+                        'data': text,
+                        'id': event_id,
+                    }
+                    if event == 'logs':
+                        failures = 0
+                        mark = text[:1]
+                        item['stream'] = 'stderr' if mark == '\x02' else 'stdout'
+                        item['line'] = text[1:] if mark in ('\x01', '\x02') else text
+                    elif event == 'status':
+                        failures = 0
+                        # a malformed frame keeps the last status
+                        with contextlib.suppress(ValueError, TypeError):
+                            state = {**state, **json.loads(text)}
+                        item['status'] = state
+                    yield cast(t.RealtimeEvent, item)
+                    if event == 'system':
+                        if text.startswith('REALTIME_DISCONNECTED'):
+                            return
+                        reconnect |= text.startswith('REALTIME_RECONNECT')
+                if not reconnect:
+                    return
+                cause: BaseException = ConnectionError('REALTIME_RECONNECT')
+            except (OSError, http.client.HTTPException) as exc:
+                cause = exc
+            finally:
+                resp.close()
+            if stop.is_set():  # closed mid-read: a read error or an early EOF
+                return
+            if failures >= 3:  # also bounds an upstream that keeps reconnecting
+                path = self._c._base_path + self._path
+                raise _network_error(cause, 'GET', path) from cause
+            failures += 1
+
+
+class AsyncRealtime:
+    """Async iterator over :class:`Realtime`: a reader thread feeds an
+    ``asyncio.Queue``, so no executor thread is held for the stream."""
+
+    def __init__(self, stream: Realtime) -> None:
+        self._stream = stream
+
+    async def __aenter__(self) -> AsyncRealtime:
+        return self
+
+    async def __aexit__(self, *_: object) -> None:
+        self.close()
+
+    def close(self) -> None:
+        self._stream.close()
+
+    async def __aiter__(self) -> AsyncIterator[t.RealtimeEvent]:
+        import asyncio  # ponytail: lazy, keeps `import squarecloud` ~40 ms faster
+
+        stream, loop = self._stream, asyncio.get_running_loop()
+        # ponytail: unbounded queue; a consumer slower than the feed buffers.
+        queue: asyncio.Queue[Any] = asyncio.Queue()
+        done = object()
+
+        def put(item: object) -> None:
+            try:
+                loop.call_soon_threadsafe(queue.put_nowait, item)
+            except RuntimeError:  # the loop is gone
+                stream.close()
+
+        def pump() -> None:
+            try:
+                for event in stream:
+                    put(event)
+            except BaseException as exc:  # handed to the consumer
+                put(exc)
+            put(done)
+
+        threading.Thread(target=pump, name='squarecloud-realtime', daemon=True).start()
+        try:
+            while (item := await queue.get()) is not done:
+                if isinstance(item, BaseException):
+                    raise item
+                yield item
+        finally:
+            stream.close()
+
+
+# Async facade ---------------------------------------------------------------
+
+P = ParamSpec('P')
+R = TypeVar('R')
+
+
+class _aio(Generic[P, R]):
+    """Exposes a sync method as a coroutine run in ``asyncio.to_thread``."""
+
+    def __init__(self, fn: Callable[Concatenate[Any, P], R]) -> None:
+        self._fn = fn
+        self.__doc__ = fn.__doc__
+
+    def __get__(
+        self, obj: Any, owner: type | None = None
+    ) -> Callable[P, Coroutine[Any, Any, R]]:
+        if obj is None:  # class access (help(), inspect)
+            return self  # type: ignore[return-value]
+        fn, sync = self._fn, obj._sync
+
+        async def call(*args: P.args, **kwargs: P.kwargs) -> R:
+            import asyncio
+
+            return await asyncio.to_thread(fn, sync, *args, **kwargs)
+
+        return call
+
+
+class _AsyncGroup:
+    def __init__(self, sync: Any) -> None:
+        self._sync = sync
+
+
+class AsyncAccount(_AsyncGroup):
+    me = _aio(Account.me)
+    snapshots = _aio(Account.snapshots)
+
+
+class AsyncService(_AsyncGroup):
+    status = _aio(Service.status)
+
+
+class AsyncAI(_AsyncGroup):
+    chat = _aio(AI.chat)
+
+
+class AsyncDeploys(_AsyncGroup):
+    set_webhook = _aio(Deploys.set_webhook)
+    link_github_app = _aio(Deploys.link_github_app)
+    unlink_github_app = _aio(Deploys.unlink_github_app)
+    list = _aio(Deploys.list)
+    current = _aio(Deploys.current)
+
+
+class AsyncEnvs(_AsyncGroup):
+    get = _aio(Envs.get)
+    set = _aio(Envs.set)
+    replace = _aio(Envs.replace)
+    delete = _aio(Envs.delete)
+
+
+class AsyncFiles(_AsyncGroup):
+    list = _aio(Files.list)
+    read = _aio(Files.read)
+    write = _aio(Files.write)
+    move = _aio(Files.move)
+    delete = _aio(Files.delete)
+
+
+class AsyncSnapshots(_AsyncGroup):
+    list = _aio(Snapshots.list)
+    create = _aio(Snapshots.create)
+    restore = _aio(Snapshots.restore)
+
+
+class AsyncNetwork(_AsyncGroup):
+    analytics = _aio(Network.analytics)
+    errors = _aio(Network.errors)
+    logs = _aio(Network.logs)
+    performance = _aio(Network.performance)
+    dns = _aio(Network.dns)
+    set_domain = _aio(Network.set_domain)
+    purge_cache = _aio(Network.purge_cache)
+
+
+class AsyncApps(_AsyncGroup):
+    def __init__(self, sync: Apps) -> None:
+        super().__init__(sync)
+        self.deploys = AsyncDeploys(sync.deploys)
+        self.envs = AsyncEnvs(sync.envs)
+        self.files = AsyncFiles(sync.files)
+        self.snapshots = AsyncSnapshots(sync.snapshots)
+        self.network = AsyncNetwork(sync.network)
+
+    create = _aio(Apps.create)
+    get = _aio(Apps.get)
+    delete = _aio(Apps.delete)
+    status_all = _aio(Apps.status_all)
+    status = _aio(Apps.status)
+    start = _aio(Apps.start)
+    stop = _aio(Apps.stop)
+    restart = _aio(Apps.restart)
+    logs = _aio(Apps.logs)
+    metrics = _aio(Apps.metrics)
+    domains = _aio(Apps.domains)
+    load_balancers = _aio(Apps.load_balancers)
+    commit = _aio(Apps.commit)
+
+    def realtime(self, app_id: str) -> AsyncRealtime:
+        """Async version of :meth:`Apps.realtime`: ``async for`` over it,
+        ideally inside ``async with`` so leaving the block closes it."""
+        return AsyncRealtime(self._sync.realtime(app_id))
+
+
+class AsyncDatabases(_AsyncGroup):
+    def __init__(self, sync: Databases) -> None:
+        super().__init__(sync)
+        self.snapshots = AsyncSnapshots(sync.snapshots)
+
+    create = _aio(Databases.create)
+    get = _aio(Databases.get)
+    update = _aio(Databases.update)
+    delete = _aio(Databases.delete)
+    start = _aio(Databases.start)
+    stop = _aio(Databases.stop)
+    status = _aio(Databases.status)
+    metrics = _aio(Databases.metrics)
+    status_all = _aio(Databases.status_all)
+    certificate = _aio(Databases.certificate)
+    reset_credentials = _aio(Databases.reset_credentials)
+
+
+class AsyncMembers(_AsyncGroup):
+    add = _aio(Members.add)
+    update = _aio(Members.update)
+    remove = _aio(Members.remove)
+    invite_code = _aio(Members.invite_code)
+
+
+class AsyncWorkspaceApps(_AsyncGroup):
+    add = _aio(WorkspaceApps.add)
+    remove = _aio(WorkspaceApps.remove)
+
+
+class AsyncWorkspaces(_AsyncGroup):
+    def __init__(self, sync: Workspaces) -> None:
+        super().__init__(sync)
+        self.members = AsyncMembers(sync.members)
+        self.apps = AsyncWorkspaceApps(sync.apps)
+
+    create = _aio(Workspaces.create)
+    list = _aio(Workspaces.list)
+    get = _aio(Workspaces.get)
+    delete = _aio(Workspaces.delete)
+    leave = _aio(Workspaces.leave)
+
+
+class AsyncSquareCloud:
+    """``await`` facade over :class:`SquareCloud`: same groups and methods,
+    each call runs in ``asyncio.to_thread``."""
+
+    def __init__(
+        self,
+        api_key: str,
+        *,
+        base_url: str = BASE_URL,
+        timeout: float = 30.0,
+        max_retries: int = 2,
+        transport: Transport | None = None,
+        user_agent: str = USER_AGENT,
+    ) -> None:
+        self._sync = SquareCloud(
+            api_key,
+            base_url=base_url,
+            timeout=timeout,
+            max_retries=max_retries,
+            transport=transport,
+            user_agent=user_agent,
+        )
+        self.account = AsyncAccount(self._sync.account)
+        self.service = AsyncService(self._sync.service)
+        self.ai = AsyncAI(self._sync.ai)
+        self.apps = AsyncApps(self._sync.apps)
+        self.databases = AsyncDatabases(self._sync.databases)
+        self.workspaces = AsyncWorkspaces(self._sync.workspaces)
+
+    async def __aenter__(self) -> AsyncSquareCloud:
+        return self
+
+    async def __aexit__(self, *_: object) -> None:
+        self.close()
+
+    def close(self) -> None:
+        self._sync.close()
+
+    async def download_snapshot(self, url: str, dest: str | os.PathLike[str]) -> str:
+        import asyncio
+
+        return await asyncio.to_thread(self._sync.download_snapshot, url, dest)
