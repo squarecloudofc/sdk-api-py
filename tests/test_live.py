@@ -1,4 +1,4 @@
-"""Live suite (SDK-STANDARD 10.1): all 67 operations against the real API.
+"""Live suite (SDK-STANDARD 10.1): all 69 operations against the real API.
 
     SQUARECLOUD_API_KEY=... uv run pytest -m live -s
 
@@ -41,8 +41,14 @@ from test_conformance import CASES, GROUPS, template_of
 from test_conformance import OPS as SPEC_OPS
 
 from squarecloud import BASE_URL, HTTPTransport, SquareCloud, SquareCloudAPIError
-from squarecloud.client import Body, Response
-from squarecloud.types import RealtimeEvent, Snapshot, SnapshotCreated
+from squarecloud._transport import Body, Response
+from squarecloud.types import (
+    RealtimeEvent,
+    Snapshot,
+    SnapshotCreated,
+    SnapshotRestored,
+    SnapshotRestoreState,
+)
 
 pytestmark = pytest.mark.live
 
@@ -273,7 +279,7 @@ def tolerate(
 
 def remove(fn: Callable[[str], None], resource_id: str) -> None:
     """A cleanup delete: a 404 (already gone) is fine. A delete within 120 s
-    of a restore gets 403 ``RESTORE_IN_PROGRESS``: retried every 10 s."""
+    of a restore gets 409 ``RESTORE_IN_PROGRESS``: retried every 10 s."""
     deadline = time.monotonic() + 130
     while True:
         try:
@@ -347,6 +353,27 @@ def listed(
         assert s['version_id'], 'version_id sent by the API'
         assert s['url'].startswith('https://'), 'signed download url'
     return max(items, key=lambda s: s['modified']) if items else None
+
+
+def follow_restore(
+    restored: SnapshotRestored | None,
+    state_of: Callable[[str], SnapshotRestoreState],
+    id_: str,
+) -> None:
+    """A pending restore is polled every 10 s, for at most 10 minutes, until
+    it ends; otherwise one call must return a known state."""
+    state = call(state_of, id_)
+    deadline = time.monotonic() + 600
+    while restored and restored['pending'] and state['state'] not in END_STATES:
+        assert time.monotonic() < deadline, 'restore still running after 10 min'
+        print(f'restore pending: {state["state"]} {state.get("step", "")}')
+        time.sleep(10)
+        state = call(state_of, id_)
+    assert state['state'] in {'none', 'queued', 'running', *END_STATES}
+    print(f'restore state: {state["state"]} {state.get("code", "")}')
+
+
+END_STATES = {'success', 'error'}
 
 
 @dataclass
@@ -548,6 +575,8 @@ def test_3_app(client: SquareCloud, app: LiveApp) -> None:
     logs = tolerate({'LOGS_UNAVAILABLE'}, 'apps.logs', apps.logs, app_id)
     assert logs is None or isinstance(logs, str)
     assert isinstance(call(apps.metrics, app_id), list)
+    # 7 days on Pro and Enterprise; the 24 h answer elsewhere, without an error
+    assert isinstance(call(apps.metrics, app_id, range='7d'), list)
     call(apps.stop, app_id)
     call(apps.start, app_id)
     print('realtime:', ' > '.join(watch_restart(client, app_id)))
@@ -675,6 +704,7 @@ def test_5_snapshots(client: SquareCloud, app: LiveApp, tmp_path: Path) -> None:
     if created and not created['pending']:
         verify_download(client, created['url'], tmp_path)
     latest = listed(created, snapshots.list, app.id)
+    restored = None
     if latest:
         every = tolerate(
             GATED, 'account.snapshots', client.account.snapshots, scope='applications'
@@ -682,9 +712,10 @@ def test_5_snapshots(client: SquareCloud, app: LiveApp, tmp_path: Path) -> None:
         if every is not None:
             ids = {s['version_id'] for s in every}
             assert latest['version_id'] in ids, 'account.snapshots lists it'
-        call(snapshots.restore, app.id, latest['name'], latest['version_id'])
+        restored = call(snapshots.restore, app.id, latest['name'], latest['version_id'])
     else:
         fails_4xx(snapshots.restore, app.id, 'sdk-live-missing', '0')
+    follow_restore(restored, snapshots.restore_state, app.id)
 
 
 # 6. Workspace --------------------------------------------------------------------
@@ -759,9 +790,11 @@ def test_7_database(client: SquareCloud, tmp_path: Path) -> None:
             dbs.start,
             dbs.snapshots.create,
             dbs.snapshots.list,
+            dbs.snapshots.restore_state,
             dbs.delete,
         ):
             fails_4xx(fn, MISSING)
+        fails_4xx(dbs.metrics, MISSING, range='7d')
         fails_4xx(dbs.status, MISSING, raw=True)
         fails_4xx(dbs.update, MISSING, name=NAME)
         fails_4xx(dbs.reset_credentials, MISSING, 'password')
@@ -775,6 +808,7 @@ def test_7_database(client: SquareCloud, tmp_path: Path) -> None:
         assert isinstance(call(dbs.status, db_id)['running'], bool)
         assert isinstance(call(dbs.status, db_id, raw=True)['cpu'], int | float)
         assert isinstance(call(dbs.metrics, db_id), list)
+        assert isinstance(call(dbs.metrics, db_id, range='7d'), list)
         call(dbs.update, db_id, name=NAME + '-2')
         assert call(dbs.get, db_id)['name'] == NAME + '-2'
         assert call(dbs.certificate, db_id) != '', 'certificate'
@@ -791,6 +825,7 @@ def test_7_database(client: SquareCloud, tmp_path: Path) -> None:
             assert (e.status, e.code) in {
                 (409, 'CONTAINER_ALREADY_STARTED'),
                 (409, 'ACTION_FAILED'),
+                (409, 'RESTORE_IN_PROGRESS'),
             }, (e.status, e.code)
             print(f'databases.start again: 409 {e.code}')
         snapshot = tolerate(
@@ -799,10 +834,13 @@ def test_7_database(client: SquareCloud, tmp_path: Path) -> None:
         if snapshot and not snapshot['pending']:
             verify_download(client, snapshot['url'], tmp_path)
         latest = listed(snapshot, dbs.snapshots.list, db_id)
+        restored = None
         if latest:
-            call(dbs.snapshots.restore, db_id, latest['name'], latest['version_id'])
+            name, version_id = latest['name'], latest['version_id']
+            restored = call(dbs.snapshots.restore, db_id, name, version_id)
         else:
             fails_4xx(dbs.snapshots.restore, db_id, 'sdk-live-missing', '0')
+        follow_restore(restored, dbs.snapshots.restore_state, db_id)
     finally:
         # Right after a restore: remove() waits out RESTORE_IN_PROGRESS
         remove(dbs.delete, db_id)

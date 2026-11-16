@@ -48,6 +48,7 @@ CASES: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = [
                 'model': 'cubic',
                 'messages': MSG,
                 'max_tokens': 5,
+                'max_completion_tokens': 5,
                 'temperature': 0.2,
                 'tools': [],
                 'tool_choice': 'auto',
@@ -64,7 +65,7 @@ CASES: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = [
     ('apps.stop', (APP,), {}),
     ('apps.restart', (APP,), {}),
     ('apps.logs', (APP,), {}),
-    ('apps.metrics', (APP,), {}),
+    ('apps.metrics', (APP,), {'range': '7d'}),
     ('apps.realtime', (APP,), {}),
     ('apps.domains', (), {}),
     ('apps.load_balancers', (), {}),
@@ -86,6 +87,7 @@ CASES: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = [
     ('apps.snapshots.list', (APP,), {}),
     ('apps.snapshots.create', (APP,), {}),
     ('apps.snapshots.restore', (APP, 'abc123_javascript_manual', VID), {}),
+    ('apps.snapshots.restore_state', (APP,), {}),
     (
         'apps.network.analytics',
         (APP, START, END),
@@ -120,13 +122,14 @@ CASES: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = [
     ('databases.start', (DB,), {}),
     ('databases.stop', (DB,), {}),
     ('databases.status', (DB,), {'raw': True}),
-    ('databases.metrics', (DB,), {}),
+    ('databases.metrics', (DB,), {'range': '7d'}),
     ('databases.status_all', (), {}),
     ('databases.certificate', (DB,), {}),
     ('databases.reset_credentials', (DB, 'password'), {}),
     ('databases.snapshots.list', (DB,), {}),
     ('databases.snapshots.create', (DB,), {}),
     ('databases.snapshots.restore', (DB, 'abc123_mongo', VID), {}),
+    ('databases.snapshots.restore_state', (DB,), {}),
     ('workspaces.create', ('Acme',), {}),
     ('workspaces.list', (), {}),
     ('workspaces.get', (WS,), {}),
@@ -147,6 +150,7 @@ BODIES: dict[str, Any] = {
         'model': 'cubic',
         'messages': MSG,
         'max_tokens': 5,
+        'max_completion_tokens': 5,
         'temperature': 0.2,
         'tools': [],
         'tool_choice': 'auto',
@@ -202,6 +206,7 @@ QUERIES: dict[str, dict[str, str]] = {
     'account.snapshots': {'scope': 'databases'},
     'apps.status_all': {'workspaceId': WS},
     'apps.status': RAW,
+    'apps.metrics': {'range': '7d'},
     'apps.commit': {'path': '/src'},
     'apps.files.list': {'path': '/src'},
     'apps.files.read': {'path': '/src/index.js', 'encoding': 'base64'},
@@ -223,6 +228,7 @@ QUERIES: dict[str, dict[str, str]] = {
     'apps.network.logs': WINDOW,
     'apps.network.performance': WINDOW,
     'databases.status': RAW,
+    'databases.metrics': {'range': '7d'},
 }
 
 
@@ -458,17 +464,17 @@ def test_every_sdk_relevant_operation_is_covered() -> None:
     for name, args, kwargs in CASES:
         run(target(client, name), args, kwargs)
     covered = {check_request(call) for call in transport.calls}
-    assert SPEC['info']['version'] == '13.76.1'
-    assert len(OPS) == 67
+    assert SPEC['info']['version'] == '14.54.0'
+    assert len(OPS) == 69
     assert covered == OPS, (OPS - covered, covered - OPS)
-    assert len(CASES) == 67
+    assert len(CASES) == 69
 
 
 def test_every_spec_error_code_is_known() -> None:
     """The known-code list in the error docstring covers the spec enum."""
     known = set(re.findall(r'\b[A-Z][A-Z0-9_]+\b', SquareCloudAPIError.__doc__ or ''))
     spec = set(SPEC['components']['schemas']['ErrorCode']['enum'])
-    assert len(spec) == 131
+    assert len(spec) == 141
     # Listed in the enum, but only an internal (non-public) route sends them.
     internal = {'SUBDOMAIN_TAKEN', 'DEPLOY_FAILED'}
     assert not internal & known
@@ -499,17 +505,55 @@ def test_public_methods_are_exactly_the_operations(cls: Any) -> None:
     assert public == {*GROUPS, 'close', 'download_snapshot'}
 
 
+PENDING = [
+    ('apps.snapshots.create', '/v2/apps/{appId}/snapshots'),
+    ('databases.snapshots.create', '/v2/databases/{databaseId}/snapshots'),
+    ('apps.snapshots.restore', '/v2/apps/{appId}/snapshots/restore'),
+    ('databases.snapshots.restore', '/v2/databases/{databaseId}/snapshots/restore'),
+]
+
+
+@pytest.mark.parametrize(('name', 'template'), PENDING)
+def test_spec_202_example_is_pending(name: str, template: str) -> None:
+    """Both 202s mean "still running": create and restore are pending."""
+    args, kwargs = next((a, k) for n, a, k in CASES if n == name)
+    [body] = success_bodies(operation('POST', template), '202')
+    client = SquareCloud(KEY, transport=MockTransport([FakeResponse(202, body)]))
+    assert target(client, name)(*args, **kwargs) == {'pending': True}
+
+
+@pytest.mark.parametrize('body', [{}, b'', {'status': 'success'}])
+@pytest.mark.parametrize('name', [n for n, _ in PENDING])
+def test_202_is_pending_whatever_the_body(name: str, body: Any) -> None:
+    """Pending comes from the HTTP status, never from the body's ``code``."""
+    args, kwargs = next((a, k) for n, a, k in CASES if n == name)
+    client = SquareCloud(KEY, transport=MockTransport([FakeResponse(202, body)]))
+    assert target(client, name)(*args, **kwargs) == {'pending': True}
+
+
+@pytest.mark.parametrize(
+    'name', ['apps.snapshots.restore', 'databases.snapshots.restore']
+)
+def test_spec_200_restore_is_not_pending(name: str) -> None:
+    args, kwargs = next((a, k) for n, a, k in CASES if n == name)
+    assert target(spec_client()[0], name)(*args, **kwargs) == {'pending': False}
+
+
+@pytest.mark.parametrize(
+    'body',
+    [
+        {'status': 'success'},
+        {'status': 'success', 'response': {}},
+        {'status': 'success', 'response': {'url': None, 'key': None}},
+    ],
+)
 @pytest.mark.parametrize(
     'name', ['apps.snapshots.create', 'databases.snapshots.create']
 )
-def test_spec_202_example_is_pending(name: str) -> None:
-    client, _ = spec_client()
-    prefix = (
-        '/v2/apps/{appId}' if name.startswith('apps') else '/v2/databases/{databaseId}'
-    )
-    [body] = success_bodies(operation('POST', prefix + '/snapshots'), '202')
-    client._transport = MockTransport([FakeResponse(202, body)])
-    assert target(client, name)(APP) == {'pending': True}
+def test_create_200_without_response_is_not_pending(name: str, body: Any) -> None:
+    """A key without ``snapshots:read`` gets a 200 with no url or key."""
+    client = SquareCloud(KEY, transport=MockTransport([FakeResponse(200, body)]))
+    assert target(client, name)(APP) == {'pending': False, 'url': '', 'key': ''}
 
 
 def error_examples() -> list[tuple[str, int, Any]]:
@@ -631,6 +675,23 @@ LIVE_BODIES: list[tuple[str, Any]] = [
                 'lastModified': 1790518259302.0295,
             },
             {'type': 'directory', 'name': 'node_modules'},
+        ],
+    ),
+    # a 7-day point carries the hour's peaks (described in the spec's prose
+    # only); `disk` and `storage` are null on a point without a reading
+    (
+        'apps.metrics',
+        [
+            {
+                'date': '2026-09-27T00:00:00.000Z',
+                'cpu': 0.5,
+                'ram': 120.4,
+                'net': [1, 2],
+                'disk': None,
+                'storage': None,
+                'cpu_max': 1.5,
+                'ram_max': 130,
+            }
         ],
     ),
 ]

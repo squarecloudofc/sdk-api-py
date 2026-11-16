@@ -1,4 +1,4 @@
-"""The same API with await: statuses of every app and database at once."""
+"""Fetch the status of every application and database at once with await."""
 
 import asyncio
 import os
@@ -16,7 +16,7 @@ async def main() -> None:
         print(len(apps), 'apps,', len(databases), 'databases')
         for ws in workspaces:
             for app in ws['applications']:
-                shared_id = f'{app["id"]}-{ws["id"]}'  # act on a shared app
+                shared_id = f'{app["id"]}-{ws["id"]}'  # The composite id.
                 print(
                     ws['name'],
                     app['name'],

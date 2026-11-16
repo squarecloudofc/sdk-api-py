@@ -4,7 +4,7 @@ import threading
 
 import pytest
 
-import squarecloud.client
+import squarecloud._wire
 
 
 @pytest.fixture(autouse=True)
@@ -15,5 +15,5 @@ def sleeps(monkeypatch: pytest.MonkeyPatch) -> list[float]:
     def record(seconds: float, stop: threading.Event | None = None) -> None:
         delays.append(seconds)
 
-    monkeypatch.setattr(squarecloud.client, '_sleep', record)
+    monkeypatch.setattr(squarecloud._wire, '_sleep', record)
     return delays

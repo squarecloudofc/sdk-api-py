@@ -1,6 +1,6 @@
-"""Follow an app's logs and metrics live (Ctrl+C to stop).
+"""Follow an application's logs and usage live. Press Ctrl+C to stop.
 
-usage: python realtime.py <app_id>
+Usage: python realtime.py <app_id>
 """
 
 import os

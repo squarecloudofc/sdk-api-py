@@ -14,10 +14,10 @@ from typing import Any
 import pytest
 from helpers import APP, KEY, FakeResponse, MockTransport, client, multipart
 
-import squarecloud.client
+import squarecloud._wire
 from squarecloud import AsyncSquareCloud, SquareCloud, SquareCloudAPIError
-from squarecloud.client import _CHUNK, _multipart, _sse
-from squarecloud.client import _sleep as real_sleep
+from squarecloud._wire import _CHUNK, _multipart, _sse
+from squarecloud._wire import _sleep as real_sleep
 
 # SSE parser -----------------------------------------------------------------
 
@@ -297,7 +297,7 @@ def test_realtime_close_stops_iteration_and_closes_response() -> None:
 def test_realtime_close_during_the_reopen_wait_ends_at_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(squarecloud.client, '_sleep', real_sleep)
+    monkeypatch.setattr(squarecloud._wire, '_sleep', real_sleep)
     c, t = client(
         Dropping(200, 'event: logs\ndata: a\n\n'),
         FakeResponse(200, 'event: logs\ndata: b\n\n'),
@@ -328,7 +328,7 @@ def test_realtime_close_while_connecting_ends_the_stream() -> None:
 def test_realtime_close_during_the_open_retry_wait_ends_at_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(squarecloud.client, '_sleep', real_sleep)
+    monkeypatch.setattr(squarecloud._wire, '_sleep', real_sleep)
     transport = MockTransport(handler=lambda _: ConnectionRefusedError('refused'))
     stream = SquareCloud(KEY, transport=transport, max_retries=10).apps.realtime(APP)
     timer = threading.Timer(0.2, stream.close)
